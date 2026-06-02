@@ -6,6 +6,7 @@ import PlayByPlay from './components/PlayByPlay';
 import CenterAnalytics from './components/CenterAnalytics';
 import FaceoffSummary from './components/FaceoffSummary';
 import UserManual from './components/UserManual';
+import LandingPage from './components/LandingPage';
 import { generateNarrative, fetchRosterByAI } from './services/geminiService';
 import { downloadPDFReport, downloadExcelReport, downloadHTMLExport } from './services/exportService';
 import { Toaster, toast } from 'sonner';
@@ -85,6 +86,7 @@ const DroppableSlot: React.FC<{ id: string, children: React.ReactNode, label: st
 };
 
 const App: React.FC = () => {
+  const [showLanding, setShowLanding] = useState(true);
   const [events, setEvents] = useState<GameEvent[]>([]);
   const [activeTeam, setActiveTeam] = useState<Team>(Team.HOME);
   const [playerNumber, setPlayerNumber] = useState('');
@@ -453,6 +455,10 @@ const App: React.FC = () => {
   const orderedTeams = useMemo(() => {
     return isCurrentlySwapped ? [Team.AWAY, Team.HOME] : [Team.HOME, Team.AWAY];
   }, [isCurrentlySwapped]);
+
+  if (showLanding) {
+    return <LandingPage onLaunch={() => setShowLanding(false)} />;
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-[#05070a] text-slate-200 overflow-x-hidden">
