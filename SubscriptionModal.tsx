@@ -48,7 +48,7 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ isOpen, onClose, 
       <div className="max-w-5xl w-full animate-in fade-in zoom-in duration-300">
         <div className="text-center mb-8">
           <h2 className="text-3xl sm:text-5xl font-black text-white italic uppercase tracking-tighter mb-2">Rule The Crease</h2>
-          <p className="text-blue-500 font-bold uppercase tracking-[0.3em] text-[10px] sm:text-xs">Unlock PuckPulse Pro Features</p>
+          <p className="text-blue-500 font-bold uppercase tracking-[0.3em] text-[10px] sm:text-xs">Unlock Top Cheese Hockey Pro Features</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
