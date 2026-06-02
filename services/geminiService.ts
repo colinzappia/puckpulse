@@ -76,10 +76,8 @@ export async function fetchRosterByAI({ teamName, rosterUrl }: SyncParams): Prom
     You are a world-class hockey scout and data analyst. 
     
     TASK: Find and extract the full active player roster for "${teamName}" for the ${season} season.
-    
-    STRICT REQUIREMENT: You MUST use the provided URL as the SOLE source of truth for player names: ${rosterUrl.trim()}. 
-    DO NOT include players that are not explicitly listed on this page. 
-    If the page is empty or doesn't contain a roster, return status "ERROR" with a clear reason.
+    Use this URL as a reference: ${rosterUrl.trim()}
+    Also search for the most current "${teamName} ${season} roster" to ensure accuracy.
     
     EXTRACTION REQUIREMENTS:
     1. Extract every active player's Jersey Number (if missing, use "00").
@@ -88,7 +86,9 @@ export async function fetchRosterByAI({ teamName, rosterUrl }: SyncParams): Prom
     4. Assign players to lines/pairings based on their depth chart or standard usage (1, 2, 3, 4 for forwards; P1, P2, P3 for defense; G1, G2 for goalies).
     5. For defensemen on the same pairing, try to assign one to LD and one to RD if possible.
     6. Ensure NO DUPLICATE players are returned.
-    7. Return ONLY the JSON object.
+    
+    You MUST respond with ONLY a valid JSON object in this exact format, no other text:
+    {"status":"OK","players":[{"number":"15","name":"Player Name","position":"C","line":"1"}]}
   `;
 
   try {
@@ -96,7 +96,7 @@ export async function fetchRosterByAI({ teamName, rosterUrl }: SyncParams): Prom
       model: 'gemini-2.5-flash',
       contents: finalPrompt,
       config: {
-        tools: [{ urlContext: {} }],
+        tools: [{ googleSearch: {} }],
       }
     })) as GenerateContentResponse;
 
