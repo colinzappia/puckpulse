@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
 import { GameEvent, TeamStats, Player, PeriodSummary } from "../types";
 
