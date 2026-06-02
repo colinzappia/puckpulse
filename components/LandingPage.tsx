@@ -23,7 +23,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch }) => {
       <section className="pt-32 pb-20 px-6 flex flex-col items-center text-center relative">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(200,232,245,0.05)_0%,transparent_70%)] pointer-events-none" />
         
-        <img src="/Top_Cheese_Hockey_logo.png" alt="Top Cheese Hockey" className="h-36 w-auto mb-8" />
+        <img src="/Top_Cheese_Hockey_logo.png" alt="Top Cheese Hockey" className="h-56 w-auto mb-8" />
         
         <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 text-blue-300 text-xs font-bold tracking-widest uppercase px-4 py-2 rounded-full mb-6">
           <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
@@ -49,31 +49,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch }) => {
           <a href="#features" className="border border-white/10 hover:border-white/20 text-slate-300 font-semibold text-lg px-10 py-4 rounded-xl transition-all hover:bg-white/5">
             See features
           </a>
-        </div>
-      </section>
-
-      {/* MOCK DASHBOARD */}
-      <section className="px-6 pb-20 max-w-3xl mx-auto w-full">
-        <div className="bg-[#0f1620] border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
-          <div className="bg-[#161e2a] px-4 py-3 flex items-center gap-2 border-b border-white/5">
-            <div className="w-3 h-3 rounded-full bg-red-500/70" />
-            <div className="w-3 h-3 rounded-full bg-yellow-500/70" />
-            <div className="w-3 h-3 rounded-full bg-green-500/70" />
-            <span className="text-xs text-slate-500 ml-2">topcheesehockey.com — Live Game Dashboard</span>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-white/5">
-            {[
-              { label: 'Home Shots', value: '14', color: 'text-red-400' },
-              { label: 'Away Shots', value: '9', color: 'text-blue-300' },
-              { label: 'AI Tactical Score', value: '87%', color: 'text-yellow-400' },
-              { label: 'Events Logged', value: '34', color: 'text-white' },
-            ].map((s) => (
-              <div key={s.label} className="bg-[#0f1620] p-5">
-                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">{s.label}</p>
-                <p className={`text-3xl font-black ${s.color}`}>{s.value}</p>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 
