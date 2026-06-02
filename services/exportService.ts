@@ -90,7 +90,7 @@ export async function downloadPDFReport(data: ExportData) {
     <div style="font-family: 'Inter', sans-serif; padding: 40px; color: #111; background: #fff;">
       <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 4px solid #111; padding-bottom: 20px; margin-bottom: 40px;">
         <div>
-          <h1 style="margin: 0; font-size: 28px; font-weight: 900; text-transform: uppercase;">PuckPulse Scouting Report</h1>
+          <h1 style="margin: 0; font-size: 28px; font-weight: 900; text-transform: uppercase;">Top Cheese Hockey Scouting Report</h1>
           <p style="margin: 5px 0 0; font-size: 12px; font-weight: 700; color: #666;">${data.homeName} vs ${data.awayName}</p>
         </div>
         <div style="text-align: right; font-size: 10px; font-weight: 700; color: #999;">
@@ -122,7 +122,7 @@ export async function downloadPDFReport(data: ExportData) {
 
   const opt = {
     margin: 0,
-    filename: `PuckPulse-Report-${data.homeName}-vs-${data.awayName}.pdf`,
+    filename: `TopCheeseHockey-Report-${data.homeName}-vs-${data.awayName}.pdf`,
     image: { type: 'jpeg', quality: 0.98 },
     html2canvas: { scale: 2, useCORS: true, logging: false },
     jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
@@ -172,7 +172,7 @@ export function downloadHTMLExport(data: ExportData) {
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>PuckPulse Report - ${data.homeName} vs ${data.awayName}</title>
+      <title>Top Cheese Hockey Report - ${data.homeName} vs ${data.awayName}</title>
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
       <style>
         body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; background: #f0f2f5; color: #111; line-height: 1.5; }
@@ -189,7 +189,7 @@ export function downloadHTMLExport(data: ExportData) {
       <div class="container">
         <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 4px solid #111; padding-bottom: 20px; margin-bottom: 40px;">
           <div>
-            <h1 style="margin: 0; font-size: 28px; font-weight: 900; text-transform: uppercase;">PuckPulse Scouting Report</h1>
+            <h1 style="margin: 0; font-size: 28px; font-weight: 900; text-transform: uppercase;">Top Cheese Hockey Scouting Report</h1>
             <p style="margin: 5px 0 0; font-size: 12px; font-weight: 700; color: #666;">${data.homeName} vs ${data.awayName}</p>
           </div>
           <div style="text-align: right; font-size: 10px; font-weight: 700; color: #999;">
@@ -223,7 +223,7 @@ export function downloadHTMLExport(data: ExportData) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `PuckPulse-Report-${data.homeName}-vs-${data.awayName}.html`;
+  a.download = `TopCheeseHockey-Report-${data.homeName}-vs-${data.awayName}.html`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -274,7 +274,7 @@ export function downloadExcelReport(data: ExportData) {
   const wsAwayRoster = XLSX.utils.aoa_to_sheet([awayRosterHeader, ...awayRosterRows]);
   XLSX.utils.book_append_sheet(wb, wsAwayRoster, `${data.awayName.slice(0, 20)} Roster`);
 
-  XLSX.writeFile(wb, `PuckPulse-Data-${data.homeName}-vs-${data.awayName}.xlsx`);
+  XLSX.writeFile(wb, `TopCheeseHockey-Data-${data.homeName}-vs-${data.awayName}.xlsx`);
 }
 
 /** 
