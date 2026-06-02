@@ -1,12 +1,13 @@
 
+ 
 import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
 import { GameEvent, TeamStats, Player, PeriodSummary } from "../types";
-
+ 
 interface SyncParams {
   teamName: string;
   rosterUrl?: string;
 }
-
+ 
 export interface AIRosterResponse {
   status: "OK" | "NEEDS_RENDERED_SOURCE" | "ERROR";
   players: Player[];
@@ -14,7 +15,7 @@ export interface AIRosterResponse {
   notes?: string[];
   sources?: { uri: string; title: string }[];
 }
-
+ 
 /**
  * Utility for exponential backoff retries.
  * Handles transient 429 (Quota) and 5xx errors.
@@ -40,7 +41,7 @@ async function callWithRetry<T>(fn: () => Promise<T>, maxRetries = 3): Promise<T
   }
   throw lastError;
 }
-
+ 
 /**
  * Calculates the current active hockey season string (e.g., "2024-25").
  */
@@ -54,7 +55,7 @@ const getSeasonString = () => {
     return `${year - 1}-${year.toString().slice(-2)}`;
   }
 };
-
+ 
 /**
  * Fetches the current season's roster using AI and Google Search grounding.
  */
@@ -71,7 +72,7 @@ export async function fetchRosterByAI({ teamName, rosterUrl }: SyncParams): Prom
   if (!hasUrl) {
     return { status: "ERROR", players: [], reason: "A valid roster URL is required for sync." };
   }
-
+ 
   const finalPrompt = `
     You are a world-class hockey scout and data analyst. 
     
@@ -90,10 +91,10 @@ export async function fetchRosterByAI({ teamName, rosterUrl }: SyncParams): Prom
     6. Ensure NO DUPLICATE players are returned.
     7. Return ONLY the JSON object.
   `;
-
+ 
   try {
     const response = await callWithRetry(() => ai.models.generateContent({
-      model: 'gemini-3.1-pro-preview',
+      model: 'gemini-2.0-flash',
       contents: finalPrompt,
       config: {
         tools: [{ urlContext: {} }],
@@ -125,14 +126,14 @@ export async function fetchRosterByAI({ teamName, rosterUrl }: SyncParams): Prom
         }
       }
     })) as GenerateContentResponse;
-
+ 
     // Extract grounding sources as required
     const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
     const sources = groundingChunks?.map((chunk: any) => ({
       uri: chunk.web?.uri || "",
       title: chunk.web?.title || "Search Result"
     })).filter((s: any) => s.uri) || [];
-
+ 
     const text = response.text;
     if (!text) return { status: "ERROR", players: [], reason: "No response text." };
     
@@ -159,7 +160,7 @@ export async function fetchRosterByAI({ teamName, rosterUrl }: SyncParams): Prom
       notes: parsed.notes,
       sources
     };
-
+ 
   } catch (error: any) {
     console.error("AI Roster Sync Error:", error);
     let userMsg = error instanceof Error ? error.message : "Internal engine error.";
@@ -169,7 +170,7 @@ export async function fetchRosterByAI({ teamName, rosterUrl }: SyncParams): Prom
     return { status: "ERROR", players: [], reason: userMsg };
   }
 }
-
+ 
 export async function generateNarrative(
   period: number | 'total',
   homeStats: TeamStats,
@@ -191,18 +192,18 @@ export async function generateNarrative(
     Stats: 
     - ${homeStats.name}: ${homeStats.shots} Shots, ${homeStats.faceoffWins} Faceoff Wins, ${homeStats.pim} PIM
     - ${awayStats.name}: ${awayStats.shots} Shots, ${awayStats.faceoffWins} Faceoff Wins, ${awayStats.pim} PIM
-
+ 
     Please provide:
     1. A technical, data-driven summary of the team's structural performance (Zone exits, puck management, and puck possession).
     2. 3 specific coaching adjustments or scouting observations regarding the opposition's weaknesses or internal tactical shifts needed.
     
     Format the response with clear headers: "TECHNICAL SUMMARY" and "COACHING ADJUSTMENTS". Use a professional, direct tone.
   `;
-
+ 
   try {
     // Cast to GenerateContentResponse to fix property access errors on text
     const response = await callWithRetry(() => ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-2.0-flash',
       contents: prompt
     })) as GenerateContentResponse;
     return response.text || "Analyzing tactical data...";
@@ -210,7 +211,7 @@ export async function generateNarrative(
     return "Tactical analysis unavailable due to API limits. Please retry in a moment.";
   }
 }
-
+ 
 export async function generatePeriodSummary(
   period: number,
   periodEvents: GameEvent[],
@@ -225,12 +226,12 @@ export async function generatePeriodSummary(
   
   // Cast to GenerateContentResponse to fix property access errors on text
   const response = await callWithRetry(() => ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+    model: 'gemini-2.0-flash',
     contents: prompt
   })) as GenerateContentResponse;
   return response.text;
 }
-
+ 
 export async function generateGameSummary(
   homeStats: TeamStats,
   awayStats: TeamStats,
@@ -243,7 +244,7 @@ export async function generateGameSummary(
   
   // Cast to GenerateContentResponse to fix property access errors on text
   const response = await callWithRetry(() => ai.models.generateContent({
-    model: 'gemini-3-flash-preview', // Flash is faster for summaries
+    model: 'gemini-2.0-flash', // Flash is faster for summaries
     contents: prompt
   })) as GenerateContentResponse;
   return response.text;
