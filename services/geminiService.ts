@@ -75,20 +75,23 @@ export async function fetchRosterByAI({ teamName, rosterUrl }: SyncParams): Prom
   const finalPrompt = `
     You are a world-class hockey scout and data analyst. 
     
-    TASK: Find and extract the full active player roster for "${teamName}" for the ${season} season.
+    TASK: Find and extract the COMPLETE full active player roster for "${teamName}" for the ${season} season.
     Use this URL as a reference: ${rosterUrl.trim()}
-    Also search for the most current "${teamName} ${season} roster" to ensure accuracy.
+    Also search for "${teamName} ${season} full roster" to ensure you have every single player.
+    
+    CRITICAL: A typical OHL/junior hockey roster has 20-25 players. You MUST return ALL of them.
+    Do NOT stop after a few players. Include every forward, every defenseman, and every goalie.
     
     EXTRACTION REQUIREMENTS:
     1. Extract every active player's Jersey Number (if missing, use "00").
     2. Extract Full Names (ensure correct spelling).
-    3. Extract Positions. Map them to: C, LW, RW, LD, RD, D, or G. Use LD/RD for defense if specified, otherwise D. 
-    4. Assign players to lines/pairings based on their depth chart or standard usage (1, 2, 3, 4 for forwards; P1, P2, P3 for defense; G1, G2 for goalies).
-    5. For defensemen on the same pairing, try to assign one to LD and one to RD if possible.
+    3. Extract Positions. Map them to: C, LW, RW, LD, RD, D, or G. Use LD/RD for defense if specified, otherwise D.
+    4. Forwards: assign line 1, 2, 3, or 4. Defense: assign P1, P2, or P3. Goalies: G1 or G2.
+    5. For defensemen on the same pairing, assign one LD and one RD where possible.
     6. Ensure NO DUPLICATE players are returned.
     
     You MUST respond with ONLY a valid JSON object in this exact format, no other text:
-    {"status":"OK","players":[{"number":"15","name":"Player Name","position":"C","line":"1"}]}
+    {"status":"OK","players":[{"number":"15","name":"Player Name","position":"C","line":"1"},{"number":"7","name":"Player Name","position":"LW","line":"2"}]}
   `;
 
   try {
