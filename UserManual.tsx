@@ -44,7 +44,7 @@ const UserManual: React.FC<UserManualProps> = ({ isOpen, onClose }) => {
       <div className="px-6 py-6 sm:px-10 flex items-center justify-between border-b border-white/10 bg-black/40 shrink-0">
         <div className="flex flex-col">
           <h2 className="text-3xl sm:text-4xl font-black italic uppercase text-white tracking-tighter">User Manual</h2>
-          <p className="text-[10px] font-bold text-blue-500 uppercase tracking-[0.3em] mt-1">Master the PuckPulse Elite Suite</p>
+          <p className="text-[10px] font-bold text-blue-500 uppercase tracking-[0.3em] mt-1">Master the Top Cheese Hockey Elite Suite</p>
         </div>
         <button 
           onClick={onClose} 
