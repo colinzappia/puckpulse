@@ -5,6 +5,10 @@ interface LandingPageProps {
 }
 
 const LandingPage: React.FC<LandingPageProps> = ({ onLaunch }) => {
+  const handleLaunch = () => {
+    window.scrollTo({ top: 0 });
+    onLaunch();
+  };
   return (
     <div className="min-h-screen bg-[#05070a] text-slate-200 flex flex-col overflow-x-hidden">
       
@@ -12,7 +16,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch }) => {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-[#05070a]/90 backdrop-blur-md border-b border-white/5 px-6 h-16 flex items-center justify-between">
         <img src="/Top_Cheese_Hockey_logo.png" alt="Top Cheese Hockey" className="h-10 w-auto" />
         <button
-          onClick={onLaunch}
+          onClick={handleLaunch}
           className="bg-red-600 hover:bg-red-700 text-white text-sm font-bold px-5 py-2 rounded-lg transition-colors"
         >
           Launch App →
@@ -23,7 +27,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch }) => {
       <section className="pt-32 pb-20 px-6 flex flex-col items-center text-center relative">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(200,232,245,0.05)_0%,transparent_70%)] pointer-events-none" />
         
-        <img src="/Top_Cheese_Hockey_logo.png" alt="Top Cheese Hockey" className="h-96 w-auto mb-8" />
+        <img src="/Top_Cheese_Hockey_logo.png" alt="Top Cheese Hockey" className="h-[32rem] w-auto mb-8" />
         
         <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 text-blue-300 text-xs font-bold tracking-widest uppercase px-4 py-2 rounded-full mb-6">
           <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
@@ -41,7 +45,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch }) => {
 
         <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
           <button
-            onClick={onLaunch}
+            onClick={handleLaunch}
             className="bg-red-600 hover:bg-red-700 text-white font-bold text-lg px-10 py-4 rounded-xl transition-all hover:-translate-y-0.5 shadow-lg shadow-red-900/30"
           >
             Launch App →
@@ -137,7 +141,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch }) => {
                 {p.features.map(f => <li key={f} className="text-sm flex gap-2"><span className="text-yellow-400 font-bold">✓</span>{f}</li>)}
               </ul>
               <button
-                onClick={onLaunch}
+                onClick={handleLaunch}
                 className={`w-full py-3 rounded-xl font-bold text-sm transition-all ${p.featured ? 'bg-yellow-400 text-[#05070a] hover:bg-yellow-300' : 'border border-white/10 hover:border-white/20 hover:bg-white/5'}`}
               >
                 Start 7-day free trial →
@@ -152,7 +156,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch }) => {
         <h2 className="text-4xl font-black tracking-tight mb-4">Ready to raise your game?</h2>
         <p className="text-slate-400 text-lg mb-8">Join coaches who are already using Top Cheese Hockey to gain the edge.</p>
         <button
-          onClick={onLaunch}
+          onClick={handleLaunch}
           className="bg-red-600 hover:bg-red-700 text-white font-bold text-lg px-12 py-4 rounded-xl transition-all hover:-translate-y-0.5 shadow-lg"
         >
           Launch the app →
