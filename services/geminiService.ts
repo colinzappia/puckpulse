@@ -96,7 +96,7 @@ export async function fetchRosterByAI({ teamName, rosterUrl }: SyncParams): Prom
 
   try {
     const response = await callWithRetry(() => ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.0-flash-lite',
       contents: finalPrompt,
       config: {
         tools: [{ googleSearch: {} }],
@@ -181,7 +181,7 @@ export async function generateNarrative(
   try {
     // Cast to GenerateContentResponse to fix property access errors on text
     const response = await callWithRetry(() => ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.0-flash-lite',
       contents: prompt
     })) as GenerateContentResponse;
     return response.text || "Analyzing tactical data...";
@@ -204,7 +204,7 @@ export async function generatePeriodSummary(
   
   // Cast to GenerateContentResponse to fix property access errors on text
   const response = await callWithRetry(() => ai.models.generateContent({
-    model: 'gemini-2.5-flash',
+    model: 'gemini-2.0-flash-lite',
     contents: prompt
   })) as GenerateContentResponse;
   return response.text;
@@ -222,7 +222,7 @@ export async function generateGameSummary(
   
   // Cast to GenerateContentResponse to fix property access errors on text
   const response = await callWithRetry(() => ai.models.generateContent({
-    model: 'gemini-2.5-flash', // Flash is faster for summaries
+    model: 'gemini-2.0-flash-lite', // Flash Lite is fastest
     contents: prompt
   })) as GenerateContentResponse;
   return response.text;
