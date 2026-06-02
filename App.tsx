@@ -456,8 +456,19 @@ const App: React.FC = () => {
     return isCurrentlySwapped ? [Team.AWAY, Team.HOME] : [Team.HOME, Team.AWAY];
   }, [isCurrentlySwapped]);
 
+  React.useEffect(() => {
+    const handlePopState = () => setShowLanding(true);
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const handleLaunch = () => {
+    window.history.pushState({ page: 'app' }, '', '');
+    setShowLanding(false);
+  };
+
   if (showLanding) {
-    return <LandingPage onLaunch={() => setShowLanding(false)} />;
+    return <LandingPage onLaunch={handleLaunch} />;
   }
 
   return (
