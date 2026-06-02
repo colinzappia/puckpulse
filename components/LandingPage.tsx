@@ -40,7 +40,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch }) => {
         </h1>
 
         <p className="text-lg text-slate-400 max-w-xl mb-10">
-          Track every shot, sync your roster in seconds, and get real-time AI tactical insights — all from the bench.
+          Track. Analyze. Win. Live game tracking, instant roster management, and powerful hockey insights—all in one place.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
