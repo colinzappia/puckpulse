@@ -49,9 +49,9 @@ const DraggablePlayer: React.FC<{ p: Player, team: Team, isHome: boolean, isSele
       {...attributes}
       {...listeners}
       onClick={() => onSelect(p.number, team)}
-      className={`relative h-12 rounded-xl font-black flex flex-col items-center justify-center transition-all border group active:scale-95 touch-none ${isSelected ? (isHome ? 'bg-blue-600 border-blue-400 shadow-blue-500/40 shadow-xl' : 'bg-red-600 border-red-400 shadow-red-500/40 shadow-xl') : 'bg-black/30 border-white/5 text-slate-400 hover:bg-white/10'}`}
+      className={`relative h-12 md:h-14 rounded-xl font-black flex flex-col items-center justify-center transition-all border group active:scale-95 touch-none ${isSelected ? (isHome ? 'bg-blue-600 border-blue-400 shadow-blue-500/40 shadow-xl' : 'bg-red-600 border-red-400 shadow-red-500/40 shadow-xl') : 'bg-black/30 border-white/5 text-slate-400 hover:bg-white/10'}`}
     >
-      <span className="text-xs md:text-sm leading-none">#{p.number}</span>
+      <span className="text-xs md:text-sm lg:text-base leading-none">#{p.number}</span>
       <span className="text-[6px] md:text-[7px] uppercase font-bold text-slate-500 truncate w-full px-1 text-center mt-0.5 group-hover:text-slate-300">
         {p.name.split(' ').pop()}
       </span>
@@ -489,7 +489,7 @@ const App: React.FC = () => {
         <main className="flex flex-col pb-20">
         
         {/* LIVE ROSTER LOGGING PANELS */}
-        <div className={`flex w-full gap-px bg-white/5 border-b border-white/10 shrink-0 transition-all duration-500 overflow-hidden ${showLineups ? 'h-80 sm:h-96 opacity-100' : 'h-0 opacity-0 border-none'}`}>
+        <div className={`flex w-full gap-px bg-white/5 border-b border-white/10 shrink-0 transition-all duration-500 overflow-hidden ${showLineups ? 'h-80 sm:h-80 md:h-96 lg:h-[420px] opacity-100' : 'h-0 opacity-0 border-none'}`}>
           {orderedTeams.map(team => {
             const isHome = team === Team.HOME;
             const roster = isHome ? homeRoster : awayRoster;
@@ -695,7 +695,7 @@ const App: React.FC = () => {
         )}
 
         {/* RINK */}
-        <div className="bg-black relative flex flex-col min-h-[420px] sm:min-h-[550px] shadow-inner overflow-hidden">
+        <div className="bg-black relative flex flex-col min-h-[420px] sm:min-h-[500px] md:min-h-[600px] shadow-inner overflow-hidden">
           {/* SHOT COUNTER BAR */}
           <div className="w-full bg-black/40 border-b border-white/5 py-3 px-6 sm:px-12 flex items-center justify-between shrink-0">
              <div className="flex items-center gap-3">
@@ -719,15 +719,15 @@ const App: React.FC = () => {
           <div className="w-full px-2 py-3 bg-white/5 border-b border-white/10 flex flex-wrap items-center justify-center gap-3 shadow-2xl shrink-0">
             <div className="flex flex-wrap items-center bg-white/5 p-1 rounded-xl border border-white/10 shrink-0 shadow-inner gap-1">
               <div className="flex">
-                <button onClick={() => setActiveTeam(Team.HOME)} className={`px-4 sm:px-6 py-2.5 rounded-lg text-xs font-black uppercase transition-all ${activeTeam === Team.HOME ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>{homeName}</button>
-                <button onClick={() => setActiveTeam(Team.AWAY)} className={`px-4 sm:px-6 py-2.5 rounded-lg text-xs font-black uppercase transition-all ${activeTeam === Team.AWAY ? 'bg-red-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>{awayName}</button>
+                <button onClick={() => setActiveTeam(Team.HOME)} className={`px-4 sm:px-6 md:px-8 py-2.5 md:py-3 rounded-lg text-xs md:text-sm font-black uppercase transition-all ${activeTeam === Team.HOME ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>{homeName}</button>
+                <button onClick={() => setActiveTeam(Team.AWAY)} className={`px-4 sm:px-6 md:px-8 py-2.5 md:py-3 rounded-lg text-xs md:text-sm font-black uppercase transition-all ${activeTeam === Team.AWAY ? 'bg-red-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>{awayName}</button>
               </div>
               
               <div className="w-px h-6 bg-white/10 mx-1 hidden sm:block" />
               
               <button 
                 onClick={() => setShowLineups(!showLineups)} 
-                className={`px-4 py-2.5 rounded-lg text-[10px] font-black uppercase transition-all border ${showLineups ? 'bg-blue-600 text-white border-blue-400 shadow-lg' : 'bg-white/5 text-slate-500 border-white/5 hover:bg-white/10'}`}
+                className={`px-4 md:px-6 py-2.5 md:py-3 rounded-lg text-[10px] md:text-xs font-black uppercase transition-all border ${showLineups ? 'bg-blue-600 text-white border-blue-400 shadow-lg' : 'bg-white/5 text-slate-500 border-white/5 hover:bg-white/10'}`}
               >
                 {showLineups ? 'HIDE ROSTERS' : 'SHOW ROSTERS'}
               </button>
@@ -736,12 +736,12 @@ const App: React.FC = () => {
 
             <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-3 px-2 border-l border-r border-white/10">
               {toolbarButtons.map(btn => (
-                <button key={btn.type} onClick={() => setMapPlotType(btn.type)} className={`px-3 sm:px-8 py-2.5 rounded-xl text-[10px] sm:text-[11px] font-black uppercase transition-all flex items-center justify-center shadow-lg active:scale-90 ${mapPlotType === btn.type ? `${btn.color} text-white ring-2 ring-white/20` : 'bg-white/5 text-slate-500 hover:bg-white/10'}`}>{btn.label}</button>
+                <button key={btn.type} onClick={() => setMapPlotType(btn.type)} className={`px-3 sm:px-6 md:px-8 py-2.5 md:py-3 rounded-xl text-[10px] sm:text-[11px] md:text-xs font-black uppercase transition-all flex items-center justify-center shadow-lg active:scale-90 ${mapPlotType === btn.type ? `${btn.color} text-white ring-2 ring-white/20` : 'bg-white/5 text-slate-500 hover:bg-white/10'}`}>{btn.label}</button>
               ))}
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
-              <button onClick={handleUndo} className="p-3 bg-white/5 hover:bg-white/10 rounded-xl text-slate-400 active:bg-white/20 transition-all shadow-lg"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /></svg></button>
+              <button onClick={handleUndo} className="p-3 md:p-4 bg-white/5 hover:bg-white/10 rounded-xl text-slate-400 active:bg-white/20 transition-all shadow-lg"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /></svg></button>
             </div>
           </div>
 
@@ -771,7 +771,7 @@ const App: React.FC = () => {
         </div>
 
         {/* DATA COMMAND CENTER */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 px-2 sm:px-4 mt-6">
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 px-2 sm:px-4 md:px-6 mt-6">
           <div className="lg:col-span-8 flex flex-col gap-6">
             <div className="bg-slate-900/40 border border-white/10 rounded-[2.5rem] overflow-hidden flex flex-col shadow-2xl">
                <div className="p-6 border-b border-white/5 bg-white/5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -809,7 +809,7 @@ const App: React.FC = () => {
                </div>
 
                <div className="p-6 bg-black/40 border-t border-white/5 flex flex-col xl:flex-row gap-3">
-                  <button onClick={handleGenerateInsights} disabled={isGeneratingInsights} className="flex-1 py-4 bg-cyan-600/10 hover:bg-cyan-600/20 border border-cyan-500/30 text-cyan-400 rounded-2xl text-[11px] font-black uppercase tracking-[0.4em] transition-all active:scale-[0.98] shadow-lg shadow-cyan-900/20">{isGeneratingInsights ? 'Processing Broadcast Feed...' : 'Generate Live Tactical Intel'}</button>
+                  <button onClick={handleGenerateInsights} disabled={isGeneratingInsights} className="flex-1 py-4 md:py-5 bg-cyan-600/10 hover:bg-cyan-600/20 border border-cyan-500/30 text-cyan-400 rounded-2xl text-[11px] md:text-xs font-black uppercase tracking-[0.4em] transition-all active:scale-[0.98] shadow-lg shadow-cyan-900/20">{isGeneratingInsights ? 'Processing Broadcast Feed...' : 'Generate Live Tactical Intel'}</button>
                   <div className="flex gap-2">
                     <button onClick={handleExportPDF} className="flex-1 sm:flex-none sm:w-40 py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 group">
                       <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
