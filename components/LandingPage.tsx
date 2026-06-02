@@ -165,7 +165,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch }) => {
 
       {/* FOOTER */}
       <footer className="px-6 py-8 text-center text-slate-600 text-sm border-t border-white/5">
-        © 2026 Top Cheese Hockey · Built for coaches, by hockey people
+        © 2026 Top Cheese Hockey · Built for hockey people, by hockey people
       </footer>
     </div>
   );
