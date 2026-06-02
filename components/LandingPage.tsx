@@ -23,7 +23,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch }) => {
       <section className="pt-32 pb-20 px-6 flex flex-col items-center text-center relative">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(200,232,245,0.05)_0%,transparent_70%)] pointer-events-none" />
         
-        <img src="/Top_Cheese_Hockey_logo.png" alt="Top Cheese Hockey" className="h-56 w-auto mb-8" />
+        <img src="/Top_Cheese_Hockey_logo.png" alt="Top Cheese Hockey" className="h-96 w-auto mb-8" />
         
         <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 text-blue-300 text-xs font-bold tracking-widest uppercase px-4 py-2 rounded-full mb-6">
           <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
@@ -46,9 +46,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch }) => {
           >
             Launch App →
           </button>
-          <a href="#features" className="border border-white/10 hover:border-white/20 text-slate-300 font-semibold text-lg px-10 py-4 rounded-xl transition-all hover:bg-white/5">
+          <button
+            onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
+            className="border border-white/10 hover:border-white/20 text-slate-300 font-semibold text-lg px-10 py-4 rounded-xl transition-all hover:bg-white/5"
+          >
             See features
-          </a>
+          </button>
         </div>
       </section>
 
@@ -102,45 +105,42 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch }) => {
       <section id="pricing" className="px-6 py-20 max-w-6xl mx-auto w-full">
         <p className="text-xs font-bold tracking-widest text-yellow-400 uppercase mb-3">Pricing</p>
         <h2 className="text-4xl font-black tracking-tight mb-4">Simple, honest pricing</h2>
-        <p className="text-slate-400 text-lg mb-12">No contracts, no surprises. Cancel any time.</p>
+        <p className="text-slate-400 text-lg mb-4">No contracts, no surprises. Cancel any time.</p>
 
+        <p className="text-slate-400 text-sm mb-10 italic">All plans include a free 7-day trial. No credit card required to start.</p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl">
           {[
             {
-              name: 'Free', price: '$0', period: '/ month', desc: 'Try it out. No credit card required.',
-              features: ['Live rink event tracking', 'Manual roster entry', 'Basic play-by-play log'],
-              missing: ['AI Roster Sync', 'AI Tactical Intel', 'Scouting report exports'],
-              cta: 'Get started free', featured: false,
+              name: 'Basic', price: '$9.99', period: '/ month', desc: 'Perfect for individual coaches tracking one team.',
+              features: ['Live rink event tracking', 'Manual roster entry', 'Basic play-by-play log', 'Faceoff Hub', 'PDF & Excel exports'],
+              featured: false,
             },
             {
-              name: 'Pro', price: '$29', period: '/ month', desc: 'Everything you need for a full season.',
-              features: ['Everything in Free', 'AI Roster Sync', 'Live AI Tactical Intel', 'PDF, Excel & HTML exports', 'Faceoff Hub & analytics', 'Line management tools'],
-              missing: [],
-              cta: 'Start free trial →', featured: true,
+              name: 'Pro', price: '$14.99', period: '/ month', desc: 'Full AI power for the serious coaching staff.',
+              features: ['Everything in Basic', 'AI Roster Sync', 'Live AI Tactical Intel', 'HTML report exports', 'Line management tools', 'Priority support'],
+              featured: true,
             },
             {
-              name: 'Team', price: '$79', period: '/ month', desc: 'For organizations tracking multiple teams.',
-              features: ['Everything in Pro', 'Up to 5 team accounts', 'Season stats dashboard', 'Priority support', 'Custom branding on reports'],
-              missing: [],
-              cta: 'Contact us', featured: false,
+              name: 'Team', price: '$29.99', period: '/ month', desc: 'Up to 5 users — ideal for full organizations.',
+              features: ['Everything in Pro', 'Up to 5 user accounts', 'Season stats dashboard', 'Custom branding on reports', 'Early access to new features'],
+              featured: false,
             },
           ].map((p) => (
-            <div key={p.name} className={`rounded-2xl p-7 flex flex-col border ${p.featured ? 'border-yellow-400 relative' : 'border-white/10 bg-[#0f1620]'}`}>
+            <div key={p.name} className={`rounded-2xl p-7 flex flex-col relative border ${p.featured ? 'border-yellow-400' : 'border-white/10 bg-[#0f1620]'}`}>
               {p.featured && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-yellow-400 text-[#05070a] text-xs font-black px-3 py-1 rounded-full">Most popular</div>
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-yellow-400 text-[#05070a] text-xs font-black px-3 py-1 rounded-full whitespace-nowrap">Most popular</div>
               )}
               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">{p.name}</p>
               <p className="text-4xl font-black mb-1">{p.price} <span className="text-base font-normal text-slate-400">{p.period}</span></p>
               <p className="text-slate-400 text-sm mb-5 pb-5 border-b border-white/10">{p.desc}</p>
               <ul className="flex flex-col gap-2 mb-8 flex-1">
                 {p.features.map(f => <li key={f} className="text-sm flex gap-2"><span className="text-yellow-400 font-bold">✓</span>{f}</li>)}
-                {p.missing.map(f => <li key={f} className="text-sm flex gap-2 text-slate-600"><span>✗</span>{f}</li>)}
               </ul>
               <button
-                onClick={p.name === 'Free' ? onLaunch : undefined}
+                onClick={onLaunch}
                 className={`w-full py-3 rounded-xl font-bold text-sm transition-all ${p.featured ? 'bg-yellow-400 text-[#05070a] hover:bg-yellow-300' : 'border border-white/10 hover:border-white/20 hover:bg-white/5'}`}
               >
-                {p.cta}
+                Start 7-day free trial →
               </button>
             </div>
           ))}
