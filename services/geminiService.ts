@@ -97,32 +97,6 @@ export async function fetchRosterByAI({ teamName, rosterUrl }: SyncParams): Prom
       contents: finalPrompt,
       config: {
         tools: [{ urlContext: {} }],
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            status: { 
-              type: Type.STRING, 
-              enum: ["OK", "NEEDS_RENDERED_SOURCE", "ERROR"]
-            },
-            players: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  number: { type: Type.STRING, description: "Jersey number as a string" },
-                  name: { type: Type.STRING, description: "Full player name" },
-                  position: { type: Type.STRING, description: "Position code: C, LW, RW, D, G, or F" },
-                  line: { type: Type.STRING, description: "Line/Pairing assignment: 1, 2, 3, 4, P1, P2, P3, G1, G2" }
-                },
-                required: ["name"]
-              }
-            },
-            reason: { type: Type.STRING },
-            notes: { type: Type.ARRAY, items: { type: Type.STRING } }
-          },
-          required: ["status", "players"]
-        }
       }
     })) as GenerateContentResponse;
 
@@ -136,7 +110,9 @@ export async function fetchRosterByAI({ teamName, rosterUrl }: SyncParams): Prom
     const text = response.text;
     if (!text) return { status: "ERROR", players: [], reason: "No response text." };
     
-    const parsed = JSON.parse(text);
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return { status: "ERROR", players: [], reason: "Could not parse roster response." };
+    const parsed = JSON.parse(jsonMatch[0]);
     
     // Deduplicate by number
     const uniquePlayers = new Map<string, Player>();
