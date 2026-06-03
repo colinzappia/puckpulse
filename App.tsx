@@ -968,7 +968,19 @@ Respond with ONLY this JSON, no other text:
                        <div className={`w-3 h-3 rounded-full ${isHome ? 'bg-blue-500' : 'bg-red-500'}`}></div>
                        <span className="text-[12px] font-black uppercase tracking-widest text-white">{team} LINEUP</span>
                      </div>
-                     <button onClick={() => isHome ? setHomeRoster([]) : setAwayRoster([])} className="text-[9px] font-black text-slate-700 hover:text-red-500 uppercase transition-colors">Clear Roster</button>
+                     <button onClick={() => {
+                       if (isHome) {
+                         setHomeRoster([]);
+                         setHomeRosterUrl('');
+                         setHomeSources([]);
+                         setPasteRosterHome('');
+                       } else {
+                         setAwayRoster([]);
+                         setAwayRosterUrl('');
+                         setAwaySources([]);
+                         setPasteRosterAway('');
+                       }
+                     }} className="text-[9px] font-black text-slate-700 hover:text-red-500 uppercase transition-colors">Clear Roster</button>
                   </div>
 
                   <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-10 scrollbar-none">
