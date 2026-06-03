@@ -16,8 +16,8 @@ const sections = [
         content: 'Tap the "Roster Setup" button in the top right corner. Enter your home and away team names. You can also upload team logos by tapping the logo placeholder and selecting an image from your device.'
       },
       {
-        title: 'AI Roster Sync',
-        content: 'The fastest way to load a roster. In Roster Setup, paste any team URL from sites like EliteProspects, HockeyDB, or your league\'s website into the AI Sync field. Tap "Sync" and the AI will pull every player\'s name, number, and position automatically. This usually takes 10–20 seconds.'
+        title: 'Paste Roster Import',
+        content: 'The fastest and most reliable way to load a roster. Go to any league website (Pointstreak, HockeyDB, your league site, etc.), select the roster table with your finger or mouse, and copy it. Then in Roster Setup, paste the text into the paste area and tap Import Roster. The AI reads the raw text and builds your lineup in seconds. Works on any device, any league, any website.'
       },
       {
         title: 'Manual roster entry',
@@ -32,7 +32,11 @@ const sections = [
     subsections: [
       {
         title: 'Logging a shot or goal',
-        content: '1. Select the active team using the Home / Away toggle.\n2. Tap a player from the lineup grid — their name will highlight to confirm selection.\n3. Select the event type from the toolbar: SHOT, GOAL, SAVE, MISS, etc.\n4. Tap the location on the rink diagram where the event occurred. The event is logged instantly.'
+        content: '1. Select the active team using the Home / Away toggle.\n2. Tap a player from the lineup grid — their name will highlight to confirm selection.\n3. Select the event type from the toolbar: SHOT, GOAL, SAVE, MISS, etc.\n4. Tap the location on the rink diagram where the event occurred. The event dot appears instantly.'
+      },
+      {
+        title: 'Moving an event dot',
+        content: 'Plotted in the wrong spot? No problem. Press and hold any event dot on the rink for a moment, then drag it to the correct location and release. This works with both your finger on a tablet and a mouse on a computer. The event updates instantly in the play-by-play log as well.'
       },
       {
         title: 'Logging a penalty',
@@ -127,7 +131,7 @@ const sections = [
     subsections: [
       {
         title: 'Before the game',
-        content: 'Sync your roster at least 10 minutes before puck drop so you\'re not scrambling. Confirm jersey numbers match your actual lineup — coaches often swap lines from the official roster.'
+        content: 'Load your roster before the game using the Paste Roster feature. Go to your league website, copy the roster, and paste it into the app. Confirm jersey numbers match your actual lineup — coaches often make changes from the official roster.'
       },
       {
         title: 'During the game',
