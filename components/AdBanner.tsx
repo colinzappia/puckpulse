@@ -29,9 +29,10 @@ const SPONSORS: Sponsor[] = [
 
 interface AdBannerProps {
   position: 'top' | 'bottom';
+  onContactClick?: () => void;
 }
 
-const AdBanner: React.FC<AdBannerProps> = ({ position }) => {
+const AdBanner: React.FC<AdBannerProps> = ({ position, onContactClick }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [visible, setVisible] = useState(true);
 
@@ -50,7 +51,9 @@ const AdBanner: React.FC<AdBannerProps> = ({ position }) => {
   const sponsor = SPONSORS[currentIndex];
 
   const handleClick = () => {
-    if (sponsor.link.startsWith('mailto') || sponsor.link.startsWith('http')) {
+    if (sponsor.link.startsWith('mailto') && onContactClick) {
+      onContactClick();
+    } else if (sponsor.link.startsWith('http')) {
       window.open(sponsor.link, '_blank', 'noopener,noreferrer');
     }
   };
