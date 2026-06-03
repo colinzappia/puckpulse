@@ -1220,12 +1220,15 @@ Respond with ONLY this JSON, no other text:
       <UserManual isOpen={showManual} onClose={() => setShowManual(false)} />
       <AdBanner position="bottom" onContactClick={() => setShowContact(true)} />
       {/* Legal footer */}
-      <div className="flex items-center justify-center gap-4 py-3 bg-black/20 border-t border-white/5">
-        <button onClick={() => setLegalPage('terms')} className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors">Terms of Service</button>
-        <span className="text-slate-700">·</span>
-        <button onClick={() => setLegalPage('privacy')} className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors">Privacy Policy</button>
-        <span className="text-slate-700">·</span>
-        <button onClick={() => setShowContact(true)} className="text-[10px] text-cyan-600 hover:text-cyan-400 transition-colors font-bold">Contact Us</button>
+      <div className="flex items-center justify-center gap-4 py-3 bg-black/30 border-t border-white/10">
+        <button onClick={() => setLegalPage('terms')} className="text-xs text-slate-500 hover:text-slate-300 transition-colors">Terms</button>
+        <span className="text-slate-600">·</span>
+        <button onClick={() => setLegalPage('privacy')} className="text-xs text-slate-500 hover:text-slate-300 transition-colors">Privacy</button>
+        <span className="text-slate-600">·</span>
+        <button 
+          onClick={() => setShowContact(true)} 
+          className="text-xs font-bold text-white bg-cyan-600 hover:bg-cyan-500 transition-colors px-4 py-1.5 rounded-full"
+        >✉ Contact Us</button>
       </div>
       {legalPage && <LegalPages page={legalPage} onClose={() => setLegalPage(null)} />}
       {showContact && <ContactPage onClose={() => setShowContact(false)} />}
