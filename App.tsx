@@ -7,6 +7,7 @@ import CenterAnalytics from './components/CenterAnalytics';
 import FaceoffSummary from './components/FaceoffSummary';
 import UserManual from './components/UserManual';
 import LandingPage from './components/LandingPage';
+import AdBanner from './components/AdBanner';
 import { generateNarrative, fetchRosterByAI } from './services/geminiService';
 import { downloadPDFReport, downloadExcelReport, downloadHTMLExport } from './services/exportService';
 import { Toaster, toast } from 'sonner';
@@ -558,6 +559,7 @@ Respond with ONLY this JSON, no other text:
 
   return (
     <div className="flex flex-col min-h-screen bg-[#05070a] text-slate-200 overflow-x-hidden">
+      <AdBanner position="top" />
       <Toaster position="top-center" richColors theme="dark" />
       
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
@@ -1129,6 +1131,7 @@ Respond with ONLY this JSON, no other text:
       )}
 
       <UserManual isOpen={showManual} onClose={() => setShowManual(false)} />
+      <AdBanner position="bottom" />
     </div>
   );
 };
