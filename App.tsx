@@ -100,6 +100,7 @@ const App: React.FC = () => {
   const [isGeneratingInsights, setIsGeneratingInsights] = useState(false);
   const [isSyncingHome, setIsSyncingHome] = useState(false);
   const [isSyncingAway, setIsSyncingAway] = useState(false);
+  const [syncMessage, setSyncMessage] = useState('');
   const [activeDragPlayer, setActiveDragPlayer] = useState<{player: Player, team: Team} | null>(null);
 
   const sensors = useSensors(
@@ -448,6 +449,8 @@ const App: React.FC = () => {
       console.error("Sync button error:", error);
       alert(`Sync failed: ${error.message || 'Unknown error occurred.'}`);
     } finally {
+      clearInterval(msgInterval);
+      setSyncMessage('');
       setSyncing(false);
     }
   };
@@ -923,9 +926,19 @@ const App: React.FC = () => {
                           disabled={isSyncing || !url}
                           className={`px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isSyncing || !url ? 'bg-slate-800 text-slate-600' : 'bg-cyan-600 text-white hover:bg-cyan-500 shadow-lg shadow-cyan-900/40 border border-cyan-400/30'}`}
                         >
-                          {isSyncing ? 'SYNCING...' : 'SYNC'}
+                          {isSyncing ? '...' : 'SYNC'}
                         </button>
                       </div>
+                      {isSyncing && (
+                        <div className="flex items-center gap-2 mt-2 px-1">
+                          <div className="flex gap-1">
+                            <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce" style={{animationDelay:'0ms'}}/>
+                            <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce" style={{animationDelay:'150ms'}}/>
+                            <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce" style={{animationDelay:'300ms'}}/>
+                          </div>
+                          <span className="text-[10px] text-cyan-400 font-semibold animate-pulse">{syncMessage}</span>
+                        </div>
+                      )}
                       <p className="text-[8px] font-bold text-slate-600 uppercase tracking-widest px-1">
                         * Required for automated roster population
                       </p>
