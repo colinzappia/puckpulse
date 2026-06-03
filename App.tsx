@@ -10,6 +10,7 @@ import LandingPage from './components/LandingPage';
 import AdBanner from './components/AdBanner';
 import AuthGate from './components/AuthGate';
 import PricingGate from './components/PricingGate';
+import LegalPages from './components/LegalPages';
 import { useAuth, UserButton, useClerk } from '@clerk/clerk-react';
 import { generateNarrative, fetchRosterByAI } from './services/geminiService';
 import { downloadPDFReport, downloadExcelReport, downloadHTMLExport } from './services/exportService';
@@ -94,6 +95,7 @@ const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [checkingSubscription, setCheckingSubscription] = useState(false);
+  const [legalPage, setLegalPage] = useState<'terms' | 'privacy' | null>(null);
   const { isSignedIn, userId } = useAuth();
   const { user } = useClerk();
 
@@ -1200,6 +1202,15 @@ Respond with ONLY this JSON, no other text:
 
       <UserManual isOpen={showManual} onClose={() => setShowManual(false)} />
       <AdBanner position="bottom" />
+      {/* Legal footer */}
+      <div className="flex items-center justify-center gap-4 py-2 bg-black/20 border-t border-white/5">
+        <button onClick={() => setLegalPage('terms')} className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors">Terms of Service</button>
+        <span className="text-slate-700">·</span>
+        <button onClick={() => setLegalPage('privacy')} className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors">Privacy Policy</button>
+        <span className="text-slate-700">·</span>
+        <a href="mailto:colinzappia@gmail.com" className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors">Support</a>
+      </div>
+      {legalPage && <LegalPages page={legalPage} onClose={() => setLegalPage(null)} />}
     </div>
   );
 };
