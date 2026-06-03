@@ -49,6 +49,7 @@ const PricingGate: React.FC<PricingGateProps> = ({ onSubscribed }) => {
   const { userId } = useAuth();
   const [loading, setLoading] = React.useState<string | null>(null);
   const [error, setError] = React.useState('');
+  const [couponCode, setCouponCode] = React.useState('');
 
   const handleSubscribe = async (plan: Plan) => {
     setLoading(plan.name);
@@ -61,6 +62,7 @@ const PricingGate: React.FC<PricingGateProps> = ({ onSubscribed }) => {
           priceId: plan.priceId,
           userId,
           planName: plan.name,
+          couponCode: couponCode.trim().toUpperCase(),
         }),
       });
 
@@ -83,6 +85,22 @@ const PricingGate: React.FC<PricingGateProps> = ({ onSubscribed }) => {
       <h2 className="text-3xl font-black text-white tracking-tight mb-2">Choose your plan</h2>
       <p className="text-slate-400 mb-2">7-day free trial on all plans. No credit card surprises.</p>
       <p className="text-xs text-slate-600 mb-8">Cancel any time.</p>
+
+      {/* Coupon code */}
+      <div className="flex gap-2 w-full max-w-sm mb-6">
+        <input
+          type="text"
+          placeholder="Have a promo code?"
+          value={couponCode}
+          onChange={e => setCouponCode(e.target.value)}
+          className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none focus:border-cyan-500/40"
+        />
+        {couponCode && (
+          <div className="flex items-center px-3 py-2 bg-green-500/20 border border-green-500/30 rounded-xl">
+            <span className="text-green-400 text-xs font-bold">✓ Applied</span>
+          </div>
+        )}
+      </div>
 
       {error && (
         <div className="bg-red-900/30 border border-red-500/30 text-red-400 text-sm px-4 py-3 rounded-xl mb-6 max-w-sm text-center">
