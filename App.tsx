@@ -617,7 +617,12 @@ Respond with ONLY this JSON, no other text:
     return <AuthGate onAuthenticated={() => setIsAuthenticated(true)} />;
   }
 
-  if (checkingSubscription) {
+  // Admin bypass — these emails skip the paywall
+  const ADMIN_EMAILS = ['colinzappia@gmail.com'];
+  const isAdmin = user?.primaryEmailAddress?.emailAddress && 
+    ADMIN_EMAILS.includes(user.primaryEmailAddress.emailAddress.toLowerCase());
+
+  if (checkingSubscription && !isAdmin) {
     return (
       <div className="min-h-screen bg-[#05070a] flex flex-col items-center justify-center gap-4">
         <img src="/Top_Cheese_Hockey_logo.png" alt="Top Cheese Hockey" className="h-24 w-auto" />
@@ -631,7 +636,7 @@ Respond with ONLY this JSON, no other text:
     );
   }
 
-  if (!isSubscribed) {
+  if (!isSubscribed && !isAdmin) {
     return <PricingGate onSubscribed={() => setIsSubscribed(true)} />;
   }
 
