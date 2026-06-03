@@ -72,39 +72,51 @@ export async function fetchRosterByAI({ teamName, rosterUrl }: SyncParams): Prom
     return { status: "ERROR", players: [], reason: "A valid roster URL is required for sync." };
   }
 
+  const currentYear = new Date().getFullYear();
   const finalPrompt = `
-    You are a hockey data extraction specialist.
+    You are a hockey roster data specialist. Today's date is ${new Date().toDateString()}.
     
-    TASK: Extract the COMPLETE player roster ONLY from the following URL: ${rosterUrl.trim()}
+    TASK: Find the CURRENT ACTIVE roster for "${teamName}" for the ${season} season ONLY.
+    Reference URL: ${rosterUrl.trim()}
     
-    CRITICAL RULES:
-    - You MUST only use data from that exact URL. Do NOT use any other source.
-    - Do NOT invent or guess any player names, numbers, or positions.
-    - If the page does not contain a roster, return status "ERROR" with reason "No roster found on page."
-    - A typical hockey roster has 20-25 players. Extract ALL of them — forwards, defensemen, and goalies.
-    - Do NOT stop early. Every player listed on the page must be included.
+    CRITICAL SEASON RULES — THIS IS THE MOST IMPORTANT PART:
+    - You MUST ONLY include players who are CURRENTLY on the roster for the ${season} season.
+    - DO NOT include any player from a previous season (${currentYear - 1} or earlier).
+    - DO NOT include players who have been traded, released, or are no longer on the team.
+    - DO NOT include players listed under "alumni", "former players", or "transaction history".
+    - If a player left the team at any point before today, EXCLUDE them.
+    - Only include players who are ACTIVE and CURRENTLY ROSTERED right now in ${season}.
+    
+    DATA RULES:
+    - Do NOT invent or guess any player. Only include players you can confirm are on the current roster.
+    - A typical hockey roster has 20-25 active players. Extract ALL current players.
+    - Do NOT stop early — include every current forward, defenseman, and goalie.
+    - No duplicate players.
     
     EXTRACTION REQUIREMENTS:
-    1. Jersey Number — use exactly what is shown on the page. If missing, use "00".
-    2. Full Name — use exactly the spelling shown on the page.
-    3. Position — map to: C, LW, RW, D, or G. Use LD/RD for defense if the page specifies left or right.
+    1. Jersey Number — as currently assigned. If missing, use "00".
+    2. Full Name — correct current spelling.
+    3. Position — map to: C, LW, RW, D, or G.
     4. Line assignment — Forwards: 1, 2, 3, or 4. Defense: P1, P2, or P3. Goalies: G1 or G2.
-    5. No duplicate players.
     
-    Respond with ONLY this JSON format, no other text:
+    Respond with ONLY this JSON, no other text:
     {"status":"OK","players":[{"number":"15","name":"Player Name","position":"C","line":"1"}]}
   `;
 
   try {
     const response = await callWithRetry(() => ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.5-flash-lite',
       contents: finalPrompt,
       config: {
-        tools: [{ urlContext: {} }],
+        tools: [{ googleSearch: {} }],
       }
     })) as GenerateContentResponse;
 
-    const sources: { uri: string; title: string }[] = [];
+    const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
+    const sources = groundingChunks?.map((chunk: any) => ({
+      uri: chunk.web?.uri || "",
+      title: chunk.web?.title || "Search Result"
+    })).filter((s: any) => s.uri) || [];
 
     const text = response.text;
     if (!text) return { status: "ERROR", players: [], reason: "No response text." };
