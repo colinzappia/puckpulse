@@ -8,6 +8,8 @@ import FaceoffSummary from './components/FaceoffSummary';
 import UserManual from './components/UserManual';
 import LandingPage from './components/LandingPage';
 import AdBanner from './components/AdBanner';
+import AuthGate from './components/AuthGate';
+import { useAuth, UserButton } from '@clerk/clerk-react';
 import { generateNarrative, fetchRosterByAI } from './services/geminiService';
 import { downloadPDFReport, downloadExcelReport, downloadHTMLExport } from './services/exportService';
 import { Toaster, toast } from 'sonner';
@@ -88,6 +90,8 @@ const DroppableSlot: React.FC<{ id: string, children: React.ReactNode, label: st
 
 const App: React.FC = () => {
   const [showLanding, setShowLanding] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { isSignedIn } = useAuth();
   const [events, setEvents] = useState<GameEvent[]>([]);
   const [activeTeam, setActiveTeam] = useState<Team>(Team.HOME);
   const [playerNumber, setPlayerNumber] = useState('');
@@ -555,6 +559,10 @@ Respond with ONLY this JSON, no other text:
 
   if (showLanding) {
     return <LandingPage onLaunch={handleLaunch} />;
+  }
+
+  if (!isSignedIn) {
+    return <AuthGate onAuthenticated={() => setIsAuthenticated(true)} />;
   }
 
   return (
