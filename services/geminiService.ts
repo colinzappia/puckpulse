@@ -121,9 +121,33 @@ export async function fetchRosterByAI({ teamName, rosterUrl }: SyncParams): Prom
     const text = response.text;
     if (!text) return { status: "ERROR", players: [], reason: "No response text." };
     
+    // Try multiple strategies to extract JSON
+    let parsed: any = null;
+    
+    // Strategy 1: Find JSON block between curly braces
     const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) return { status: "ERROR", players: [], reason: "Could not parse roster response." };
-    const parsed = JSON.parse(jsonMatch[0]);
+    if (jsonMatch) {
+      try { parsed = JSON.parse(jsonMatch[0]); } catch {}
+    }
+    
+    // Strategy 2: Strip markdown code fences and try again
+    if (!parsed) {
+      const stripped = text.replace(/```json|```/g, '').trim();
+      try { parsed = JSON.parse(stripped); } catch {}
+    }
+    
+    // Strategy 3: Find the largest JSON-like block
+    if (!parsed) {
+      const blocks = text.match(/\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g) || [];
+      for (const block of blocks.sort((a, b) => b.length - a.length)) {
+        try { parsed = JSON.parse(block); break; } catch {}
+      }
+    }
+    
+    if (!parsed) {
+      console.error("Raw AI response:", text);
+      return { status: "ERROR", players: [], reason: "Could not parse roster response. The AI returned an unexpected format." };
+    }
     
     // Deduplicate by number
     const uniquePlayers = new Map<string, Player>();
