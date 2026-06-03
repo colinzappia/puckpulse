@@ -58,7 +58,7 @@ const AdBanner: React.FC<AdBannerProps> = ({ position }) => {
       style={{ opacity: visible ? 1 : 0 }}
     >
       <div
-        className="w-full flex items-center justify-between px-4 py-2 border-white/5"
+        className="w-full flex items-center justify-between px-6 py-3 border-white/5"
         style={{
           backgroundColor: sponsor.backgroundColor,
           borderTopWidth: position === 'bottom' ? '1px' : '0',
@@ -69,7 +69,7 @@ const AdBanner: React.FC<AdBannerProps> = ({ position }) => {
       >
         {/* Left — Sponsored label */}
         <span
-          className="text-[8px] font-black uppercase tracking-[0.2em] shrink-0"
+          className="text-[10px] font-black uppercase tracking-[0.2em] shrink-0"
           style={{ color: sponsor.accentColor, opacity: 0.7 }}
         >
           Sponsored
@@ -86,14 +86,14 @@ const AdBanner: React.FC<AdBannerProps> = ({ position }) => {
           )}
           <div className="flex items-center gap-2 overflow-hidden">
             <span
-              className="text-[11px] font-black uppercase tracking-wider shrink-0"
+              className="text-sm font-black uppercase tracking-wider shrink-0"
               style={{ color: sponsor.textColor }}
             >
               {sponsor.name}
             </span>
             <span className="text-white/10 shrink-0">·</span>
             <span
-              className="text-[10px] truncate"
+              className="text-xs truncate"
               style={{ color: sponsor.textColor, opacity: 0.6 }}
             >
               {sponsor.tagline}
@@ -103,14 +103,14 @@ const AdBanner: React.FC<AdBannerProps> = ({ position }) => {
 
         {/* Right — CTA */}
         <span
-          className="text-[9px] font-black uppercase tracking-wider shrink-0 px-3 py-1 rounded-full border"
+          className="text-xs font-black uppercase tracking-wider shrink-0 px-4 py-1.5 rounded-full border"
           style={{
             color: sponsor.accentColor,
             borderColor: sponsor.accentColor,
-            opacity: 0.8,
+            opacity: 0.9,
           }}
         >
-          Learn More
+          {sponsor.link.startsWith('mailto') ? 'Advertise Here' : 'Learn More'}
         </span>
       </div>
     </a>
