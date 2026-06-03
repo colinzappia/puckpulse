@@ -1004,77 +1004,30 @@ Respond with ONLY this JSON, no other text:
                     </section>
 
                     <section className="space-y-4 p-5 bg-white/5 rounded-[2.5rem] border border-white/5">
-                      {/* Tabs */}
-                      <div className="flex gap-1 bg-black/40 rounded-xl p-1">
+                      <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">📋 Paste Roster</h4>
+                      <div className="space-y-3">
+                        <p className="text-[9px] text-slate-500 px-1">Go to any roster website, select and copy the player list, then paste it here. Works on any device, any league.</p>
+                        <textarea
+                          className="w-full bg-black/40 border border-white/10 p-3.5 rounded-xl text-[10px] text-slate-300 font-mono outline-none focus:border-cyan-500/40 resize-none"
+                          rows={6}
+                          placeholder="Paste copied roster text here... e.g. 15 John Smith C, 7 Mike Jones LW, 31 Dave Brown G"
+                          value={isHome ? pasteRosterHome : pasteRosterAway}
+                          onChange={e => isHome ? setPasteRosterHome(e.target.value) : setPasteRosterAway(e.target.value)}
+                        />
                         <button
-                          onClick={() => setRosterTab('url')}
-                          className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${rosterTab === 'url' ? 'bg-cyan-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}
-                        >🔗 URL Sync</button>
-                        <button
-                          onClick={() => setRosterTab('paste')}
-                          className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${rosterTab === 'paste' ? 'bg-cyan-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}
-                        >📋 Paste Roster</button>
+                          onClick={() => handlePasteSync(team)}
+                          disabled={isPasteSyncing || !(isHome ? pasteRosterHome : pasteRosterAway).trim()}
+                          className={`w-full py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isPasteSyncing || !(isHome ? pasteRosterHome : pasteRosterAway).trim() ? 'bg-slate-800 text-slate-600' : 'bg-cyan-600 text-white hover:bg-cyan-500 shadow-lg border border-cyan-400/30'}`}
+                        >
+                          {isPasteSyncing ? (
+                            <span className="flex items-center justify-center gap-2">
+                              <span className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{animationDelay:'0ms'}}/>
+                              <span className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{animationDelay:'150ms'}}/>
+                              <span className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{animationDelay:'300ms'}}/>
+                            </span>
+                          ) : '📋 Import Roster'}
+                        </button>
                       </div>
-
-                      {/* URL Sync Tab */}
-                      {rosterTab === 'url' && (
-                        <div className="space-y-3">
-                          <p className="text-[9px] text-slate-500 px-1">Paste your team's roster page URL and the AI will extract the players.</p>
-                          <div className="flex gap-2">
-                            <input 
-                              className="flex-1 bg-black/40 border border-white/10 p-3.5 rounded-xl text-[10px] text-slate-400 font-bold outline-none focus:border-cyan-500/40" 
-                              placeholder="PASTE OFFICIAL ROSTER URL HERE" 
-                              value={url} 
-                              onChange={e => isHome ? setHomeRosterUrl(e.target.value) : setAwayRosterUrl(e.target.value)}
-                              onKeyDown={(e) => { if (e.key === 'Enter') handleAISync(team); }}
-                            />
-                            <button 
-                              onClick={() => handleAISync(team)}
-                              disabled={isSyncing || !url}
-                              className={`px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isSyncing || !url ? 'bg-slate-800 text-slate-600' : 'bg-cyan-600 text-white hover:bg-cyan-500 shadow-lg shadow-cyan-900/40 border border-cyan-400/30'}`}
-                            >
-                              {isSyncing ? '...' : 'SYNC'}
-                            </button>
-                          </div>
-                          {isSyncing && (
-                            <div className="flex items-center gap-2 px-1">
-                              <div className="flex gap-1">
-                                <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce" style={{animationDelay:'0ms'}}/>
-                                <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce" style={{animationDelay:'150ms'}}/>
-                                <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce" style={{animationDelay:'300ms'}}/>
-                              </div>
-                              <span className="text-[10px] text-cyan-400 font-semibold animate-pulse">{syncMessage}</span>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Paste Roster Tab */}
-                      {rosterTab === 'paste' && (
-                        <div className="space-y-3">
-                          <p className="text-[9px] text-slate-500 px-1">Go to any roster website, select and copy the player list, then paste it here. Works on any device, any league.</p>
-                          <textarea
-                            className="w-full bg-black/40 border border-white/10 p-3.5 rounded-xl text-[10px] text-slate-300 font-mono outline-none focus:border-cyan-500/40 resize-none"
-                            rows={6}
-                            placeholder="Paste copied roster text here... e.g. 15 John Smith C, 7 Mike Jones LW, 31 Dave Brown G"
-                            value={isHome ? pasteRosterHome : pasteRosterAway}
-                            onChange={e => isHome ? setPasteRosterHome(e.target.value) : setPasteRosterAway(e.target.value)}
-                          />
-                          <button
-                            onClick={() => handlePasteSync(team)}
-                            disabled={isPasteSyncing || !(isHome ? pasteRosterHome : pasteRosterAway).trim()}
-                            className={`w-full py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isPasteSyncing || !(isHome ? pasteRosterHome : pasteRosterAway).trim() ? 'bg-slate-800 text-slate-600' : 'bg-cyan-600 text-white hover:bg-cyan-500 shadow-lg border border-cyan-400/30'}`}
-                          >
-                            {isPasteSyncing ? (
-                              <span className="flex items-center justify-center gap-2">
-                                <span className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{animationDelay:'0ms'}}/>
-                                <span className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{animationDelay:'150ms'}}/>
-                                <span className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{animationDelay:'300ms'}}/>
-                              </span>
-                            ) : '📋 Import Roster'}
-                          </button>
-                        </div>
-                      )}
                     </section>
 
                     {/* ADD PLAYER - ENHANCED POSITION SELECTOR */}
