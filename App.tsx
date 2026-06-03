@@ -296,6 +296,14 @@ const App: React.FC = () => {
     away: getStatsForRange(Team.AWAY)
   }), [getStatsForRange]);
 
+  const handleMoveEvent = (eventId: string, x: number, y: number) => {
+    setEvents(prev => prev.map(e => 
+      e.id === eventId 
+        ? { ...e, coordinates: { x, y } }
+        : e
+    ));
+  };
+
   const handlePasteSync = async (team: Team) => {
     const isHome = team === Team.HOME;
     const pasteText = isHome ? pasteRosterHome : pasteRosterAway;
