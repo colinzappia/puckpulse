@@ -146,7 +146,9 @@ export async function fetchRosterByAI({ teamName, rosterUrl }: SyncParams): Prom
     
     if (!parsed) {
       console.error("Raw AI response:", text);
-      return { status: "ERROR", players: [], reason: "Could not parse roster response. The AI returned an unexpected format." };
+      // Return first 500 chars of response in error so we can debug
+      const preview = text.substring(0, 300).replace(/[\n\r]/g, ' ');
+      return { status: "ERROR", players: [], reason: `Unexpected format. AI said: "${preview}..."` };
     }
     
     // Deduplicate by number
