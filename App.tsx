@@ -309,10 +309,10 @@ Respond with ONLY this JSON, no other text:
       if (players.length === 0) throw new Error('No players found in pasted text');
 
       if (isHome) {
-        setHomePlayers(players);
+        setHomeRoster(players);
         setPasteRosterHome('');
       } else {
-        setAwayPlayers(players);
+        setAwayRoster(players);
         setPasteRosterAway('');
       }
       setSyncMessage('');
