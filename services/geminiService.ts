@@ -73,42 +73,38 @@ export async function fetchRosterByAI({ teamName, rosterUrl }: SyncParams): Prom
   }
 
   const finalPrompt = `
-    You are a world-class hockey scout and data analyst. 
+    You are a hockey data extraction specialist.
     
-    TASK: Find and extract the COMPLETE full active player roster for "${teamName}" for the ${season} season.
-    Use this URL as a reference: ${rosterUrl.trim()}
-    Also search for "${teamName} ${season} full roster" to ensure you have every single player.
+    TASK: Extract the COMPLETE player roster ONLY from the following URL: ${rosterUrl.trim()}
     
-    CRITICAL: A typical OHL/junior hockey roster has 20-25 players. You MUST return ALL of them.
-    Do NOT stop after a few players. Include every forward, every defenseman, and every goalie.
+    CRITICAL RULES:
+    - You MUST only use data from that exact URL. Do NOT use any other source.
+    - Do NOT invent or guess any player names, numbers, or positions.
+    - If the page does not contain a roster, return status "ERROR" with reason "No roster found on page."
+    - A typical hockey roster has 20-25 players. Extract ALL of them — forwards, defensemen, and goalies.
+    - Do NOT stop early. Every player listed on the page must be included.
     
     EXTRACTION REQUIREMENTS:
-    1. Extract every active player's Jersey Number (if missing, use "00").
-    2. Extract Full Names (ensure correct spelling).
-    3. Extract Positions. Map them to: C, LW, RW, LD, RD, D, or G. Use LD/RD for defense if specified, otherwise D.
-    4. Forwards: assign line 1, 2, 3, or 4. Defense: assign P1, P2, or P3. Goalies: G1 or G2.
-    5. For defensemen on the same pairing, assign one LD and one RD where possible.
-    6. Ensure NO DUPLICATE players are returned.
+    1. Jersey Number — use exactly what is shown on the page. If missing, use "00".
+    2. Full Name — use exactly the spelling shown on the page.
+    3. Position — map to: C, LW, RW, D, or G. Use LD/RD for defense if the page specifies left or right.
+    4. Line assignment — Forwards: 1, 2, 3, or 4. Defense: P1, P2, or P3. Goalies: G1 or G2.
+    5. No duplicate players.
     
-    You MUST respond with ONLY a valid JSON object in this exact format, no other text:
-    {"status":"OK","players":[{"number":"15","name":"Player Name","position":"C","line":"1"},{"number":"7","name":"Player Name","position":"LW","line":"2"}]}
+    Respond with ONLY this JSON format, no other text:
+    {"status":"OK","players":[{"number":"15","name":"Player Name","position":"C","line":"1"}]}
   `;
 
   try {
     const response = await callWithRetry(() => ai.models.generateContent({
-      model: 'gemini-2.5-flash-lite',
+      model: 'gemini-2.5-flash',
       contents: finalPrompt,
       config: {
-        tools: [{ googleSearch: {} }],
+        tools: [{ urlContext: {} }],
       }
     })) as GenerateContentResponse;
 
-    // Extract grounding sources as required
-    const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
-    const sources = groundingChunks?.map((chunk: any) => ({
-      uri: chunk.web?.uri || "",
-      title: chunk.web?.title || "Search Result"
-    })).filter((s: any) => s.uri) || [];
+    const sources: { uri: string; title: string }[] = [];
 
     const text = response.text;
     if (!text) return { status: "ERROR", players: [], reason: "No response text." };
