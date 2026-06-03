@@ -7,14 +7,15 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { priceId, userId, planName } = req.body;
+  const { priceId, userId, planName, couponCode } = req.body;
 
   if (!priceId || !userId) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
   try {
-    const session = await stripe.checkout.sessions.create({
+    // Build session params
+    const sessionParams = {
       mode: 'subscription',
       payment_method_types: ['card'],
       line_items: [{ price: priceId, quantity: 1 }],
@@ -23,9 +24,22 @@ export default async function handler(req, res) {
         metadata: { userId, planName },
       },
       metadata: { userId, planName },
+      allow_promotion_codes: !couponCode,  // Allow Stripe promo codes if no manual code
       success_url: `${process.env.VITE_APP_URL || 'https://topcheesehockey.com'}?subscribed=true`,
       cancel_url: `${process.env.VITE_APP_URL || 'https://topcheesehockey.com'}?cancelled=true`,
-    });
+    };
+
+    // Apply coupon if provided
+    if (couponCode) {
+      try {
+        const coupon = await stripe.coupons.retrieve(couponCode);
+        if (coupon) sessionParams.discounts = [{ coupon: couponCode }];
+      } catch {
+        return res.status(400).json({ error: `Invalid promo code: ${couponCode}` });
+      }
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
 
     res.status(200).json({ url: session.url });
   } catch (err) {
