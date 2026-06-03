@@ -1,3 +1,4 @@
+import { UserButton } from '@clerk/clerk-react';
 import React from 'react';
 import { getPeriodLabel } from '../App';
 
@@ -157,6 +158,13 @@ const Header: React.FC<HeaderProps> = ({ leftTeam, rightTeam, period, onOpenSetu
             </div>
           </div>
         </div>
+      </div>
+    <div className="absolute top-2 right-2 z-50">
+        <UserButton afterSignOutUrl="/" appearance={{
+          elements: {
+            avatarBox: 'w-8 h-8',
+          }
+        }} />
       </div>
     </header>
   );
