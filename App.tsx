@@ -10,7 +10,7 @@ import LandingPage from './components/LandingPage';
 import AdBanner from './components/AdBanner';
 import AuthGate from './components/AuthGate';
 import PricingGate from './components/PricingGate';
-import { useAuth, UserButton } from '@clerk/clerk-react';
+import { useAuth, UserButton, useClerk } from '@clerk/clerk-react';
 import { generateNarrative, fetchRosterByAI } from './services/geminiService';
 import { downloadPDFReport, downloadExcelReport, downloadHTMLExport } from './services/exportService';
 import { Toaster, toast } from 'sonner';
@@ -93,17 +93,47 @@ const App: React.FC = () => {
   const [showLanding, setShowLanding] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
-  const { isSignedIn } = useAuth();
+  const [checkingSubscription, setCheckingSubscription] = useState(false);
+  const { isSignedIn, userId } = useAuth();
+  const { user } = useClerk();
 
-  // Check if returning from successful Stripe checkout
+  // Check subscription status when user signs in
   React.useEffect(() => {
+    if (!isSignedIn || !user?.primaryEmailAddress?.emailAddress) return;
+    
+    // Check if returning from successful Stripe checkout
     const params = new URLSearchParams(window.location.search);
     if (params.get('subscribed') === 'true') {
       setIsSubscribed(true);
       setShowLanding(false);
       window.history.replaceState({}, '', '/');
+      return;
     }
-  }, []);
+
+    // Verify subscription with Stripe
+    const checkSub = async () => {
+      setCheckingSubscription(true);
+      try {
+        const response = await fetch('/api/check-subscription', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId,
+            email: user.primaryEmailAddress.emailAddress,
+          }),
+        });
+        const data = await response.json();
+        if (data.isSubscribed) {
+          setIsSubscribed(true);
+        }
+      } catch (err) {
+        console.error('Subscription check failed:', err);
+      } finally {
+        setCheckingSubscription(false);
+      }
+    };
+    checkSub();
+  }, [isSignedIn, user]);
   const [events, setEvents] = useState<GameEvent[]>([]);
   const [activeTeam, setActiveTeam] = useState<Team>(Team.HOME);
   const [playerNumber, setPlayerNumber] = useState('');
@@ -575,6 +605,20 @@ Respond with ONLY this JSON, no other text:
 
   if (!isSignedIn) {
     return <AuthGate onAuthenticated={() => setIsAuthenticated(true)} />;
+  }
+
+  if (checkingSubscription) {
+    return (
+      <div className="min-h-screen bg-[#05070a] flex flex-col items-center justify-center gap-4">
+        <img src="/Top_Cheese_Hockey_logo.png" alt="Top Cheese Hockey" className="h-24 w-auto" />
+        <div className="flex gap-2 mt-4">
+          <span className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{animationDelay:'0ms'}}/>
+          <span className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{animationDelay:'150ms'}}/>
+          <span className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{animationDelay:'300ms'}}/>
+        </div>
+        <p className="text-slate-500 text-sm">Verifying your subscription...</p>
+      </div>
+    );
   }
 
   if (!isSubscribed) {
