@@ -49,13 +49,17 @@ const AdBanner: React.FC<AdBannerProps> = ({ position }) => {
 
   const sponsor = SPONSORS[currentIndex];
 
+  const handleClick = () => {
+    if (sponsor.link.startsWith('mailto') || sponsor.link.startsWith('http')) {
+      window.open(sponsor.link, '_blank', 'noopener,noreferrer');
+    }
+  };
+
   return (
-    <a
-      href={sponsor.link}
-      target="_blank"
-      rel="noopener noreferrer"
+    <div
+      onClick={handleClick}
       className="block w-full transition-all duration-300"
-      style={{ opacity: visible ? 1 : 0 }}
+      style={{ opacity: visible ? 1 : 0, cursor: sponsor.link ? 'pointer' : 'default' }}
     >
       <div
         className="w-full flex items-center justify-between px-6 py-3 border-white/5"
@@ -113,7 +117,7 @@ const AdBanner: React.FC<AdBannerProps> = ({ position }) => {
           {sponsor.link.startsWith('mailto') ? 'Advertise Here' : 'Learn More'}
         </span>
       </div>
-    </a>
+    </div>
   );
 };
 
