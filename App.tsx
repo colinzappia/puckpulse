@@ -11,6 +11,7 @@ import AdBanner from './components/AdBanner';
 import AuthGate from './components/AuthGate';
 import PricingGate from './components/PricingGate';
 import LegalPages from './components/LegalPages';
+import ContactPage from './components/ContactPage';
 import { useAuth, UserButton, useClerk, useUser } from '@clerk/clerk-react';
 import { generateNarrative, fetchRosterByAI } from './services/geminiService';
 import { downloadPDFReport, downloadExcelReport, downloadHTMLExport } from './services/exportService';
@@ -96,6 +97,7 @@ const App: React.FC = () => {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [checkingSubscription, setCheckingSubscription] = useState(false);
   const [legalPage, setLegalPage] = useState<'terms' | 'privacy' | null>(null);
+  const [showContact, setShowContact] = useState(false);
   const { isSignedIn, userId } = useAuth();
   const { user } = useClerk();
   const { user: currentUser } = useUser();
@@ -1223,9 +1225,10 @@ Respond with ONLY this JSON, no other text:
         <span className="text-slate-700">·</span>
         <button onClick={() => setLegalPage('privacy')} className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors">Privacy Policy</button>
         <span className="text-slate-700">·</span>
-        <a href="mailto:colinzappia@gmail.com" className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors">Support</a>
+        <button onClick={() => setShowContact(true)} className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors">Contact Us</button>
       </div>
       {legalPage && <LegalPages page={legalPage} onClose={() => setLegalPage(null)} />}
+      {showContact && <ContactPage onClose={() => setShowContact(false)} />}
     </div>
   );
 };
