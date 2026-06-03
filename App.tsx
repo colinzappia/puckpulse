@@ -11,7 +11,7 @@ import AdBanner from './components/AdBanner';
 import AuthGate from './components/AuthGate';
 import PricingGate from './components/PricingGate';
 import LegalPages from './components/LegalPages';
-import { useAuth, UserButton, useClerk } from '@clerk/clerk-react';
+import { useAuth, UserButton, useClerk, useUser } from '@clerk/clerk-react';
 import { generateNarrative, fetchRosterByAI } from './services/geminiService';
 import { downloadPDFReport, downloadExcelReport, downloadHTMLExport } from './services/exportService';
 import { Toaster, toast } from 'sonner';
@@ -98,6 +98,7 @@ const App: React.FC = () => {
   const [legalPage, setLegalPage] = useState<'terms' | 'privacy' | null>(null);
   const { isSignedIn, userId } = useAuth();
   const { user } = useClerk();
+  const { user: currentUser } = useUser();
 
   // Check subscription status when user signs in
   React.useEffect(() => {
@@ -619,8 +620,9 @@ Respond with ONLY this JSON, no other text:
 
   // Admin bypass — these emails skip the paywall
   const ADMIN_EMAILS = ['colinzappia@gmail.com'];
-  const isAdmin = user?.primaryEmailAddress?.emailAddress && 
-    ADMIN_EMAILS.includes(user.primaryEmailAddress.emailAddress.toLowerCase());
+  const userEmail = currentUser?.primaryEmailAddress?.emailAddress?.toLowerCase() || 
+    user?.primaryEmailAddress?.emailAddress?.toLowerCase() || '';
+  const isAdmin = ADMIN_EMAILS.includes(userEmail);
 
   if (checkingSubscription && !isAdmin) {
     return (
