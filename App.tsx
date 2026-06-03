@@ -1044,12 +1044,7 @@ Respond with ONLY this JSON, no other text:
                           <textarea
                             className="w-full bg-black/40 border border-white/10 p-3.5 rounded-xl text-[10px] text-slate-300 font-mono outline-none focus:border-cyan-500/40 resize-none"
                             rows={6}
-                            placeholder={"Paste copied roster text here...
-
-Example:
-15 John Smith C
-7 Mike Jones LW
-31 Dave Brown G"}
+                            placeholder="Paste copied roster text here... e.g. 15 John Smith C, 7 Mike Jones LW, 31 Dave Brown G"
                             value={isHome ? pasteRosterHome : pasteRosterAway}
                             onChange={e => isHome ? setPasteRosterHome(e.target.value) : setPasteRosterAway(e.target.value)}
                           />
