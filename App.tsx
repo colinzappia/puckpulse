@@ -9,6 +9,7 @@ import UserManual from './components/UserManual';
 import LandingPage from './components/LandingPage';
 import AdBanner from './components/AdBanner';
 import AuthGate from './components/AuthGate';
+import PricingGate from './components/PricingGate';
 import { useAuth, UserButton } from '@clerk/clerk-react';
 import { generateNarrative, fetchRosterByAI } from './services/geminiService';
 import { downloadPDFReport, downloadExcelReport, downloadHTMLExport } from './services/exportService';
@@ -91,7 +92,18 @@ const DroppableSlot: React.FC<{ id: string, children: React.ReactNode, label: st
 const App: React.FC = () => {
   const [showLanding, setShowLanding] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(false);
   const { isSignedIn } = useAuth();
+
+  // Check if returning from successful Stripe checkout
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('subscribed') === 'true') {
+      setIsSubscribed(true);
+      setShowLanding(false);
+      window.history.replaceState({}, '', '/');
+    }
+  }, []);
   const [events, setEvents] = useState<GameEvent[]>([]);
   const [activeTeam, setActiveTeam] = useState<Team>(Team.HOME);
   const [playerNumber, setPlayerNumber] = useState('');
@@ -563,6 +575,10 @@ Respond with ONLY this JSON, no other text:
 
   if (!isSignedIn) {
     return <AuthGate onAuthenticated={() => setIsAuthenticated(true)} />;
+  }
+
+  if (!isSubscribed) {
+    return <PricingGate onSubscribed={() => setIsSubscribed(true)} />;
   }
 
   return (
