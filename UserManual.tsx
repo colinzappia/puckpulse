@@ -16,8 +16,8 @@ const sections = [
         content: 'Tap the "Roster Setup" button in the top right corner. Enter your home and away team names. You can also upload team logos by tapping the logo placeholder and selecting an image from your device.'
       },
       {
-        title: 'AI Roster Sync',
-        content: 'The fastest way to load a roster. In Roster Setup, paste any team URL from sites like EliteProspects, HockeyDB, or your league\'s website into the AI Sync field. Tap "Sync" and the AI will pull every player\'s name, number, and position automatically. This usually takes 10–20 seconds.'
+        title: 'Paste Roster Import',
+        content: 'The fastest and most reliable way to load a roster. Go to any league website (Pointstreak, HockeyDB, your league site, etc.), select the roster table with your finger or mouse, and copy it. Then in Roster Setup, paste the text into the paste area and tap Import Roster. The AI reads the raw text and builds your lineup in seconds. Works on any device, any league, any website.'
       },
       {
         title: 'Manual roster entry',
