@@ -101,6 +101,10 @@ const App: React.FC = () => {
   const [isSyncingHome, setIsSyncingHome] = useState(false);
   const [isSyncingAway, setIsSyncingAway] = useState(false);
   const [syncMessage, setSyncMessage] = useState('');
+  const [pasteRosterHome, setPasteRosterHome] = useState('');
+  const [pasteRosterAway, setPasteRosterAway] = useState('');
+  const [isPasteSyncing, setIsPasteSyncing] = useState(false);
+  const [rosterTab, setRosterTab] = useState<'url' | 'paste'>('url');
   const [activeDragPlayer, setActiveDragPlayer] = useState<{player: Player, team: Team} | null>(null);
 
   const sensors = useSensors(
@@ -242,6 +246,84 @@ const App: React.FC = () => {
     home: getStatsForRange(Team.HOME),
     away: getStatsForRange(Team.AWAY)
   }), [getStatsForRange]);
+
+  const handlePasteSync = async (team: Team) => {
+    const isHome = team === Team.HOME;
+    const pasteText = isHome ? pasteRosterHome : pasteRosterAway;
+    const teamName = isHome ? homeName : awayName;
+
+    if (!pasteText.trim()) {
+      alert('Please paste your roster text first.');
+      return;
+    }
+    if (!teamName.trim()) {
+      alert('Please enter a team name first.');
+      return;
+    }
+
+    setIsPasteSyncing(true);
+    setSyncMessage('Reading pasted roster...');
+    try {
+      const apiKey = (window as any).__GEMINI_API_KEY__ || process.env.GEMINI_API_KEY;
+      const prompt = `You are a hockey roster parser.
+      
+Extract ALL players from the following pasted roster text for the team "${teamName}".
+
+RULES:
+- Only extract players from the text below. Do not add any players not mentioned.
+- Extract jersey number, full name, and position for each player.
+- Position: map to C, LW, RW, D, or G only.
+- Line assignment: Forwards get 1,2,3,4. Defense get P1,P2,P3. Goalies get G1,G2.
+- If jersey number is missing use "00".
+- No duplicates.
+
+PASTED TEXT:
+${pasteText}
+
+Respond with ONLY this JSON, no other text:
+{"status":"OK","players":[{"number":"15","name":"Player Name","position":"C","line":"1"}]}`;
+
+      const { GoogleGenAI } = await import('@google/genai');
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || process.env.API_KEY });
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash-lite',
+        contents: prompt,
+      });
+
+      const text = response.text;
+      if (!text) throw new Error('No response from AI');
+
+      let parsed: any = null;
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) { try { parsed = JSON.parse(jsonMatch[0]); } catch {} }
+      if (!parsed) { const stripped = text.replace(/\`\`\`json|\`\`\`/g, '').trim(); try { parsed = JSON.parse(stripped); } catch {} }
+      if (!parsed) throw new Error('Could not parse response');
+
+      const players: Player[] = (parsed.players || []).map((p: any) => ({
+        number: p.number || '00',
+        name: p.name,
+        position: p.position || 'F',
+        line: p.line || (p.position === 'G' ? 'G1' : p.position === 'D' ? 'P1' : '1'),
+      }));
+
+      if (players.length === 0) throw new Error('No players found in pasted text');
+
+      if (isHome) {
+        setHomePlayers(players);
+        setPasteRosterHome('');
+      } else {
+        setAwayPlayers(players);
+        setPasteRosterAway('');
+      }
+      setSyncMessage('');
+      alert(`✅ ${players.length} players imported successfully!`);
+    } catch (err: any) {
+      alert(`Paste Sync Error: ${err.message}`);
+    } finally {
+      setIsPasteSyncing(false);
+      setSyncMessage('');
+    }
+  };
 
   const handleGenerateInsights = async () => {
     setIsGeneratingInsights(true);
@@ -910,42 +992,80 @@ const App: React.FC = () => {
                     </section>
 
                     <section className="space-y-4 p-5 bg-white/5 rounded-[2.5rem] border border-white/5">
-                      <div className="flex items-center justify-between mb-2"><h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">Sync with URL</h4></div>
-                      <div className="flex gap-2">
-                        <input 
-                          className="flex-1 bg-black/40 border border-white/10 p-3.5 rounded-xl text-[10px] text-slate-400 font-bold outline-none focus:border-cyan-500/40" 
-                          placeholder="PASTE OFFICIAL ROSTER URL HERE" 
-                          value={url} 
-                          onChange={e => isHome ? setHomeRosterUrl(e.target.value) : setAwayRosterUrl(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') handleAISync(team);
-                          }}
-                        />
-                        <button 
-                          onClick={() => handleAISync(team)}
-                          disabled={isSyncing || !url}
-                          className={`px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isSyncing || !url ? 'bg-slate-800 text-slate-600' : 'bg-cyan-600 text-white hover:bg-cyan-500 shadow-lg shadow-cyan-900/40 border border-cyan-400/30'}`}
-                        >
-                          {isSyncing ? '...' : 'SYNC'}
-                        </button>
+                      {/* Tabs */}
+                      <div className="flex gap-1 bg-black/40 rounded-xl p-1">
+                        <button
+                          onClick={() => setRosterTab('url')}
+                          className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${rosterTab === 'url' ? 'bg-cyan-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}
+                        >🔗 URL Sync</button>
+                        <button
+                          onClick={() => setRosterTab('paste')}
+                          className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${rosterTab === 'paste' ? 'bg-cyan-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}
+                        >📋 Paste Roster</button>
                       </div>
-                      {isSyncing && (
-                        <div className="flex items-center gap-2 mt-2 px-1">
-                          <div className="flex gap-1">
-                            <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce" style={{animationDelay:'0ms'}}/>
-                            <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce" style={{animationDelay:'150ms'}}/>
-                            <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce" style={{animationDelay:'300ms'}}/>
+
+                      {/* URL Sync Tab */}
+                      {rosterTab === 'url' && (
+                        <div className="space-y-3">
+                          <p className="text-[9px] text-slate-500 px-1">Paste your team's roster page URL and the AI will extract the players.</p>
+                          <div className="flex gap-2">
+                            <input 
+                              className="flex-1 bg-black/40 border border-white/10 p-3.5 rounded-xl text-[10px] text-slate-400 font-bold outline-none focus:border-cyan-500/40" 
+                              placeholder="PASTE OFFICIAL ROSTER URL HERE" 
+                              value={url} 
+                              onChange={e => isHome ? setHomeRosterUrl(e.target.value) : setAwayRosterUrl(e.target.value)}
+                              onKeyDown={(e) => { if (e.key === 'Enter') handleAISync(team); }}
+                            />
+                            <button 
+                              onClick={() => handleAISync(team)}
+                              disabled={isSyncing || !url}
+                              className={`px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isSyncing || !url ? 'bg-slate-800 text-slate-600' : 'bg-cyan-600 text-white hover:bg-cyan-500 shadow-lg shadow-cyan-900/40 border border-cyan-400/30'}`}
+                            >
+                              {isSyncing ? '...' : 'SYNC'}
+                            </button>
                           </div>
-                          <span className="text-[10px] text-cyan-400 font-semibold animate-pulse">{syncMessage}</span>
+                          {isSyncing && (
+                            <div className="flex items-center gap-2 px-1">
+                              <div className="flex gap-1">
+                                <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce" style={{animationDelay:'0ms'}}/>
+                                <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce" style={{animationDelay:'150ms'}}/>
+                                <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce" style={{animationDelay:'300ms'}}/>
+                              </div>
+                              <span className="text-[10px] text-cyan-400 font-semibold animate-pulse">{syncMessage}</span>
+                            </div>
+                          )}
                         </div>
                       )}
-                      <p className="text-[8px] font-bold text-slate-600 uppercase tracking-widest px-1">
-                        * Required for automated roster population
-                      </p>
-                      {sources.length > 0 && (
-                        <div className="mt-3 flex flex-col gap-1.5">
-                           <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest px-1">Source Grounding</span>
-                           {sources.map((s, idx) => <a key={idx} href={s.uri} target="_blank" rel="noopener noreferrer" className="text-[9px] text-cyan-500 hover:text-cyan-400 font-bold underline flex items-center gap-1"><svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>{s.title}</a>)}
+
+                      {/* Paste Roster Tab */}
+                      {rosterTab === 'paste' && (
+                        <div className="space-y-3">
+                          <p className="text-[9px] text-slate-500 px-1">Go to any roster website, select and copy the player list, then paste it here. Works on any device, any league.</p>
+                          <textarea
+                            className="w-full bg-black/40 border border-white/10 p-3.5 rounded-xl text-[10px] text-slate-300 font-mono outline-none focus:border-cyan-500/40 resize-none"
+                            rows={6}
+                            placeholder={"Paste copied roster text here...
+
+Example:
+15 John Smith C
+7 Mike Jones LW
+31 Dave Brown G"}
+                            value={isHome ? pasteRosterHome : pasteRosterAway}
+                            onChange={e => isHome ? setPasteRosterHome(e.target.value) : setPasteRosterAway(e.target.value)}
+                          />
+                          <button
+                            onClick={() => handlePasteSync(team)}
+                            disabled={isPasteSyncing || !(isHome ? pasteRosterHome : pasteRosterAway).trim()}
+                            className={`w-full py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isPasteSyncing || !(isHome ? pasteRosterHome : pasteRosterAway).trim() ? 'bg-slate-800 text-slate-600' : 'bg-cyan-600 text-white hover:bg-cyan-500 shadow-lg border border-cyan-400/30'}`}
+                          >
+                            {isPasteSyncing ? (
+                              <span className="flex items-center justify-center gap-2">
+                                <span className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{animationDelay:'0ms'}}/>
+                                <span className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{animationDelay:'150ms'}}/>
+                                <span className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{animationDelay:'300ms'}}/>
+                              </span>
+                            ) : '📋 Import Roster'}
+                          </button>
                         </div>
                       )}
                     </section>
