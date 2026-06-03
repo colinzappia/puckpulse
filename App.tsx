@@ -646,7 +646,7 @@ Respond with ONLY this JSON, no other text:
 
   return (
     <div className="flex flex-col min-h-screen bg-[#05070a] text-slate-200 overflow-x-hidden">
-      <AdBanner position="top" />
+      <AdBanner position="top" onContactClick={() => setShowContact(true)} />
       <Toaster position="top-center" richColors theme="dark" />
       
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
@@ -1218,14 +1218,14 @@ Respond with ONLY this JSON, no other text:
       )}
 
       <UserManual isOpen={showManual} onClose={() => setShowManual(false)} />
-      <AdBanner position="bottom" />
+      <AdBanner position="bottom" onContactClick={() => setShowContact(true)} />
       {/* Legal footer */}
-      <div className="flex items-center justify-center gap-4 py-2 bg-black/20 border-t border-white/5">
+      <div className="flex items-center justify-center gap-4 py-3 bg-black/20 border-t border-white/5">
         <button onClick={() => setLegalPage('terms')} className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors">Terms of Service</button>
         <span className="text-slate-700">·</span>
         <button onClick={() => setLegalPage('privacy')} className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors">Privacy Policy</button>
         <span className="text-slate-700">·</span>
-        <button onClick={() => setShowContact(true)} className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors">Contact Us</button>
+        <button onClick={() => setShowContact(true)} className="text-[10px] text-cyan-600 hover:text-cyan-400 transition-colors font-bold">Contact Us</button>
       </div>
       {legalPage && <LegalPages page={legalPage} onClose={() => setLegalPage(null)} />}
       {showContact && <ContactPage onClose={() => setShowContact(false)} />}
