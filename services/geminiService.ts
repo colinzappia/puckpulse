@@ -72,34 +72,29 @@ export async function fetchRosterByAI({ teamName, rosterUrl }: SyncParams): Prom
     return { status: "ERROR", players: [], reason: "A valid roster URL is required for sync." };
   }
 
-  const currentYear = new Date().getFullYear();
   const finalPrompt = `
-    You are a hockey roster data specialist. Today's date is ${new Date().toDateString()}.
+    You are a hockey roster expert. Today is ${new Date().toDateString()}.
     
-    TASK: Find the CURRENT ACTIVE roster for "${teamName}" for the ${season} season ONLY.
-    Reference URL: ${rosterUrl.trim()}
+    TASK: Return the most current active roster for "${teamName}" for the ${season} season.
+    Use this as a reference: ${rosterUrl.trim()}
+    Also search for "${teamName} roster ${season}" to find the most up to date information.
     
-    CRITICAL SEASON RULES — THIS IS THE MOST IMPORTANT PART:
-    - You MUST ONLY include players who are CURRENTLY on the roster for the ${season} season.
-    - DO NOT include any player from a previous season (${currentYear - 1} or earlier).
-    - DO NOT include players who have been traded, released, or are no longer on the team.
-    - DO NOT include players listed under "alumni", "former players", or "transaction history".
-    - If a player left the team at any point before today, EXCLUDE them.
-    - Only include players who are ACTIVE and CURRENTLY ROSTERED right now in ${season}.
-    
-    DATA RULES:
-    - Do NOT invent or guess any player. Only include players you can confirm are on the current roster.
-    - A typical hockey roster has 20-25 active players. Extract ALL current players.
-    - Do NOT stop early — include every current forward, defenseman, and goalie.
+    IMPORTANT GUIDELINES:
+    - Focus on players currently on the active roster in ${season}.
+    - Prefer players from this season over previous seasons.
+    - If a player was traded or released this season, exclude them if you can confirm it.
+    - Do your best — if you are unsure about a player, include them rather than refusing.
+    - Never refuse to answer. Always return as many current players as you can find.
+    - A typical NHL/junior roster has 20-25 players. Return ALL you can find.
     - No duplicate players.
     
     EXTRACTION REQUIREMENTS:
-    1. Jersey Number — as currently assigned. If missing, use "00".
-    2. Full Name — correct current spelling.
-    3. Position — map to: C, LW, RW, D, or G.
-    4. Line assignment — Forwards: 1, 2, 3, or 4. Defense: P1, P2, or P3. Goalies: G1 or G2.
+    1. Jersey Number — as currently assigned. If unknown, use "00".
+    2. Full Name — correct spelling.
+    3. Position — C, LW, RW, D, or G.
+    4. Line — Forwards: 1, 2, 3, or 4. Defense: P1, P2, P3. Goalies: G1 or G2.
     
-    Respond with ONLY this JSON, no other text:
+    You MUST always respond with ONLY this exact JSON format, no other text, no explanation:
     {"status":"OK","players":[{"number":"15","name":"Player Name","position":"C","line":"1"}]}
   `;
 
