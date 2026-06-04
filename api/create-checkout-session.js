@@ -24,15 +24,14 @@ export default async function handler(req, res) {
         metadata: { userId, planName },
       },
       metadata: { userId, planName },
-      allow_promotion_codes: !couponCode,  // Allow Stripe promo codes if no manual code
+      allow_promotion_codes: false,
       success_url: `${process.env.VITE_APP_URL || 'https://topcheesehockey.com'}?subscribed=true`,
       cancel_url: `${process.env.VITE_APP_URL || 'https://topcheesehockey.com'}?cancelled=true`,
     };
 
-    // Apply coupon if provided
+    // Apply coupon if provided, otherwise allow promotion codes
     if (couponCode) {
       try {
-        // Try exact code first, then uppercase
         let validCoupon = null;
         try { validCoupon = await stripe.coupons.retrieve(couponCode); } catch {}
         if (!validCoupon) { try { validCoupon = await stripe.coupons.retrieve(couponCode.toUpperCase()); } catch {} }
@@ -40,12 +39,16 @@ export default async function handler(req, res) {
         
         if (validCoupon) {
           sessionParams.discounts = [{ coupon: validCoupon.id }];
+          delete sessionParams.allow_promotion_codes;
         } else {
           return res.status(400).json({ error: `Invalid promo code: ${couponCode}` });
         }
       } catch {
         return res.status(400).json({ error: `Invalid promo code: ${couponCode}` });
       }
+    } else {
+      sessionParams.allow_promotion_codes = true;
+      delete sessionParams.discounts;
     }
 
     const session = await stripe.checkout.sessions.create(sessionParams);
