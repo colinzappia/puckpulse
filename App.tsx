@@ -92,7 +92,9 @@ const DroppableSlot: React.FC<{ id: string, children: React.ReactNode, label: st
 };
 
 const App: React.FC = () => {
-  const [showLanding, setShowLanding] = useState(true);
+  const [showLanding, setShowLanding] = useState(() => {
+    return sessionStorage.getItem('tch_launched') !== 'true';
+  });
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [checkingSubscription, setCheckingSubscription] = useState(false);
@@ -602,13 +604,14 @@ Respond with ONLY this JSON, no other text:
   }, [isCurrentlySwapped]);
 
   React.useEffect(() => {
-    const handlePopState = () => setShowLanding(true);
+    const handlePopState = () => { sessionStorage.removeItem('tch_launched'); setShowLanding(true); };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
   const handleLaunch = () => {
     window.history.pushState({ page: 'app' }, '', '');
+    sessionStorage.setItem('tch_launched', 'true');
     setShowLanding(false);
   };
 
