@@ -14,15 +14,16 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Build session params
+    // Build session params — no trial when using a coupon
+    const subscriptionData = couponCode
+      ? { metadata: { userId, planName } }
+      : { trial_period_days: 7, metadata: { userId, planName } };
+
     const sessionParams = {
       mode: 'subscription',
       payment_method_types: ['card'],
       line_items: [{ price: priceId, quantity: 1 }],
-      subscription_data: {
-        trial_period_days: 7,
-        metadata: { userId, planName },
-      },
+      subscription_data: subscriptionData,
       metadata: { userId, planName },
       allow_promotion_codes: false,
       success_url: `${process.env.VITE_APP_URL || 'https://topcheesehockey.com'}?subscribed=true`,
