@@ -41,6 +41,12 @@ export default async function handler(req, res) {
         if (validCoupon) {
           sessionParams.discounts = [{ coupon: validCoupon.id }];
           delete sessionParams.allow_promotion_codes;
+          // If 100% off, don't require payment method
+          const isFullDiscount = validCoupon.percent_off === 100 || 
+            (validCoupon.amount_off && validCoupon.currency);
+          if (isFullDiscount) {
+            sessionParams.payment_method_collection = 'if_required';
+          }
         } else {
           return res.status(400).json({ error: `Invalid promo code: ${couponCode}` });
         }
