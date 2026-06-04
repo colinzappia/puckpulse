@@ -301,6 +301,26 @@ const App: React.FC = () => {
     away: getStatsForRange(Team.AWAY)
   }), [getStatsForRange]);
 
+  const handleManageSubscription = async () => {
+    const email = currentUser?.primaryEmailAddress?.emailAddress;
+    if (!email) return;
+    try {
+      const response = await fetch('/api/customer-portal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await response.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert(data.error || 'Could not open subscription portal.');
+      }
+    } catch (err) {
+      alert('Could not open subscription portal. Please contact support.');
+    }
+  };
+
   const handleMoveEvent = (eventId: string, x: number, y: number) => {
     setEvents(prev => prev.map(e => 
       e.id === eventId 
@@ -1232,6 +1252,13 @@ Respond with ONLY this JSON, no other text:
           onClick={() => setShowContact(true)} 
           className="text-xs font-bold text-white bg-cyan-600 hover:bg-cyan-500 transition-colors px-4 py-1.5 rounded-full"
         >✉ Contact Us</button>
+        <span className="text-slate-600">·</span>
+        {!isAdmin && (
+          <button
+            onClick={handleManageSubscription}
+            className="text-xs font-bold text-slate-400 hover:text-white transition-colors px-4 py-1.5 rounded-full border border-white/10 hover:border-white/20"
+          >⚙ Manage Subscription</button>
+        )}
       </div>
       {legalPage && <LegalPages page={legalPage} onClose={() => setLegalPage(null)} />}
       {showContact && <ContactPage onClose={() => setShowContact(false)} />}
