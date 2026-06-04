@@ -9,6 +9,7 @@ const AuthGate: React.FC<AuthGateProps> = ({ onAuthenticated }) => {
   const { isSignedIn, isLoaded } = useAuth();
   const [mode, setMode] = React.useState<'signin' | 'signup'>('signin');
 
+  // When Clerk detects signed in state, move forward
   React.useEffect(() => {
     if (isLoaded && isSignedIn) {
       onAuthenticated();
@@ -29,10 +30,8 @@ const AuthGate: React.FC<AuthGateProps> = ({ onAuthenticated }) => {
 
   return (
     <div className="min-h-screen bg-[#05070a] flex flex-col items-center justify-center px-4 py-12">
-      {/* Logo */}
       <img src="/Top_Cheese_Hockey_logo.png" alt="Top Cheese Hockey" className="h-28 w-auto mb-8" />
       
-      {/* Tab switcher */}
       <div className="flex gap-1 bg-white/5 rounded-xl p-1 mb-6 w-full max-w-sm">
         <button
           onClick={() => setMode('signin')}
@@ -44,10 +43,11 @@ const AuthGate: React.FC<AuthGateProps> = ({ onAuthenticated }) => {
         >Create Account</button>
       </div>
 
-      {/* Clerk components */}
       <div className="w-full max-w-sm">
         {mode === 'signin' ? (
           <SignIn
+            routing="hash"
+            forceRedirectUrl={window.location.href}
             appearance={{
               elements: {
                 rootBox: 'w-full',
@@ -65,6 +65,8 @@ const AuthGate: React.FC<AuthGateProps> = ({ onAuthenticated }) => {
           />
         ) : (
           <SignUp
+            routing="hash"
+            forceRedirectUrl={window.location.href}
             appearance={{
               elements: {
                 rootBox: 'w-full',
