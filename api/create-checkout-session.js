@@ -32,8 +32,17 @@ export default async function handler(req, res) {
     // Apply coupon if provided
     if (couponCode) {
       try {
-        const coupon = await stripe.coupons.retrieve(couponCode);
-        if (coupon) sessionParams.discounts = [{ coupon: couponCode }];
+        // Try exact code first, then uppercase
+        let validCoupon = null;
+        try { validCoupon = await stripe.coupons.retrieve(couponCode); } catch {}
+        if (!validCoupon) { try { validCoupon = await stripe.coupons.retrieve(couponCode.toUpperCase()); } catch {} }
+        if (!validCoupon) { try { validCoupon = await stripe.coupons.retrieve(couponCode.toLowerCase()); } catch {} }
+        
+        if (validCoupon) {
+          sessionParams.discounts = [{ coupon: validCoupon.id }];
+        } else {
+          return res.status(400).json({ error: `Invalid promo code: ${couponCode}` });
+        }
       } catch {
         return res.status(400).json({ error: `Invalid promo code: ${couponCode}` });
       }
