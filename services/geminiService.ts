@@ -5,6 +5,7 @@ import { GameEvent, TeamStats, Player, PeriodSummary } from "../types";
 interface SyncParams {
   teamName: string;
   rosterUrl?: string;
+  pasteText?: string;
 }
 
 export interface AIRosterResponse {
@@ -58,7 +59,13 @@ const getSeasonString = () => {
 /**
  * Fetches the current season's roster using AI and Google Search grounding.
  */
-export async function fetchRosterByAI({ teamName, rosterUrl }: SyncParams): Promise<AIRosterResponse> {
+function getAI() {
+  const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+  if (!apiKey) return null;
+  return new GoogleGenAI({ apiKey });
+}
+
+export async function fetchRosterByAI({ teamName, rosterUrl, pasteText }: SyncParams): Promise<AIRosterResponse> {
   const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
   if (!apiKey) {
     console.error("Gemini API Key is missing. Check environment variables.");
@@ -70,6 +77,33 @@ export async function fetchRosterByAI({ teamName, rosterUrl }: SyncParams): Prom
   const hasUrl = rosterUrl && rosterUrl.trim().startsWith('http');
   if (!hasUrl) {
     return { status: "ERROR", players: [], reason: "A valid roster URL is required for sync." };
+  }
+
+  // If paste text provided, use it directly
+  if (pasteText) {
+    const pastePrompt = `You are a hockey roster parser. Extract ALL players from the following pasted roster text for the team "${teamName}".
+RULES: Only extract players from the text below. Do not add any players not mentioned. Extract jersey number, full name, and position. Position: map to C, LW, RW, D, or G. Line: Forwards get 1,2,3,4. Defense get P1,P2,P3. Goalies get G1,G2. If jersey number missing use "00". No duplicates.
+PASTED TEXT:
+${pasteText}
+Respond with ONLY this JSON, no other text: {"status":"OK","players":[{"number":"15","name":"Player Name","position":"C","line":"1"}]}`;
+
+    try {
+      const ai = getAI();
+      if (!ai) return { status: "ERROR", players: [], reason: "API Key not configured." };
+      const response = await callWithRetry(() => ai.models.generateContent({
+        model: 'gemini-2.5-flash-lite',
+        contents: pastePrompt,
+      })) as GenerateContentResponse;
+      const text = response.text;
+      if (!text) return { status: "ERROR", players: [], reason: "No response text." };
+      let parsed: any = null;
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) { try { parsed = JSON.parse(jsonMatch[0]); } catch {} }
+      if (!parsed) return { status: "ERROR", players: [], reason: "Could not parse roster response." };
+      return { status: "OK", players: parsed.players || [], sources: [] };
+    } catch (err: any) {
+      return { status: "ERROR", players: [], reason: err.message };
+    }
   }
 
   const finalPrompt = `
