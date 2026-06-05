@@ -9,6 +9,7 @@ import UserManual from './components/UserManual';
 import LandingPage from './components/LandingPage';
 import AdBanner from './components/AdBanner';
 import PlayerStats from './components/playerstats';
+import FaceoffWidget from './components/FaceoffWidget';
 import AuthGate from './components/AuthGate';
 import PricingGate from './components/PricingGate';
 import LegalPages from './components/LegalPages';
@@ -936,6 +937,43 @@ const App: React.FC = () => {
               <span>📊</span>
               <span>Player Stats</span>
             </button>
+            <FaceoffWidget
+              events={events}
+              homeRoster={homeRoster}
+              awayRoster={awayRoster}
+              homeName={homeName}
+              awayName={awayName}
+              fowHomeCenter={fowHomeCenter}
+              fowAwayCenter={fowAwayCenter}
+              onSetHomeCenter={setFowHomeCenter}
+              onSetAwayCenter={setFowAwayCenter}
+              onLogFaceoff={(win) => {
+                const homeWin = win;
+                const homeFO: GameEvent = {
+                  id: `fo-h-${Date.now()}`,
+                  timestamp: Date.now(),
+                  gameTime: `P${currentPeriod}`,
+                  period: currentPeriod,
+                  type: homeWin ? EventType.FACEOFF_WIN : EventType.FACEOFF_LOSS,
+                  team: Team.HOME,
+                  zone: Zone.NEUTRAL,
+                  playerNumber: fowHomeCenter,
+                };
+                const awayFO: GameEvent = {
+                  id: `fo-a-${Date.now()}`,
+                  timestamp: Date.now() + 1,
+                  gameTime: `P${currentPeriod}`,
+                  period: currentPeriod,
+                  type: homeWin ? EventType.FACEOFF_LOSS : EventType.FACEOFF_WIN,
+                  team: Team.AWAY,
+                  zone: Zone.NEUTRAL,
+                  playerNumber: fowAwayCenter,
+                };
+                setEvents(prev => [...prev, homeFO, awayFO]);
+              }}
+              mapPlotType={mapPlotType}
+              onSetPlotType={setMapPlotType}
+            />
           </div>
         </div>
 
