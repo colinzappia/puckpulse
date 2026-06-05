@@ -1,3 +1,4 @@
+import { UserButton } from '@clerk/clerk-react';
 import React from 'react';
 import { getPeriodLabel } from '../App';
 
@@ -16,9 +17,10 @@ interface HeaderProps {
   onOpenManual: () => void;
   onSetPeriod: (p: number) => void;
   onSwapSides: () => void;
+  onNewGame: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ leftTeam, rightTeam, period, onOpenSetup, onOpenManual, onSetPeriod, onSwapSides }) => {
+const Header: React.FC<HeaderProps> = ({ leftTeam, rightTeam, period, onOpenSetup, onOpenManual, onSetPeriod, onSwapSides, onNewGame }) => {
   const periodLabel = getPeriodLabel(period);
 
   const TeamScore = ({ team, align }: { team: TeamDisplay, align: 'left' | 'right' }) => {
@@ -82,6 +84,17 @@ const Header: React.FC<HeaderProps> = ({ leftTeam, rightTeam, period, onOpenSetu
               </button>
 
               <div className="w-px h-3 sm:h-4 bg-white/10"></div>
+
+              <button 
+                onClick={onNewGame}
+                className="px-3 py-1.5 sm:px-4 sm:py-2 bg-green-700 hover:bg-green-600 rounded-lg border border-green-500/50 text-white active:scale-95 transition-all shadow-lg flex items-center gap-2"
+                title="New Game"
+              >
+                <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                <span className="text-[9px] sm:text-[11px] font-black uppercase tracking-widest">New Game</span>
+              </button>
 
               <button 
                 onClick={onOpenSetup} 
@@ -157,6 +170,13 @@ const Header: React.FC<HeaderProps> = ({ leftTeam, rightTeam, period, onOpenSetu
             </div>
           </div>
         </div>
+      </div>
+    <div className="absolute top-2 right-2 z-50">
+        <UserButton afterSignOutUrl="/" appearance={{
+          elements: {
+            avatarBox: 'w-8 h-8',
+          }
+        }} />
       </div>
     </header>
   );
