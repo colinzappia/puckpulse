@@ -351,69 +351,23 @@ const App: React.FC = () => {
     const pasteText = isHome ? pasteRosterHome : pasteRosterAway;
     const teamName = isHome ? homeName : awayName;
 
-    if (!pasteText.trim()) {
-      alert('Please paste your roster text first.');
-      return;
-    }
-    if (!teamName.trim()) {
-      alert('Please enter a team name first.');
-      return;
-    }
+    if (!pasteText.trim()) { alert('Please paste your roster text first.'); return; }
+    if (!teamName.trim()) { alert('Please enter a team name first.'); return; }
 
     setIsPasteSyncing(true);
     setSyncMessage('Reading pasted roster...');
     try {
-      const apiKey = (window as any).__GEMINI_API_KEY__ || process.env.GEMINI_API_KEY;
-      const prompt = `You are a hockey roster parser.
-      
-Extract ALL players from the following pasted roster text for the team "${teamName}".
-
-RULES:
-- Only extract players from the text below. Do not add any players not mentioned.
-- Extract jersey number, full name, and position for each player.
-- Position: map to C, LW, RW, D, or G only.
-- Line assignment: Forwards get 1,2,3,4. Defense get P1,P2,P3. Goalies get G1,G2.
-- If jersey number is missing use "00".
-- No duplicates.
-
-PASTED TEXT:
-${pasteText}
-
-Respond with ONLY this JSON, no other text:
-{"status":"OK","players":[{"number":"15","name":"Player Name","position":"C","line":"1"}]}`;
-
-      const { GoogleGenAI } = await import('@google/genai');
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-lite',
-        contents: prompt,
-      });
-
-      const text = response.text;
-      if (!text) throw new Error('No response from AI');
-
-      let parsed: any = null;
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (jsonMatch) { try { parsed = JSON.parse(jsonMatch[0]); } catch {} }
-      if (!parsed) { const stripped = text.replace(/\`\`\`json|\`\`\`/g, '').trim(); try { parsed = JSON.parse(stripped); } catch {} }
-      if (!parsed) throw new Error('Could not parse response');
-
-      const players: Player[] = (parsed.players || []).map((p: any) => ({
+      const result = await fetchRosterByAI({ teamName, rosterUrl: '', pasteText });
+      if (result.status === 'ERROR') throw new Error(result.reason || 'Could not parse roster');
+      const players: Player[] = (result.players || []).map((p: any) => ({
         number: p.number || '00',
         name: p.name,
         position: p.position || 'F',
         line: p.line || (p.position === 'G' ? 'G1' : p.position === 'D' ? 'P1' : '1'),
       }));
-
       if (players.length === 0) throw new Error('No players found in pasted text');
-
-      if (isHome) {
-        setHomeRoster(players);
-        setPasteRosterHome('');
-      } else {
-        setAwayRoster(players);
-        setPasteRosterAway('');
-      }
+      if (isHome) { setHomeRoster(players); setPasteRosterHome(''); }
+      else { setAwayRoster(players); setPasteRosterAway(''); }
       setSyncMessage('');
       alert(`✅ ${players.length} players imported successfully!`);
     } catch (err: any) {
