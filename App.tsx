@@ -321,14 +321,7 @@ const App: React.FC = () => {
     }
   };
 
-  const [showNewGameConfirm, setShowNewGameConfirm] = useState(false);
-
   const handleNewGame = () => {
-    setShowNewGameConfirm(true);
-  };
-
-  const confirmNewGame = () => {
-    setShowNewGameConfirm(false);
     // Clear game state
     setEvents([]);
     setCurrentPeriod(1);
@@ -647,56 +640,7 @@ Respond with ONLY this JSON, no other text:
     return isCurrentlySwapped ? [Team.AWAY, Team.HOME] : [Team.HOME, Team.AWAY];
   }, [isCurrentlySwapped]);
 
-  // ── AUTO-SAVE GAME STATE ─────────────────────────────────
-  const [hasSavedGame, setHasSavedGame] = useState(false);
-  const [savedGameData, setSavedGameData] = useState<any>(null);
-
-  // Check for saved game on mount (after subscription confirmed)
-  React.useEffect(() => {
-    if (!isSubscribed && !isAdmin) return;
-    try {
-      const saved = localStorage.getItem('tch_game_state');
-      if (saved) {
-        const state = JSON.parse(saved);
-        if (state.events?.length > 0 || (state.homeName && state.homeName !== 'HOME')) {
-          setHasSavedGame(true);
-          setSavedGameData(state);
-        }
-      }
-    } catch {}
-  }, [isSubscribed, isAdmin]);
-
-  const restoreSavedGame = () => {
-    if (!savedGameData) return;
-    try {
-      if (savedGameData.events) setEvents(savedGameData.events);
-      if (savedGameData.homeName) setHomeName(savedGameData.homeName);
-      if (savedGameData.awayName) setAwayName(savedGameData.awayName);
-      if (savedGameData.homeRoster) setHomeRoster(savedGameData.homeRoster);
-      if (savedGameData.awayRoster) setAwayRoster(savedGameData.awayRoster);
-      if (savedGameData.currentPeriod) setCurrentPeriod(savedGameData.currentPeriod);
-    } catch {}
-    setHasSavedGame(false);
-    setSavedGameData(null);
-  };
-
-  const dismissSavedGame = () => {
-    localStorage.removeItem('tch_game_state');
-    setHasSavedGame(false);
-    setSavedGameData(null);
-  };
-
-  // Auto-save whenever game state changes
-  React.useEffect(() => {
-    if (!isSubscribed && !isAdmin) return;
-    if (events.length === 0 && homeName === 'HOME') return;
-    try {
-      localStorage.setItem('tch_game_state', JSON.stringify({
-        events, homeName, awayName, homeRoster, awayRoster, currentPeriod,
-        savedAt: new Date().toISOString()
-      }));
-    } catch {}
-  }, [events, homeName, awayName, homeRoster, awayRoster, currentPeriod, isSubscribed, isAdmin]);
+  // Auto-save placeholder - to be implemented
 
   React.useEffect(() => {
     const handlePopState = () => { sessionStorage.removeItem('tch_launched'); setShowLanding(true); };
@@ -746,34 +690,7 @@ Respond with ONLY this JSON, no other text:
     <div className="flex flex-col min-h-screen bg-[#05070a] text-slate-200 overflow-x-hidden">
       <AdBanner position="top" onContactClick={() => setShowContact(true)} />
 
-      {/* Restore saved game banner */}
-      {hasSavedGame && (
-        <div className="flex items-center justify-between px-4 py-2.5 bg-yellow-500/10 border-b border-yellow-500/20">
-          <div className="flex items-center gap-2">
-            <span className="text-yellow-400 text-sm">💾</span>
-            <span className="text-yellow-300 text-xs font-bold">You have a saved game from {savedGameData?.savedAt ? new Date(savedGameData.savedAt).toLocaleDateString() : 'earlier'}.</span>
-          </div>
-          <div className="flex gap-2">
-            <button onClick={restoreSavedGame} className="px-3 py-1 bg-yellow-500 hover:bg-yellow-400 text-black text-xs font-black rounded-lg transition-colors">Restore</button>
-            <button onClick={dismissSavedGame} className="px-3 py-1 bg-white/10 hover:bg-white/20 text-white text-xs font-bold rounded-lg transition-colors">Dismiss</button>
-          </div>
-        </div>
-      )}
 
-      {/* New game confirm dialog */}
-      {showNewGameConfirm && (
-        <div className="fixed inset-0 z-[400] bg-black/80 flex items-center justify-center px-4">
-          <div className="bg-[#0f1620] border border-white/10 rounded-2xl p-8 max-w-sm w-full text-center">
-            <div className="text-4xl mb-4">🏒</div>
-            <h3 className="text-white font-black text-xl mb-2">Start a New Game?</h3>
-            <p className="text-slate-400 text-sm mb-6">This will clear all current events, rosters, and team names. Make sure you've exported your report first!</p>
-            <div className="flex gap-3">
-              <button onClick={() => setShowNewGameConfirm(false)} className="flex-1 py-3 border border-white/10 hover:border-white/20 text-white font-bold rounded-xl transition-colors text-sm">Cancel</button>
-              <button onClick={confirmNewGame} className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl transition-colors text-sm">Start New Game</button>
-            </div>
-          </div>
-        </div>
-      )}
       <Toaster position="top-center" richColors theme="dark" />
       
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
