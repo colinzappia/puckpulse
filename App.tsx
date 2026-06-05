@@ -8,7 +8,6 @@ import FaceoffSummary from './components/FaceoffSummary';
 import UserManual from './components/UserManual';
 import LandingPage from './components/LandingPage';
 import AdBanner from './components/AdBanner';
-import GameManager from './components/GameManager';
 import AuthGate from './components/AuthGate';
 import PricingGate from './components/PricingGate';
 import LegalPages from './components/LegalPages';
@@ -144,47 +143,6 @@ const App: React.FC = () => {
     checkSub();
   }, [isSignedIn, user]);
 
-  // Emit game state for GameManager to save
-  useEffect(() => {
-    if (!isSubscribed && !isAdmin) return;
-    window.dispatchEvent(new CustomEvent('tch_game_state', {
-      detail: { events, homeName, awayName, homeRoster, awayRoster, currentPeriod }
-    }));
-  }, [events, homeName, awayName, homeRoster, awayRoster, currentPeriod]);
-
-  // Listen for restore event from GameManager
-  useEffect(() => {
-    const handler = (e: CustomEvent) => {
-      const d = e.detail;
-      if (d.events) setEvents(d.events);
-      if (d.homeName) setHomeName(d.homeName);
-      if (d.awayName) setAwayName(d.awayName);
-      if (d.homeRoster) setHomeRoster(d.homeRoster);
-      if (d.awayRoster) setAwayRoster(d.awayRoster);
-      if (d.currentPeriod) setCurrentPeriod(d.currentPeriod);
-    };
-    window.addEventListener('tch_restore_game' as any, handler);
-    return () => window.removeEventListener('tch_restore_game' as any, handler);
-  }, []);
-
-  // Listen for confirmed new game from GameManager
-  useEffect(() => {
-    const handler = () => {
-      setEvents([]);
-      setCurrentPeriod(1);
-      setHomeName('HOME');
-      setAwayName('AWAY');
-      setHomeRoster([]);
-      setAwayRoster([]);
-      setHomeRosterUrl('');
-      setAwayRosterUrl('');
-      setHomeLogo('');
-      setAwayLogo('');
-      setSummaries({ 'total': 'Game tracking active. Generate coaching analysis after logging more events.' });
-    };
-    window.addEventListener('tch_confirm_new_game', handler);
-    return () => window.removeEventListener('tch_confirm_new_game', handler);
-  }, []);
 
   const [events, setEvents] = useState<GameEvent[]>([]);
   const [activeTeam, setActiveTeam] = useState<Team>(Team.HOME);
@@ -366,8 +324,7 @@ const App: React.FC = () => {
     }
   };
 
-  const handleNewGame = () => { window.dispatchEvent(new CustomEvent('tch_new_game_request')); };
-  const _unused_newgame = () => {
+  const handleNewGame = () => {
     // Clear game state
     setEvents([]);
     setCurrentPeriod(1);
@@ -689,7 +646,6 @@ const App: React.FC = () => {
   return (
     <div className="flex flex-col min-h-screen bg-[#05070a] text-slate-200 overflow-x-hidden">
       <AdBanner position="top" onContactClick={() => setShowContact(true)} />
-      <GameManager isActive={isSubscribed || isAdmin} />
 
 
 
