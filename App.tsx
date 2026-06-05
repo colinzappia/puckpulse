@@ -8,7 +8,7 @@ import FaceoffSummary from './components/FaceoffSummary';
 import UserManual from './components/UserManual';
 import LandingPage from './components/LandingPage';
 import AdBanner from './components/AdBanner';
-import PlayerStats from './components/PlayerStats';
+import PlayerStats from './components/playerstats';
 import AuthGate from './components/AuthGate';
 import PricingGate from './components/PricingGate';
 import LegalPages from './components/LegalPages';
