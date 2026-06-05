@@ -321,6 +321,26 @@ const App: React.FC = () => {
     }
   };
 
+  const handleNewGame = () => {
+    const confirm = window.confirm('Start a new game? This will clear all current events and rosters. The current game will be saved for export first.');
+    if (!confirm) return;
+    // Clear game state
+    setEvents([]);
+    setCurrentPeriod(1);
+    setHomeName('HOME');
+    setAwayName('AWAY');
+    setHomeRoster([]);
+    setAwayRoster([]);
+    setHomeRosterUrl('');
+    setAwayRosterUrl('');
+    setHomeLogo('');
+    setAwayLogo('');
+    setSummaries({ 'total': 'Game tracking active. Generate coaching analysis after logging more events.' });
+    localStorage.removeItem('tch_game_state');
+    sessionStorage.removeItem('tch_launched');
+    sessionStorage.setItem('tch_launched', 'true');
+  };
+
   const handleMoveEvent = (eventId: string, x: number, y: number) => {
     setEvents(prev => prev.map(e => 
       e.id === eventId 
@@ -623,6 +643,41 @@ Respond with ONLY this JSON, no other text:
     return isCurrentlySwapped ? [Team.AWAY, Team.HOME] : [Team.HOME, Team.AWAY];
   }, [isCurrentlySwapped]);
 
+  // ── AUTO-SAVE GAME STATE ─────────────────────────────────
+  const SAVE_KEY = 'tch_game_state';
+
+  // Restore saved game on mount
+  React.useEffect(() => {
+    try {
+      const saved = localStorage.getItem(SAVE_KEY);
+      if (saved) {
+        const state = JSON.parse(saved);
+        if (state.events?.length > 0 || state.homeName !== 'HOME') {
+          const restore = window.confirm('You have a saved game in progress. Would you like to restore it?');
+          if (restore) {
+            if (state.events) setEvents(state.events);
+            if (state.homeName) setHomeName(state.homeName);
+            if (state.awayName) setAwayName(state.awayName);
+            if (state.homeRoster) setHomeRoster(state.homeRoster);
+            if (state.awayRoster) setAwayRoster(state.awayRoster);
+            if (state.currentPeriod) setCurrentPeriod(state.currentPeriod);
+          }
+        }
+      }
+    } catch {}
+  }, [isSubscribed]);
+
+  // Auto-save whenever game state changes
+  React.useEffect(() => {
+    if (!isSubscribed && !isAdmin) return;
+    try {
+      localStorage.setItem(SAVE_KEY, JSON.stringify({
+        events, homeName, awayName, homeRoster, awayRoster, currentPeriod,
+        savedAt: new Date().toISOString()
+      }));
+    } catch {}
+  }, [events, homeName, awayName, homeRoster, awayRoster, currentPeriod, isSubscribed]);
+
   React.useEffect(() => {
     const handlePopState = () => { sessionStorage.removeItem('tch_launched'); setShowLanding(true); };
     window.addEventListener('popstate', handlePopState);
@@ -681,6 +736,7 @@ Respond with ONLY this JSON, no other text:
           onOpenManual={() => setShowManual(true)}
           onSetPeriod={setCurrentPeriod}
           onSwapSides={() => setIsRosterSwapped(!isRosterSwapped)}
+          onNewGame={handleNewGame}
         />
         
         <main className="flex flex-col pb-20">
