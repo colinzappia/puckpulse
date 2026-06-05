@@ -100,6 +100,9 @@ const App: React.FC = () => {
   const [checkingSubscription, setCheckingSubscription] = useState(false);
   const [legalPage, setLegalPage] = useState<'terms' | 'privacy' | null>(null);
   const [showContact, setShowContact] = useState(false);
+  const [showNewGameConfirm, setShowNewGameConfirm] = useState(false);
+  const [hasSavedGame, setHasSavedGame] = useState(false);
+  const [savedGameData, setSavedGameData] = useState<any>(null);
   const { isSignedIn, userId } = useAuth();
   const { user } = useClerk();
   const { user: currentUser } = useUser();
@@ -141,6 +144,32 @@ const App: React.FC = () => {
     };
     checkSub();
   }, [isSignedIn, user]);
+
+  // Check for saved game after login
+  useEffect(() => {
+    if (!isSubscribed && !isAdmin) return;
+    try {
+      const saved = localStorage.getItem('tch_game_state');
+      if (!saved) return;
+      const state = JSON.parse(saved);
+      if (state.events?.length > 0 || (state.homeName && state.homeName !== 'HOME')) {
+        setHasSavedGame(true);
+        setSavedGameData(state);
+      }
+    } catch {}
+  }, [isSubscribed, isAdmin]);
+
+  // Auto-save on game state changes
+  useEffect(() => {
+    if (!isSubscribed && !isAdmin) return;
+    if (events.length === 0 && homeName === 'HOME' && awayName === 'AWAY') return;
+    try {
+      localStorage.setItem('tch_game_state', JSON.stringify({
+        events, homeName, awayName, homeRoster, awayRoster, currentPeriod,
+        savedAt: new Date().toISOString()
+      }));
+    } catch {}
+  }, [events, homeName, awayName, homeRoster, awayRoster, currentPeriod]);
   const [events, setEvents] = useState<GameEvent[]>([]);
   const [activeTeam, setActiveTeam] = useState<Team>(Team.HOME);
   const [playerNumber, setPlayerNumber] = useState('');
@@ -321,7 +350,8 @@ const App: React.FC = () => {
     }
   };
 
-  const handleNewGame = () => {
+  const handleNewGame = () => { setShowNewGameConfirm(true); };
+  const _handleNewGame_impl = () => {
     // Clear game state
     setEvents([]);
     setCurrentPeriod(1);
@@ -336,6 +366,40 @@ const App: React.FC = () => {
     setSummaries({ 'total': 'Game tracking active. Generate coaching analysis after logging more events.' });
     localStorage.removeItem('tch_game_state');
     sessionStorage.setItem('tch_launched', 'true');
+  };
+
+  const restoreSavedGame = () => {
+    if (!savedGameData) return;
+    if (savedGameData.events) setEvents(savedGameData.events);
+    if (savedGameData.homeName) setHomeName(savedGameData.homeName);
+    if (savedGameData.awayName) setAwayName(savedGameData.awayName);
+    if (savedGameData.homeRoster) setHomeRoster(savedGameData.homeRoster);
+    if (savedGameData.awayRoster) setAwayRoster(savedGameData.awayRoster);
+    if (savedGameData.currentPeriod) setCurrentPeriod(savedGameData.currentPeriod);
+    setHasSavedGame(false);
+    setSavedGameData(null);
+  };
+
+  const dismissSavedGame = () => {
+    localStorage.removeItem('tch_game_state');
+    setHasSavedGame(false);
+    setSavedGameData(null);
+  };
+
+  const confirmNewGame = () => {
+    setEvents([]);
+    setCurrentPeriod(1);
+    setHomeName('HOME');
+    setAwayName('AWAY');
+    setHomeRoster([]);
+    setAwayRoster([]);
+    setHomeRosterUrl('');
+    setAwayRosterUrl('');
+    setHomeLogo('');
+    setAwayLogo('');
+    setSummaries({ 'total': 'Game tracking active. Generate coaching analysis after logging more events.' });
+    localStorage.removeItem('tch_game_state');
+    setShowNewGameConfirm(false);
   };
 
   const handleMoveEvent = (eventId: string, x: number, y: number) => {
@@ -643,6 +707,33 @@ const App: React.FC = () => {
   return (
     <div className="flex flex-col min-h-screen bg-[#05070a] text-slate-200 overflow-x-hidden">
       <AdBanner position="top" onContactClick={() => setShowContact(true)} />
+
+      {hasSavedGame && (
+        <div className="flex items-center justify-between px-4 py-2.5 bg-yellow-500/10 border-b border-yellow-500/20 shrink-0">
+          <div className="flex items-center gap-2">
+            <span className="text-yellow-400">💾</span>
+            <span className="text-yellow-300 text-xs font-bold">Saved game found from {savedGameData?.savedAt ? new Date(savedGameData.savedAt).toLocaleDateString() : 'earlier'}</span>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={restoreSavedGame} className="px-3 py-1 bg-yellow-500 hover:bg-yellow-400 text-black text-xs font-black rounded-lg">Restore</button>
+            <button onClick={dismissSavedGame} className="px-3 py-1 bg-white/10 hover:bg-white/20 text-white text-xs font-bold rounded-lg">Dismiss</button>
+          </div>
+        </div>
+      )}
+
+      {showNewGameConfirm && (
+        <div className="fixed inset-0 z-[400] bg-black/80 backdrop-blur-sm flex items-center justify-center px-4">
+          <div className="bg-[#0f1620] border border-white/10 rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl">
+            <div className="text-4xl mb-4">🏒</div>
+            <h3 className="text-white font-black text-xl mb-2">Start a New Game?</h3>
+            <p className="text-slate-400 text-sm mb-6">This will clear all events, rosters, and team names. Make sure you have exported your report first!</p>
+            <div className="flex gap-3">
+              <button onClick={() => setShowNewGameConfirm(false)} className="flex-1 py-3 border border-white/10 hover:border-white/20 text-white font-bold rounded-xl text-sm transition-colors">Cancel</button>
+              <button onClick={confirmNewGame} className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl text-sm transition-colors">Start New Game</button>
+            </div>
+          </div>
+        </div>
+      )}
 
 
       <Toaster position="top-center" richColors theme="dark" />
