@@ -8,6 +8,7 @@ import FaceoffSummary from './components/FaceoffSummary';
 import UserManual from './components/UserManual';
 import LandingPage from './components/LandingPage';
 import AdBanner from './components/AdBanner';
+import PlayerStats from './components/PlayerStats';
 import AuthGate from './components/AuthGate';
 import PricingGate from './components/PricingGate';
 import LegalPages from './components/LegalPages';
@@ -100,6 +101,7 @@ const App: React.FC = () => {
   const [checkingSubscription, setCheckingSubscription] = useState(false);
   const [legalPage, setLegalPage] = useState<'terms' | 'privacy' | null>(null);
   const [showContact, setShowContact] = useState(false);
+  const [showPlayerStats, setShowPlayerStats] = useState(false);
 
   const { isSignedIn, userId } = useAuth();
   const { user } = useClerk();
@@ -1242,6 +1244,7 @@ const App: React.FC = () => {
         )}
       </div>
       {legalPage && <LegalPages page={legalPage} onClose={() => setLegalPage(null)} />}
+      <PlayerStats isOpen={showPlayerStats} onClose={() => setShowPlayerStats(false)} events={events} homeRoster={homeRoster} awayRoster={awayRoster} homeName={homeName} awayName={awayName} />
       {showContact && <ContactPage onClose={() => setShowContact(false)} />}
     </div>
   );
