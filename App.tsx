@@ -929,6 +929,13 @@ const App: React.FC = () => {
             <div className={`w-full max-w-6xl aspect-[200/85] transition-all duration-700 rounded-[5rem] sm:rounded-[8.5rem] p-2 border-4 shadow-2xl ${activeTeam === Team.HOME ? 'border-blue-500/20' : 'border-red-500/20'}`}>
               <RinkChart events={events.filter(e => e.period === currentPeriod && visibleTypes.includes(e.type))} leftLogo={leftTeamDisplay.logo} rightLogo={rightTeamDisplay.logo} onPlot={handlePlot} onMoveEvent={handleMoveEvent} activeEventType={mapPlotType} />
             </div>
+            <button
+              onClick={() => setShowPlayerStats(true)}
+              className="absolute bottom-4 right-4 sm:bottom-12 sm:right-12 flex items-center gap-2 bg-blue-600/90 hover:bg-blue-500 text-white text-xs font-black uppercase tracking-wider px-4 py-2.5 rounded-full shadow-xl border border-blue-400/30 transition-all active:scale-95 backdrop-blur-sm"
+            >
+              <span>📊</span>
+              <span>Player Stats</span>
+            </button>
           </div>
         </div>
 
