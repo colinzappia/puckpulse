@@ -14,6 +14,8 @@ interface FaceoffWidgetProps {
   onLogFaceoff: (win: boolean) => void;
   mapPlotType: EventType;
   onSetPlotType: (type: EventType) => void;
+  onClose?: () => void;
+  isBottomPanel?: boolean;
 }
 
 interface ZoneStats { wins: number; losses: number; }
@@ -105,9 +107,9 @@ function getMatchupStats(events: GameEvent[], homeRoster: Player[], awayRoster: 
 const FaceoffWidget: React.FC<FaceoffWidgetProps> = ({
   events, homeRoster, awayRoster, homeName, awayName,
   fowHomeCenter, fowAwayCenter, onSetHomeCenter, onSetAwayCenter,
-  onLogFaceoff, mapPlotType, onSetPlotType
+  onLogFaceoff, mapPlotType, onSetPlotType, onClose, isBottomPanel = false
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(isBottomPanel);
   const [view, setView] = useState<'log' | 'stats'>('log');
 
   const homeStats = getFaceoffStats(events, Team.HOME);
@@ -125,30 +127,29 @@ const FaceoffWidget: React.FC<FaceoffWidgetProps> = ({
 
   return (
     <>
-      {/* Floating trigger button */}
-      <button
-        onClick={() => setIsOpen(true)}
-        className="absolute bottom-4 left-4 sm:bottom-12 sm:left-12 flex items-center gap-2 bg-yellow-600/90 hover:bg-yellow-500 text-white text-xs font-black uppercase tracking-wider px-4 py-2.5 rounded-full shadow-xl border border-yellow-400/30 transition-all active:scale-95 backdrop-blur-sm"
-      >
-        <span>🏒</span>
-        <span>Faceoffs {totalFaceoffs > 0 ? `· ${homeStats.pct}%` : ''}</span>
-      </button>
+      {/* Floating trigger button - only show when not in bottom panel mode */}
+      {!isBottomPanel && (
+        <button
+          onClick={() => setIsOpen(true)}
+          className="absolute bottom-4 left-4 sm:bottom-12 sm:left-12 flex items-center gap-2 bg-yellow-600/90 hover:bg-yellow-500 text-white text-xs font-black uppercase tracking-wider px-4 py-2.5 rounded-full shadow-xl border border-yellow-400/30 transition-all active:scale-95 backdrop-blur-sm"
+        >
+          <span>🏒</span>
+          <span>Faceoffs {totalFaceoffs > 0 ? `· ${homeStats.pct}%` : ''}</span>
+        </button>
+      )}
 
-      {/* Slide-in panel */}
+      {/* Panel */}
       {isOpen && (
-        <div className="fixed inset-0 z-[250] pointer-events-none">
-          {/* Backdrop - only covers rink area, allows scrolling */}
-          <div className="absolute inset-0 bg-black/40 pointer-events-auto" onClick={() => setIsOpen(false)} />
-          
-          {/* Panel slides in from right */}
-          <div className="absolute top-0 right-0 h-full w-full max-w-sm bg-[#0a0e14] border-l border-white/10 shadow-2xl flex flex-col pointer-events-auto animate-in slide-in-from-right duration-300">
+        <div className={isBottomPanel ? 'flex flex-col h-full' : 'fixed inset-0 z-[250] pointer-events-none'}>
+          {!isBottomPanel && <div className="absolute inset-0 bg-black/40 pointer-events-auto" onClick={() => setIsOpen(false)} />}
+          <div className={isBottomPanel ? 'flex flex-col flex-1 overflow-hidden' : 'absolute top-0 right-0 h-full w-full max-w-sm bg-[#0a0e14] border-l border-white/10 shadow-2xl flex flex-col pointer-events-auto animate-in slide-in-from-right duration-300'}>
           {/* Header */}
           <div className="px-4 py-4 flex items-center justify-between border-b border-white/10 bg-black/40 shrink-0">
             <div>
               <h2 className="text-lg font-black text-white tracking-tight">🏒 Faceoff Hub</h2>
               <p className="text-xs text-slate-500 mt-0.5">{totalFaceoffs} faceoffs tracked</p>
             </div>
-            <button onClick={() => setIsOpen(false)} className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white text-lg font-bold">×</button>
+            <button onClick={() => { setIsOpen(false); if (onClose) onClose(); }} className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white text-lg font-bold">×</button>
           </div>
 
           {/* Tabs */}
@@ -401,7 +402,6 @@ const FaceoffWidget: React.FC<FaceoffWidgetProps> = ({
                 )}
               </div>
             )}
-          </div>
           </div>
         </div>
       )}
