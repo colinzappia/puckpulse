@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAuth } from '@clerk/clerk-react';
+import { useAuth, useUser } from '@clerk/clerk-react';
 
 interface Plan {
   name: string;
@@ -47,6 +47,7 @@ interface PricingGateProps {
 
 const PricingGate: React.FC<PricingGateProps> = ({ onSubscribed }) => {
   const { userId } = useAuth();
+  const { user } = useUser();
   const [loading, setLoading] = React.useState<string | null>(null);
   const [error, setError] = React.useState('');
   const [couponCode, setCouponCode] = React.useState('');
@@ -63,6 +64,7 @@ const PricingGate: React.FC<PricingGateProps> = ({ onSubscribed }) => {
           userId,
           planName: plan.name,
           couponCode: couponCode.trim().toUpperCase(),
+          email: user?.primaryEmailAddress?.emailAddress || '',
         }),
       });
 
