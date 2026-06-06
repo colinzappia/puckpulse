@@ -39,12 +39,16 @@ const sections = [
         content: 'Plotted in the wrong spot? No problem. Press and hold any event dot on the rink for a moment, then drag it to the correct location and release. This works with both your finger on a tablet and a mouse on a computer. The event updates instantly in the play-by-play log as well.'
       },
       {
+        title: 'Quick logging tips',
+        content: 'The app is designed for speed during live games:\n\n• Your selected player stays active between events — no need to re-tap after each log\n• Your selected event type (SHOT, GOAL, etc.) also stays selected\n• Watch for the green flash on the rink — it confirms your event was logged\n• Use the ↺ REPEAT button in the toolbar to instantly log the same event again for the same player\n• The active player badge in the toolbar shows who is currently selected'
+      },
+      {
         title: 'Logging a penalty',
         content: 'Select the penalized player, tap PENALTY from the event toolbar, then tap the location on ice. You\'ll be prompted to select the infraction type and duration.'
       },
       {
         title: 'Logging a faceoff',
-        content: 'Open the Faceoff Hub by tapping "F.O. HUB". Select the centre for each team, then tap the faceoff dot on the rink. The win is automatically recorded for the active team.'
+        content: 'Tap the 🏒 Faceoffs floating button on the bottom left of the rink to open the Faceoff Hub panel. Select the centre for each team using the player buttons, then tap WIN or LOSS. The event is logged instantly for both teams.\n\nSwitch to the Breakdown tab to see live win percentages, zone stats, and head-to-head matchup data between specific centres.'
       },
       {
         title: 'Undoing an event',
@@ -103,6 +107,25 @@ const sections = [
         title: 'Showing rosters during the game',
         content: 'Tap "Show Rosters" to reveal the full lineup grid on screen. This is useful when you need to quickly select players without opening the full roster panel. Tap again to collapse it and free up screen space.'
       }
+    ]
+  },
+  {
+    id: 'endgame',
+    icon: '🏆',
+    title: 'Ending the Game',
+    subsections: [
+      {
+        title: 'End Game button',
+        content: 'When the final buzzer sounds, tap the red End Game button in the header. A summary screen appears showing the final score, shots, total events, and faceoffs tracked.\n\nTap "Download Report" to automatically generate and download your PDF scouting report. You can also download Excel and HTML versions from the same screen.'
+      },
+      {
+        title: 'Player Stats',
+        content: 'Tap the 📊 Player Stats floating button on the bottom right of the rink at any time to see a per-player breakdown for both teams. Stats include goals, shots, hits, penalties, faceoff wins/losses, and blocks. The top performer is highlighted with a ⭐.'
+      },
+      {
+        title: 'Starting a new game',
+        content: 'Tap the green New Game button in the header to clear all events, rosters, and team names and start fresh. You will be asked to confirm before anything is cleared — make sure you have exported your report first!'
+      },
     ]
   },
   {
