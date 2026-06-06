@@ -145,11 +145,27 @@ const App: React.FC = () => {
     checkSub();
   }, [isSignedIn, user]);
 
+  // Persist game state to sessionStorage
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('tch_events', JSON.stringify(events));
+      sessionStorage.setItem('tch_period', String(currentPeriod));
+      sessionStorage.setItem('tch_homeName', homeName);
+      sessionStorage.setItem('tch_awayName', awayName);
+      sessionStorage.setItem('tch_homeRoster', JSON.stringify(homeRoster));
+      sessionStorage.setItem('tch_awayRoster', JSON.stringify(awayRoster));
+    } catch {}
+  }, [events, currentPeriod, homeName, awayName, homeRoster, awayRoster]);
 
-  const [events, setEvents] = useState<GameEvent[]>([]);
+
+  const [events, setEvents] = useState<GameEvent[]>(() => {
+    try { const s = sessionStorage.getItem('tch_events'); return s ? JSON.parse(s) : []; } catch { return []; }
+  });
   const [activeTeam, setActiveTeam] = useState<Team>(Team.HOME);
   const [playerNumber, setPlayerNumber] = useState('');
-  const [currentPeriod, setCurrentPeriod] = useState(1);
+  const [currentPeriod, setCurrentPeriod] = useState<number>(() => {
+    try { const s = sessionStorage.getItem('tch_period'); return s ? parseInt(s) : 1; } catch { return 1; }
+  });
   const [breakdownFilter, setBreakdownFilter] = useState<number | 'total'>('total');
   
   const [summaries, setSummaries] = useState<Record<string, string>>({
@@ -237,15 +253,23 @@ const App: React.FC = () => {
     EventType.PP_SHOT_AGAINST
   ]);
   
-  const [homeName, setHomeName] = useState("HOME");
-  const [awayName, setAwayName] = useState("AWAY");
+  const [homeName, setHomeName] = useState<string>(() => {
+    try { return sessionStorage.getItem('tch_homeName') || 'HOME'; } catch { return 'HOME'; }
+  });
+  const [awayName, setAwayName] = useState<string>(() => {
+    try { return sessionStorage.getItem('tch_awayName') || 'AWAY'; } catch { return 'AWAY'; }
+  });
   const [homeLogo, setHomeLogo] = useState("");
   const [awayLogo, setAwayLogo] = useState("");
   const [homeRosterUrl, setHomeRosterUrl] = useState("");
   const [awayRosterUrl, setAwayRosterUrl] = useState("");
   
-  const [homeRoster, setHomeRoster] = useState<Player[]>([]);
-  const [awayRoster, setAwayRoster] = useState<Player[]>([]);
+  const [homeRoster, setHomeRoster] = useState<Player[]>(() => {
+    try { const s = sessionStorage.getItem('tch_homeRoster'); return s ? JSON.parse(s) : []; } catch { return []; }
+  });
+  const [awayRoster, setAwayRoster] = useState<Player[]>(() => {
+    try { const s = sessionStorage.getItem('tch_awayRoster'); return s ? JSON.parse(s) : []; } catch { return []; }
+  });
   const [homeSources, setHomeSources] = useState<{ uri: string; title: string }[]>([]);
   const [awaySources, setAwaySources] = useState<{ uri: string; title: string }[]>([]);
 
