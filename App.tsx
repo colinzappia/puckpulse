@@ -9,7 +9,6 @@ import UserManual from './components/UserManual';
 import LandingPage from './components/LandingPage';
 import AdBanner from './components/AdBanner';
 import PlayerStats from './components/playerstats';
-import FaceoffWidget from './components/FaceoffWidget';
 import AuthGate from './components/AuthGate';
 import PricingGate from './components/PricingGate';
 import LegalPages from './components/LegalPages';
@@ -167,7 +166,6 @@ const App: React.FC = () => {
   const [showContact, setShowContact] = useState(false);
   const [showPlayerStats, setShowPlayerStats] = useState(false);
   const [showFaceoffPanel, setShowFaceoffPanel] = useState(false);
-  const [selectedFODot, setSelectedFODot] = useState<string>('center');
 
   const { isSignedIn, userId } = useAuth();
   const { user } = useClerk();
@@ -807,6 +805,90 @@ const App: React.FC = () => {
 
           </div>
         </div>
+
+        {/* MAP FILTERS */}
+        <div className="w-full px-4 py-3 bg-black/40 border-b border-white/5 flex items-center justify-center gap-2 overflow-x-auto scrollbar-none shadow-inner">
+          <button onClick={toggleAllFilters} className="shrink-0 px-4 py-2 rounded-xl bg-white/10 text-[9px] font-black uppercase text-slate-300 border border-white/10 active:scale-95 transition-all">
+            {toolbarButtons.every(t => visibleTypes.includes(t.type)) ? 'Isolate' : 'Show All'}
+          </button>
+          <div className="flex items-center gap-2">
+            {toolbarButtons.map(btn => {
+              const isActive = visibleTypes.includes(btn.type);
+              return (
+                <button key={`filter-${btn.type}`} onClick={() => toggleVisibleType(btn.type)} className={`shrink-0 px-4 py-2.5 rounded-xl text-[9px] font-black uppercase transition-all flex items-center gap-2 border shadow-sm ${isActive ? 'bg-white/10 text-white border-white/20' : 'opacity-20 border-transparent bg-transparent'}`}>
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: (btn as any).dotColor }} />
+                  <span>{btn.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* FACEOFF INLINE PANEL */}
+        {showFaceoffPanel && (
+          <div className="w-full bg-[#0a0e14] border-b border-yellow-500/20 animate-in slide-in-from-top duration-200">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
+              <div className="flex items-center gap-3">
+                <span className="text-yellow-400 font-black text-sm">🏒 Faceoff</span>
+                <span className="text-xs text-slate-500">Select centres, choose WIN or LOSS, then tap a dot on the rink</span>
+              </div>
+              <button onClick={() => { setShowFaceoffPanel(false); if (mapPlotType === EventType.FACEOFF_WIN || mapPlotType === EventType.FACEOFF_LOSS) setMapPlotType(EventType.SHOT); }} className="text-slate-500 hover:text-white text-lg font-bold px-2">×</button>
+            </div>
+            <div className="p-4 grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
+              {/* Home centre */}
+              <div className="bg-blue-900/20 border border-blue-500/20 rounded-xl p-3">
+                <p className="text-xs font-black text-blue-400 uppercase tracking-wider mb-2">{homeName} Centre</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {homeRoster.filter(p => ['C','LW','RW','F'].includes(p.position?.toUpperCase() || '')).map(p => (
+                    <button key={p.number} onClick={() => setFowHomeCenter(p.number)}
+                      className={`px-2.5 py-1.5 rounded-lg text-xs font-black transition-all border ${fowHomeCenter === p.number ? 'bg-blue-600 text-white border-blue-400' : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'}`}>
+                      #{p.number} {p.name.split(' ').pop()}
+                    </button>
+                  ))}
+                  {homeRoster.filter(p => ['C','LW','RW','F'].includes(p.position?.toUpperCase() || '')).length === 0 && (
+                    <span className="text-xs text-slate-600">Load a roster first</span>
+                  )}
+                </div>
+              </div>
+
+              {/* WIN / LOSS — sets plot type then user taps rink */}
+              <div className="flex flex-col gap-3 items-center">
+                <div className="grid grid-cols-2 gap-3 w-full">
+                  <button
+                    onClick={() => { setMapPlotType(EventType.FACEOFF_WIN); }}
+                    className={`py-4 font-black rounded-xl text-sm transition-all active:scale-95 shadow-lg border ${mapPlotType === EventType.FACEOFF_WIN ? 'bg-yellow-500 text-white border-yellow-300 ring-2 ring-yellow-300/40' : 'bg-yellow-600/30 text-yellow-300 border-yellow-500/30 hover:bg-yellow-600/50'}`}
+                  >✓ {homeName} WIN</button>
+                  <button
+                    onClick={() => { setMapPlotType(EventType.FACEOFF_LOSS); }}
+                    className={`py-4 font-black rounded-xl text-sm transition-all active:scale-95 shadow-lg border ${mapPlotType === EventType.FACEOFF_LOSS ? 'bg-slate-500 text-white border-slate-300 ring-2 ring-slate-300/40' : 'bg-slate-700/50 text-slate-300 border-slate-500/30 hover:bg-slate-600/50'}`}
+                  >✗ {homeName} LOSS</button>
+                </div>
+                {(mapPlotType === EventType.FACEOFF_WIN || mapPlotType === EventType.FACEOFF_LOSS) && (
+                  <p className="text-xs text-yellow-400 animate-pulse text-center">👆 Now tap a faceoff dot on the rink</p>
+                )}
+                {(!fowHomeCenter || !fowAwayCenter) && (
+                  <p className="text-xs text-slate-600 text-center">Select both centres first</p>
+                )}
+              </div>
+
+              {/* Away centre */}
+              <div className="bg-red-900/20 border border-red-500/20 rounded-xl p-3">
+                <p className="text-xs font-black text-red-400 uppercase tracking-wider mb-2">{awayName} Centre</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {awayRoster.filter(p => ['C','LW','RW','F'].includes(p.position?.toUpperCase() || '')).map(p => (
+                    <button key={p.number} onClick={() => setFowAwayCenter(p.number)}
+                      className={`px-2.5 py-1.5 rounded-lg text-xs font-black transition-all border ${fowAwayCenter === p.number ? 'bg-red-600 text-white border-red-400' : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'}`}>
+                      #{p.number} {p.name.split(' ').pop()}
+                    </button>
+                  ))}
+                  {awayRoster.filter(p => ['C','LW','RW','F'].includes(p.position?.toUpperCase() || '')).length === 0 && (
+                    <span className="text-xs text-slate-600">Load a roster first</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* MAP FILTERS */}
         <div className="w-full px-4 py-3 bg-black/40 border-b border-white/5 flex items-center justify-center gap-2 overflow-x-auto scrollbar-none shadow-inner">
