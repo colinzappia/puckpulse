@@ -1,9 +1,10 @@
-import { createClient } from '@supabase/supabase-js';
+// @ts-ignore
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-let client: ReturnType<typeof createClient> | null = null;
+let client: any = null;
 
 function getClient() {
   if (!supabaseUrl || !supabaseKey) return null;
@@ -25,7 +26,6 @@ export async function saveGameSession(userId: string, state: GameState): Promise
     const sb = getClient();
     if (!sb) return false;
 
-    // Check if session exists for this user
     const { data: existing } = await sb
       .from('game_sessions')
       .select('id')
@@ -33,13 +33,11 @@ export async function saveGameSession(userId: string, state: GameState): Promise
       .single();
 
     if (existing?.id) {
-      // Update existing
       await sb.from('game_sessions').update({
         ...state,
         updated_at: new Date().toISOString()
       }).eq('user_id', userId);
     } else {
-      // Insert new
       await sb.from('game_sessions').insert({
         user_id: userId,
         ...state
