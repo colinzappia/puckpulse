@@ -74,12 +74,7 @@ export async function fetchRosterByAI({ teamName, rosterUrl, pasteText }: SyncPa
   const ai = new GoogleGenAI({ apiKey });
   const season = getSeasonString();
   
-  const hasUrl = rosterUrl && rosterUrl.trim().startsWith('http');
-  if (!hasUrl) {
-    return { status: "ERROR", players: [], reason: "A valid roster URL is required for sync." };
-  }
-
-  // If paste text provided, use it directly
+  // Handle paste text first - doesn't need a URL
   if (pasteText) {
     const pastePrompt = `You are a hockey roster parser. Extract ALL players from the following pasted roster text for the team "${teamName}".
 RULES: Only extract players from the text below. Do not add any players not mentioned. Extract jersey number, full name, and position. Position: map to C, LW, RW, D, or G. Line: Forwards get 1,2,3,4. Defense get P1,P2,P3. Goalies get G1,G2. If jersey number missing use "00". No duplicates.
