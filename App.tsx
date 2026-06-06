@@ -7,6 +7,7 @@ import CenterAnalytics from './components/CenterAnalytics';
 import UserManual from './components/UserManual';
 import LandingPage from './components/LandingPage';
 import AdBanner from './components/AdBanner';
+import { saveGameSession, loadGameSession, clearGameSession } from './services/supabaseService';
 import PlayerStats from './components/playerstats';
 import FaceoffWidget from './components/FaceoffWidget';
 import AuthGate from './components/AuthGate';
@@ -144,6 +145,37 @@ const App: React.FC = () => {
     };
     checkSub();
   }, [isSignedIn, user]);
+
+  // Load saved game from Supabase after login
+  useEffect(() => {
+    if (!isSubscribed && !isAdmin) return;
+    if (!userId) return;
+    loadGameSession(userId).then(state => {
+      if (!state || state.events.length === 0) return;
+      setEvents(state.events);
+      setHomeName(state.home_name);
+      setAwayName(state.away_name);
+      setCurrentPeriod(state.current_period);
+      setHomeRoster(state.home_roster);
+      setAwayRoster(state.away_roster);
+    }).catch(() => {});
+  }, [isSubscribed, isAdmin, userId]);
+
+  // Auto-save to Supabase every 30 seconds if there are events
+  useEffect(() => {
+    if (!userId || events.length === 0) return;
+    const interval = setInterval(() => {
+      saveGameSession(userId, {
+        home_name: homeName,
+        away_name: awayName,
+        current_period: currentPeriod,
+        events,
+        home_roster: homeRoster,
+        away_roster: awayRoster,
+      }).catch(() => {});
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [userId, events, homeName, awayName, currentPeriod, homeRoster, awayRoster]);
 
 
 
