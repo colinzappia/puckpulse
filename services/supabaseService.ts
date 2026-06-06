@@ -1,26 +1,20 @@
-import path from 'path';
-import { defineConfig, loadEnv } from 'vite';
-import react from '@vitejs/plugin-react';
-import tailwindcss from '@tailwindcss/vite';
+// Supabase service - placeholder until package is properly installed
+export interface GameState {
+  home_name: string;
+  away_name: string;
+  current_period: number;
+  events: any[];
+  home_roster: any[];
+  away_roster: any[];
+}
 
-export default defineConfig(({ mode }) => {
-    const env = loadEnv(mode, '.', '');
-    const apiKey = env.GEMINI_API_KEY || process.env.GEMINI_API_KEY || '';
-    
-    return {
-      server: {
-        port: 3000,
-        host: '0.0.0.0',
-      },
-      plugins: [react(), tailwindcss()],
-      define: {
-        'process.env.GEMINI_API_KEY': JSON.stringify(apiKey),
-        'process.env.API_KEY': JSON.stringify(apiKey)
-      },
-      resolve: {
-        alias: {
-          '@': path.resolve(__dirname, '.'),
-        }
-      }
-    };
-});
+export async function saveGameSession(userId: string, state: GameState): Promise<boolean> {
+  return false;
+}
+
+export async function loadGameSession(userId: string): Promise<GameState | null> {
+  return null;
+}
+
+export async function clearGameSession(userId: string): Promise<void> {
+}
