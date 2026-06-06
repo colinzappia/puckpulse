@@ -167,6 +167,7 @@ const App: React.FC = () => {
   const [showContact, setShowContact] = useState(false);
   const [showPlayerStats, setShowPlayerStats] = useState(false);
   const [showFaceoffPanel, setShowFaceoffPanel] = useState(false);
+  const [selectedFODot, setSelectedFODot] = useState<string>('center');
 
   const { isSignedIn, userId } = useAuth();
   const { user } = useClerk();
@@ -829,63 +830,100 @@ const App: React.FC = () => {
         {showFaceoffPanel && (
           <div className="w-full bg-[#0a0e14] border-b border-yellow-500/20 animate-in slide-in-from-top duration-200">
             <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <span className="text-yellow-400 font-black text-sm">🏒 Faceoff Hub</span>
-                {(() => { const fo = events.filter(e => e.type === EventType.FACEOFF_WIN || e.type === EventType.FACEOFF_LOSS); const wins = fo.filter(e => e.team === Team.HOME && e.type === EventType.FACEOFF_WIN).length; const total = fo.length / 2 | 0; return total > 0 ? <span className="text-xs text-slate-400">{homeName}: {wins}/{total} ({Math.round(wins/total*100)}%)</span> : null; })()}
+                {(() => {
+                  const fo = events.filter(e => e.type === EventType.FACEOFF_WIN || e.type === EventType.FACEOFF_LOSS);
+                  const wins = fo.filter(e => e.team === Team.HOME && e.type === EventType.FACEOFF_WIN).length;
+                  const total = fo.length / 2 | 0;
+                  return total > 0 ? <span className="text-xs text-slate-400">{homeName}: {wins}/{total} ({Math.round(wins/total*100)}%)</span> : null;
+                })()}
               </div>
               <button onClick={() => setShowFaceoffPanel(false)} className="text-slate-500 hover:text-white text-lg font-bold px-2">×</button>
             </div>
-            <div className="p-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {/* Home centre */}
-              <div className="bg-blue-900/20 border border-blue-500/20 rounded-xl p-3">
-                <p className="text-xs font-black text-blue-400 uppercase tracking-wider mb-2">{homeName} Centre</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {homeRoster.filter(p => ['C','LW','RW','F'].includes(p.position?.toUpperCase() || '')).map(p => (
-                    <button key={p.number} onClick={() => setFowHomeCenter(p.number)}
-                      className={`px-2.5 py-1.5 rounded-lg text-xs font-black transition-all border ${fowHomeCenter === p.number ? 'bg-blue-600 text-white border-blue-400' : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'}`}>
-                      #{p.number} {p.name.split(' ').pop()}
-                    </button>
-                  ))}
+
+            <div className="p-4 space-y-4">
+              {/* Row 1: Centres */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-blue-900/20 border border-blue-500/20 rounded-xl p-3">
+                  <p className="text-xs font-black text-blue-400 uppercase tracking-wider mb-2">{homeName} Centre</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {homeRoster.filter(p => ['C','LW','RW','F'].includes(p.position?.toUpperCase() || '')).map(p => (
+                      <button key={p.number} onClick={() => setFowHomeCenter(p.number)}
+                        className={`px-2.5 py-1.5 rounded-lg text-xs font-black transition-all border ${fowHomeCenter === p.number ? 'bg-blue-600 text-white border-blue-400' : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'}`}>
+                        #{p.number} {p.name.split(' ').pop()}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="bg-red-900/20 border border-red-500/20 rounded-xl p-3">
+                  <p className="text-xs font-black text-red-400 uppercase tracking-wider mb-2">{awayName} Centre</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {awayRoster.filter(p => ['C','LW','RW','F'].includes(p.position?.toUpperCase() || '')).map(p => (
+                      <button key={p.number} onClick={() => setFowAwayCenter(p.number)}
+                        className={`px-2.5 py-1.5 rounded-lg text-xs font-black transition-all border ${fowAwayCenter === p.number ? 'bg-red-600 text-white border-red-400' : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'}`}>
+                        #{p.number} {p.name.split(' ').pop()}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
-              {/* WIN / LOSS */}
-              <div className="flex flex-col gap-3 items-center justify-center">
-                <div className="grid grid-cols-2 gap-3 w-full">
-                  <button
-                    onClick={() => {
-                      if (!fowHomeCenter || !fowAwayCenter) { alert('Select both centres first'); return; }
-                      const homeFO: GameEvent = { id: `fo-h-${Date.now()}`, timestamp: Date.now(), gameTime: `P${currentPeriod}`, period: currentPeriod, type: EventType.FACEOFF_WIN, team: Team.HOME, zone: Zone.NEUTRAL, playerNumber: fowHomeCenter };
-                      const awayFO: GameEvent = { id: `fo-a-${Date.now()}`, timestamp: Date.now() + 1, gameTime: `P${currentPeriod}`, period: currentPeriod, type: EventType.FACEOFF_LOSS, team: Team.AWAY, zone: Zone.NEUTRAL, playerNumber: fowAwayCenter };
-                      setEvents(prev => [...prev, homeFO, awayFO]);
-                    }}
-                    className="py-4 bg-yellow-600 hover:bg-yellow-500 text-white font-black rounded-xl text-sm transition-all active:scale-95 shadow-lg"
-                  >✓ WIN</button>
-                  <button
-                    onClick={() => {
-                      if (!fowHomeCenter || !fowAwayCenter) { alert('Select both centres first'); return; }
-                      const homeFO: GameEvent = { id: `fo-h-${Date.now()}`, timestamp: Date.now(), gameTime: `P${currentPeriod}`, period: currentPeriod, type: EventType.FACEOFF_LOSS, team: Team.HOME, zone: Zone.NEUTRAL, playerNumber: fowHomeCenter };
-                      const awayFO: GameEvent = { id: `fo-a-${Date.now()}`, timestamp: Date.now() + 1, gameTime: `P${currentPeriod}`, period: currentPeriod, type: EventType.FACEOFF_WIN, team: Team.AWAY, zone: Zone.NEUTRAL, playerNumber: fowAwayCenter };
-                      setEvents(prev => [...prev, homeFO, awayFO]);
-                    }}
-                    className="py-4 bg-slate-700 hover:bg-slate-600 text-white font-black rounded-xl text-sm transition-all active:scale-95 shadow-lg"
-                  >✗ LOSS</button>
+              {/* Row 2: Faceoff dot selector */}
+              <div className="bg-white/5 border border-white/10 rounded-xl p-3">
+                <p className="text-xs font-black text-slate-400 uppercase tracking-wider mb-3">Faceoff Location</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {/* Left zone (Home D-zone / Away O-zone) */}
+                  <div className="space-y-1.5">
+                    <p className="text-[9px] text-slate-600 font-bold uppercase text-center">Left Zone</p>
+                    <button onClick={() => setSelectedFODot('left-top')} className={`w-full py-2 rounded-lg text-[10px] font-black border transition-all ${selectedFODot === 'left-top' ? 'bg-yellow-600 text-white border-yellow-400' : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'}`}>Top Circle</button>
+                    <button onClick={() => setSelectedFODot('left-bottom')} className={`w-full py-2 rounded-lg text-[10px] font-black border transition-all ${selectedFODot === 'left-bottom' ? 'bg-yellow-600 text-white border-yellow-400' : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'}`}>Bottom Circle</button>
+                  </div>
+                  {/* Center */}
+                  <div className="space-y-1.5">
+                    <p className="text-[9px] text-slate-600 font-bold uppercase text-center">Neutral Zone</p>
+                    <button onClick={() => setSelectedFODot('center')} className={`w-full py-2 rounded-lg text-[10px] font-black border transition-all ${selectedFODot === 'center' ? 'bg-yellow-600 text-white border-yellow-400' : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'}`}>Center Ice</button>
+                    <button onClick={() => setSelectedFODot('neutral-left-top')} className={`w-full py-2 rounded-lg text-[10px] font-black border transition-all ${selectedFODot === 'neutral-left-top' ? 'bg-yellow-600 text-white border-yellow-400' : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'}`}>Left Top</button>
+                    <button onClick={() => setSelectedFODot('neutral-left-bottom')} className={`w-full py-2 rounded-lg text-[10px] font-black border transition-all ${selectedFODot === 'neutral-left-bottom' ? 'bg-yellow-600 text-white border-yellow-400' : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'}`}>Left Bottom</button>
+                    <button onClick={() => setSelectedFODot('neutral-right-top')} className={`w-full py-2 rounded-lg text-[10px] font-black border transition-all ${selectedFODot === 'neutral-right-top' ? 'bg-yellow-600 text-white border-yellow-400' : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'}`}>Right Top</button>
+                    <button onClick={() => setSelectedFODot('neutral-right-bottom')} className={`w-full py-2 rounded-lg text-[10px] font-black border transition-all ${selectedFODot === 'neutral-right-bottom' ? 'bg-yellow-600 text-white border-yellow-400' : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'}`}>Right Bottom</button>
+                  </div>
+                  {/* Right zone */}
+                  <div className="space-y-1.5">
+                    <p className="text-[9px] text-slate-600 font-bold uppercase text-center">Right Zone</p>
+                    <button onClick={() => setSelectedFODot('right-top')} className={`w-full py-2 rounded-lg text-[10px] font-black border transition-all ${selectedFODot === 'right-top' ? 'bg-yellow-600 text-white border-yellow-400' : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'}`}>Top Circle</button>
+                    <button onClick={() => setSelectedFODot('right-bottom')} className={`w-full py-2 rounded-lg text-[10px] font-black border transition-all ${selectedFODot === 'right-bottom' ? 'bg-yellow-600 text-white border-yellow-400' : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'}`}>Bottom Circle</button>
+                  </div>
                 </div>
-                {(!fowHomeCenter || !fowAwayCenter) && <p className="text-xs text-slate-600 text-center">Select both centres to log</p>}
               </div>
 
-              {/* Away centre */}
-              <div className="bg-red-900/20 border border-red-500/20 rounded-xl p-3">
-                <p className="text-xs font-black text-red-400 uppercase tracking-wider mb-2">{awayName} Centre</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {awayRoster.filter(p => ['C','LW','RW','F'].includes(p.position?.toUpperCase() || '')).map(p => (
-                    <button key={p.number} onClick={() => setFowAwayCenter(p.number)}
-                      className={`px-2.5 py-1.5 rounded-lg text-xs font-black transition-all border ${fowAwayCenter === p.number ? 'bg-red-600 text-white border-red-400' : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'}`}>
-                      #{p.number} {p.name.split(' ').pop()}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              {/* Row 3: WIN / LOSS */}
+              {(() => {
+                const dotCoords: Record<string, {x: number; y: number; zone: Zone}> = {
+                  'center': {x: 100, y: 42.5, zone: Zone.NEUTRAL},
+                  'left-top': {x: 31, y: 20.5, zone: Zone.DEFENSIVE},
+                  'left-bottom': {x: 31, y: 64.5, zone: Zone.DEFENSIVE},
+                  'right-top': {x: 169, y: 20.5, zone: Zone.OFFENSIVE},
+                  'right-bottom': {x: 169, y: 64.5, zone: Zone.OFFENSIVE},
+                  'neutral-left-top': {x: 80, y: 20.5, zone: Zone.NEUTRAL},
+                  'neutral-left-bottom': {x: 80, y: 64.5, zone: Zone.NEUTRAL},
+                  'neutral-right-top': {x: 120, y: 20.5, zone: Zone.NEUTRAL},
+                  'neutral-right-bottom': {x: 120, y: 64.5, zone: Zone.NEUTRAL},
+                };
+                const logFaceoff = (homeWins: boolean) => {
+                  if (!fowHomeCenter || !fowAwayCenter) { alert('Select both centres first'); return; }
+                  const dot = dotCoords[selectedFODot] || dotCoords['center'];
+                  const homeFO: GameEvent = { id: `fo-h-${Date.now()}`, timestamp: Date.now(), gameTime: `P${currentPeriod}`, period: currentPeriod, type: homeWins ? EventType.FACEOFF_WIN : EventType.FACEOFF_LOSS, team: Team.HOME, zone: dot.zone, playerNumber: fowHomeCenter, coordinates: {x: dot.x, y: dot.y}, metadata: { faceoffDot: selectedFODot } };
+                  const awayFO: GameEvent = { id: `fo-a-${Date.now()}`, timestamp: Date.now() + 1, gameTime: `P${currentPeriod}`, period: currentPeriod, type: homeWins ? EventType.FACEOFF_LOSS : EventType.FACEOFF_WIN, team: Team.AWAY, zone: dot.zone, playerNumber: fowAwayCenter, coordinates: {x: dot.x, y: dot.y}, metadata: { faceoffDot: selectedFODot } };
+                  setEvents(prev => [...prev, homeFO, awayFO]);
+                };
+                return (
+                  <div className="grid grid-cols-2 gap-4">
+                    <button onClick={() => logFaceoff(true)} className="py-5 bg-yellow-600 hover:bg-yellow-500 text-white font-black rounded-xl text-base transition-all active:scale-95 shadow-lg">✓ {homeName} WIN</button>
+                    <button onClick={() => logFaceoff(false)} className="py-5 bg-slate-700 hover:bg-slate-600 text-white font-black rounded-xl text-base transition-all active:scale-95 shadow-lg">✗ {homeName} LOSS</button>
+                  </div>
+                );
+              })()}
             </div>
           </div>
         )}
