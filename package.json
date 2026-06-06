@@ -25,7 +25,8 @@
     "tailwindcss": "^4.2.2",
     "xlsx": "0.18.5",
     "@clerk/clerk-react": "^5.0.0",
-    "stripe": "^14.0.0"
+    "stripe": "^14.0.0",
+    "@supabase/supabase-js": "^2.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
