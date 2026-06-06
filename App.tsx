@@ -255,6 +255,7 @@ const App: React.FC = () => {
   const [mapPlotType, setMapPlotType] = useState<EventType>(EventType.SHOT);
   const [lastEvent, setLastEvent] = useState<{type: EventType; playerNumber: string; team: Team} | null>(null);
   const [plotFlash, setPlotFlash] = useState(false);
+  const [showEndGame, setShowEndGame] = useState(false);
   const [isRosterSwapped, setIsRosterSwapped] = useState(false);
 
   const toolbarButtons = useMemo(() => [
@@ -515,6 +516,17 @@ const App: React.FC = () => {
     setTimeout(() => setPlotFlash(false), 600);
   };
 
+  const handleEndGame = () => {
+    setShowEndGame(true);
+  };
+
+  const handleConfirmEndGame = async () => {
+    try {
+      handleExportPDF();
+    } catch {}
+    setShowEndGame(false);
+  };
+
   const handleRepeatLast = () => {
     if (!lastEvent) return;
     const lastLogged = [...events].reverse().find(e => e.type === lastEvent.type && e.team === lastEvent.team);
@@ -689,6 +701,7 @@ const App: React.FC = () => {
           onSetPeriod={setCurrentPeriod}
           onSwapSides={() => setIsRosterSwapped(!isRosterSwapped)}
           onNewGame={handleNewGame}
+          onEndGame={handleEndGame}
         />
         
         <main className="flex flex-col pb-20">
@@ -1279,6 +1292,73 @@ const App: React.FC = () => {
       {legalPage && <LegalPages page={legalPage} onClose={() => setLegalPage(null)} />}
       <PlayerStats isOpen={showPlayerStats} onClose={() => setShowPlayerStats(false)} events={events} homeRoster={homeRoster} awayRoster={awayRoster} homeName={homeName} awayName={awayName} />
       {showContact && <ContactPage onClose={() => setShowContact(false)} />}
+
+      {showEndGame && (
+        <div className="fixed inset-0 z-[400] bg-black/90 backdrop-blur-sm flex items-center justify-center px-4">
+          <div className="bg-[#0f1620] border border-white/10 rounded-2xl p-8 max-w-md w-full shadow-2xl">
+            <div className="text-center mb-6">
+              <div className="text-5xl mb-4">🏆</div>
+              <h3 className="text-white font-black text-2xl mb-2">End Game</h3>
+              <p className="text-slate-400 text-sm">Here's your game summary</p>
+            </div>
+
+            {/* Game summary stats */}
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              <div className="bg-blue-900/20 border border-blue-500/20 rounded-xl p-3 text-center">
+                <p className="text-xs text-blue-400 font-bold uppercase tracking-wider mb-1">{homeName}</p>
+                <p className="text-3xl font-black text-white">{events.filter(e => e.team === Team.HOME && e.type === EventType.GOAL).length}</p>
+                <p className="text-xs text-slate-500">Goals</p>
+                <p className="text-lg font-black text-blue-300 mt-1">{events.filter(e => e.team === Team.HOME && e.type === EventType.SHOT).length}</p>
+                <p className="text-xs text-slate-500">Shots</p>
+              </div>
+              <div className="bg-red-900/20 border border-red-500/20 rounded-xl p-3 text-center">
+                <p className="text-xs text-red-400 font-bold uppercase tracking-wider mb-1">{awayName}</p>
+                <p className="text-3xl font-black text-white">{events.filter(e => e.team === Team.AWAY && e.type === EventType.GOAL).length}</p>
+                <p className="text-xs text-slate-500">Goals</p>
+                <p className="text-lg font-black text-red-300 mt-1">{events.filter(e => e.team === Team.AWAY && e.type === EventType.SHOT).length}</p>
+                <p className="text-xs text-slate-500">Shots</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2 mb-6 text-center">
+              <div className="bg-white/5 rounded-xl p-2">
+                <p className="text-lg font-black text-white">{events.length}</p>
+                <p className="text-xs text-slate-500">Total Events</p>
+              </div>
+              <div className="bg-white/5 rounded-xl p-2">
+                <p className="text-lg font-black text-white">{events.filter(e => e.type === EventType.FACEOFF_WIN || e.type === EventType.FACEOFF_LOSS).length / 2 | 0}</p>
+                <p className="text-xs text-slate-500">Faceoffs</p>
+              </div>
+              <div className="bg-white/5 rounded-xl p-2">
+                <p className="text-lg font-black text-white">{currentPeriod}</p>
+                <p className="text-xs text-slate-500">Periods</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-500 text-center mb-5">Your PDF scouting report will download automatically.</p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowEndGame(false)}
+                className="flex-1 py-3 border border-white/10 hover:border-white/20 text-white font-bold rounded-xl text-sm transition-colors"
+              >
+                Keep Tracking
+              </button>
+              <button
+                onClick={handleConfirmEndGame}
+                className="flex-1 py-3 bg-green-600 hover:bg-green-500 text-white font-black rounded-xl text-sm transition-colors"
+              >
+                📥 Download Report
+              </button>
+            </div>
+
+            <div className="flex gap-2 mt-3">
+              <button onClick={() => { handleExportExcel(); }} className="flex-1 py-2 bg-white/5 hover:bg-white/10 text-slate-400 font-bold rounded-xl text-xs transition-colors">Excel</button>
+              <button onClick={() => { handleExportHTML(); }} className="flex-1 py-2 bg-white/5 hover:bg-white/10 text-slate-400 font-bold rounded-xl text-xs transition-colors">HTML</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
