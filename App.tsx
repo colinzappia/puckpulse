@@ -4,7 +4,6 @@ import Header from './components/Header';
 import RinkChart from './components/RinkChart';
 import PlayByPlay from './components/PlayByPlay';
 import CenterAnalytics from './components/CenterAnalytics';
-import FaceoffSummary from './components/FaceoffSummary';
 import UserManual from './components/UserManual';
 import LandingPage from './components/LandingPage';
 import AdBanner from './components/AdBanner';
@@ -222,7 +221,6 @@ const App: React.FC = () => {
   const [showManual, setShowManual] = useState(false);
   const [showFeed, setShowFeed] = useState(true);
   const [showLineups, setShowLineups] = useState(true);
-  const [showFaceoffHub, setShowFaceoffHub] = useState(false); 
 
   const [fowHomeCenter, setFowHomeCenter] = useState<string>('');
   const [fowAwayCenter, setFowAwayCenter] = useState<string>('');
@@ -822,58 +820,6 @@ const App: React.FC = () => {
           })}
         </div>
 
-        {/* FACEOFF HUB */}
-        {showFaceoffHub && (
-          <div className="w-full px-4 py-6 bg-slate-900/60 border-b border-white/10 flex flex-col gap-6 animate-in slide-in-from-top duration-300">
-            <div className="flex flex-col sm:flex-row gap-6 justify-center max-w-7xl mx-auto w-full">
-              <div className="flex-1 flex flex-col gap-3 p-5 bg-black/40 border border-blue-500/20 rounded-[2.5rem] shadow-xl">
-                <div className="flex justify-between items-center px-2">
-                   <div className="flex items-center gap-2">
-                     <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                     <span className="text-[10px] font-black uppercase text-blue-400 tracking-widest">{homeName} CENTER</span>
-                   </div>
-                   {fowHomeCenter && <span className="text-[10px] font-black text-white italic tracking-tighter">{getPlayerFOStats(fowHomeCenter)}% WINS</span>}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {centers.home.map(p => (
-                    <button key={`fo-home-${p.number}`} onClick={() => setFowHomeCenter(p.number)} className={`px-4 py-2.5 rounded-xl text-[11px] font-black transition-all border active:scale-95 ${fowHomeCenter === p.number ? 'bg-blue-600 text-white border-blue-400 shadow-lg shadow-blue-500/20' : 'bg-white/5 text-slate-500 border-white/5 hover:bg-white/10'}`}>#{p.number}</button>
-                  ))}
-                  <select className="flex-1 min-w-[120px] bg-black/60 border border-white/10 rounded-xl px-4 py-2.5 text-[10px] font-black text-slate-300 outline-none" value={fowHomeCenter} onChange={(e) => setFowHomeCenter(e.target.value)}>
-                    <option value="">OTHER...</option>
-                    {homeRoster.filter(p => p.position?.toUpperCase() !== 'G').map(p => <option key={p.number} value={p.number}>#{p.number} {p.name}</option>)}
-                  </select>
-                </div>
-              </div>
-
-              <div className="flex flex-col items-center justify-center gap-5 px-4">
-                <div className="flex bg-black/60 p-2 rounded-[2rem] border border-white/10 shadow-inner">
-                  <button onClick={() => setMapPlotType(EventType.FACEOFF_WIN)} className={`px-8 py-4 rounded-2xl text-[11px] font-black uppercase transition-all active:scale-90 ${mapPlotType === EventType.FACEOFF_WIN ? 'bg-yellow-600 text-white shadow-[0_0_25px_rgba(202,138,4,0.5)] border border-yellow-400' : 'text-slate-600 hover:text-white'}`}>WIN</button>
-                  <button onClick={() => setMapPlotType(EventType.FACEOFF_LOSS)} className={`px-8 py-4 rounded-2xl text-[11px] font-black uppercase transition-all active:scale-90 ${mapPlotType === EventType.FACEOFF_LOSS ? 'bg-purple-600 text-white shadow-[0_0_25px_rgba(147,51,234,0.5)] border border-purple-400' : 'text-slate-600 hover:text-white'}`}>LOSS</button>
-                </div>
-                <div className="text-[10px] font-black text-blue-500 uppercase tracking-widest flex items-center gap-2 animate-pulse">Tap Rink to Plot</div>
-              </div>
-
-              <div className="flex-1 flex flex-col gap-3 p-5 bg-black/40 border border-red-500/20 rounded-[2.5rem] shadow-xl">
-                <div className="flex justify-between items-center px-2">
-                   <div className="flex items-center gap-2">
-                     <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                     <span className="text-[10px] font-black uppercase text-red-400 tracking-widest">{awayName} CENTER</span>
-                   </div>
-                   {fowAwayCenter && <span className="text-[10px] font-black text-white italic tracking-tighter">{getPlayerFOStats(fowAwayCenter)}% WINS</span>}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {centers.away.map(p => (
-                    <button key={`fo-away-${p.number}`} onClick={() => setFowAwayCenter(p.number)} className={`px-4 py-2.5 rounded-xl text-[11px] font-black transition-all border active:scale-95 ${fowAwayCenter === p.number ? 'bg-red-600 text-white border-red-400 shadow-lg shadow-red-500/20' : 'bg-white/5 text-slate-500 border-white/5 hover:bg-white/10'}`}>#{p.number}</button>
-                  ))}
-                  <select className="flex-1 min-w-[120px] bg-black/60 border border-white/10 rounded-xl px-4 py-2.5 text-[10px] font-black text-slate-300 outline-none" value={fowAwayCenter} onChange={(e) => setFowAwayCenter(e.target.value)}>
-                    <option value="">OTHER...</option>
-                    {awayRoster.filter(p => p.position?.toUpperCase() !== 'G').map(p => <option key={p.number} value={p.number}>#{p.number} {p.name}</option>)}
-                  </select>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* RINK */}
         <div className="bg-black relative flex flex-col min-h-[420px] sm:min-h-[500px] md:min-h-[600px] shadow-inner overflow-hidden">
@@ -912,7 +858,6 @@ const App: React.FC = () => {
               >
                 {showLineups ? 'HIDE ROSTERS' : 'SHOW ROSTERS'}
               </button>
-              <button onClick={() => { setShowFaceoffHub(!showFaceoffHub); setMapPlotType(EventType.FACEOFF_WIN); }} className={`px-4 py-2.5 rounded-lg text-[10px] font-black uppercase transition-all border ${showFaceoffHub ? 'bg-yellow-600 text-white border-yellow-400 shadow-[0_0_15px_rgba(202,138,4,0.3)]' : 'bg-white/5 text-slate-500 border-white/5 hover:bg-white/10'}`}>F.O. HUB</button>
             </div>
 
             <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-3 px-2 border-l border-r border-white/10">
@@ -1052,8 +997,6 @@ const App: React.FC = () => {
                </div>
             </div>
 
-            <FaceoffSummary events={events} homeName={homeName} awayName={awayName} />
-            
             {showFeed && (
               <div className="rounded-[2rem] overflow-hidden border border-white/10 bg-slate-900/40 shadow-2xl">
                 <PlayByPlay events={events} homeName={homeName} awayName={awayName} onRemoveEvent={handleRemoveEvent} onUpdateEvent={handleUpdateEvent} />
