@@ -134,29 +134,34 @@ const FaceoffWidget: React.FC<FaceoffWidgetProps> = ({
         <span>Faceoffs {totalFaceoffs > 0 ? `· ${homeStats.pct}%` : ''}</span>
       </button>
 
-      {/* Full widget modal */}
+      {/* Slide-in panel */}
       {isOpen && (
-        <div className="fixed inset-0 z-[250] bg-black/95 backdrop-blur-xl flex flex-col">
+        <div className="fixed inset-0 z-[250] pointer-events-none">
+          {/* Backdrop - only covers rink area, allows scrolling */}
+          <div className="absolute inset-0 bg-black/40 pointer-events-auto" onClick={() => setIsOpen(false)} />
+          
+          {/* Panel slides in from right */}
+          <div className="absolute top-0 right-0 h-full w-full max-w-sm bg-[#0a0e14] border-l border-white/10 shadow-2xl flex flex-col pointer-events-auto animate-in slide-in-from-right duration-300">
           {/* Header */}
-          <div className="px-6 py-5 flex items-center justify-between border-b border-white/10 bg-black/40 shrink-0">
+          <div className="px-4 py-4 flex items-center justify-between border-b border-white/10 bg-black/40 shrink-0">
             <div>
-              <h2 className="text-2xl font-black text-white tracking-tight">Faceoff Hub</h2>
+              <h2 className="text-lg font-black text-white tracking-tight">🏒 Faceoff Hub</h2>
               <p className="text-xs text-slate-500 mt-0.5">{totalFaceoffs} faceoffs tracked</p>
             </div>
-            <button onClick={() => setIsOpen(false)} className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white text-lg font-bold">×</button>
+            <button onClick={() => setIsOpen(false)} className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white text-lg font-bold">×</button>
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-1 p-3 bg-black/20 border-b border-white/5 shrink-0">
-            <button onClick={() => setView('log')} className={`flex-1 py-2.5 rounded-xl text-sm font-black uppercase tracking-wider transition-all ${view === 'log' ? 'bg-yellow-600 text-white' : 'text-slate-400 hover:text-white'}`}>
-              🏒 Log Faceoff
+          <div className="flex gap-1 p-2 bg-black/20 border-b border-white/5 shrink-0">
+            <button onClick={() => setView('log')} className={`flex-1 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${view === 'log' ? 'bg-yellow-600 text-white' : 'text-slate-400 hover:text-white'}`}>
+              Log
             </button>
-            <button onClick={() => setView('stats')} className={`flex-1 py-2.5 rounded-xl text-sm font-black uppercase tracking-wider transition-all ${view === 'stats' ? 'bg-yellow-600 text-white' : 'text-slate-400 hover:text-white'}`}>
-              📊 Breakdown
+            <button onClick={() => setView('stats')} className={`flex-1 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${view === 'stats' ? 'bg-yellow-600 text-white' : 'text-slate-400 hover:text-white'}`}>
+              Breakdown
             </button>
           </div>
 
-          <div className="flex-1 overflow-auto px-4 py-4">
+          <div className="flex-1 overflow-auto px-3 py-3">
 
             {/* LOG VIEW */}
             {view === 'log' && (
@@ -396,6 +401,7 @@ const FaceoffWidget: React.FC<FaceoffWidgetProps> = ({
                 )}
               </div>
             )}
+          </div>
           </div>
         </div>
       )}
