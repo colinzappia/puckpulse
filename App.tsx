@@ -253,6 +253,8 @@ const App: React.FC = () => {
   const [manualAway, setManualAway] = useState({ number: '', name: '', pos: 'F', line: '1' });
   
   const [mapPlotType, setMapPlotType] = useState<EventType>(EventType.SHOT);
+  const [lastEvent, setLastEvent] = useState<{type: EventType; playerNumber: string; team: Team} | null>(null);
+  const [plotFlash, setPlotFlash] = useState(false);
   const [isRosterSwapped, setIsRosterSwapped] = useState(false);
 
   const toolbarButtons = useMemo(() => [
@@ -496,7 +498,7 @@ const App: React.FC = () => {
       return;
     }
 
-    setEvents(prev => [...prev, {
+    const newEvent = {
       id: Math.random().toString(36).substr(2, 9),
       timestamp: Date.now(),
       gameTime: '20:00',
@@ -506,7 +508,31 @@ const App: React.FC = () => {
       zone: getTeamZone(activeTeam, x),
       playerNumber: playerNumber || undefined,
       coordinates: { x, y }
-    }]);
+    };
+    setEvents(prev => [...prev, newEvent]);
+    setLastEvent({ type: mapPlotType, playerNumber: playerNumber, team: activeTeam });
+    setPlotFlash(true);
+    setTimeout(() => setPlotFlash(false), 600);
+  };
+
+  const handleRepeatLast = () => {
+    if (!lastEvent) return;
+    const lastLogged = [...events].reverse().find(e => e.type === lastEvent.type && e.team === lastEvent.team);
+    const coords = lastLogged?.coordinates || { x: 100, y: 42.5 };
+    const newEvent = {
+      id: Math.random().toString(36).substr(2, 9),
+      timestamp: Date.now(),
+      gameTime: '20:00',
+      period: currentPeriod,
+      type: lastEvent.type,
+      team: lastEvent.team,
+      zone: Zone.NEUTRAL,
+      playerNumber: lastEvent.playerNumber || undefined,
+      coordinates: coords
+    };
+    setEvents(prev => [...prev, newEvent]);
+    setPlotFlash(true);
+    setTimeout(() => setPlotFlash(false), 600);
   };
 
   const handleUndo = () => setEvents(prev => prev.slice(0, -1));
@@ -867,6 +893,22 @@ const App: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
+              {/* Active player indicator */}
+              {playerNumber && (
+                <div className={`px-3 py-2 rounded-xl text-xs font-black border transition-all ${activeTeam === Team.HOME ? 'bg-blue-600/20 border-blue-500/40 text-blue-300' : 'bg-red-600/20 border-red-500/40 text-red-300'}`}>
+                  #{playerNumber}
+                </div>
+              )}
+              {/* Repeat last button */}
+              {lastEvent && (
+                <button
+                  onClick={handleRepeatLast}
+                  title="Repeat last event"
+                  className="px-3 py-2 bg-yellow-600/20 hover:bg-yellow-600/40 border border-yellow-500/30 rounded-xl text-yellow-400 text-xs font-black transition-all active:scale-95"
+                >
+                  ↺ REPEAT
+                </button>
+              )}
               <button onClick={handleUndo} className="p-3 md:p-4 bg-white/5 hover:bg-white/10 rounded-xl text-slate-400 active:bg-white/20 transition-all shadow-lg"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /></svg></button>
             </div>
           </div>
@@ -875,6 +917,9 @@ const App: React.FC = () => {
             <div className={`w-full max-w-6xl aspect-[200/85] transition-all duration-700 rounded-[5rem] sm:rounded-[8.5rem] p-2 border-4 shadow-2xl ${activeTeam === Team.HOME ? 'border-blue-500/20' : 'border-red-500/20'}`}>
               <RinkChart events={events.filter(e => e.period === currentPeriod && visibleTypes.includes(e.type))} leftLogo={leftTeamDisplay.logo} rightLogo={rightTeamDisplay.logo} onPlot={handlePlot} onMoveEvent={handleMoveEvent} activeEventType={mapPlotType} />
             </div>
+            {plotFlash && (
+              <div className="absolute inset-0 bg-green-500/10 border-2 border-green-400/40 rounded-[5rem] sm:rounded-[8.5rem] pointer-events-none animate-ping" style={{animationDuration:'0.5s', animationIterationCount:1}} />
+            )}
             <button
               onClick={() => setShowPlayerStats(true)}
               className="absolute bottom-4 right-4 sm:bottom-12 sm:right-12 flex items-center gap-2 bg-blue-600/90 hover:bg-blue-500 text-white text-xs font-black uppercase tracking-wider px-4 py-2.5 rounded-full shadow-xl border border-blue-400/30 transition-all active:scale-95 backdrop-blur-sm"
