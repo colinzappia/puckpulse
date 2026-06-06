@@ -1338,58 +1338,73 @@ const App: React.FC = () => {
           >⚙ Manage Subscription</button>
         )}
       </div>
-      {/* Line on ice popup for goals */}
-      {pendingGoal && (
-        <div className="fixed inset-0 z-[400] bg-black/80 backdrop-blur-sm flex items-center justify-center px-4" style={{pointerEvents:'all'}}>
-          <div className="bg-[#0f1620] border border-white/10 rounded-2xl p-6 max-w-sm w-full shadow-2xl">
-            <div className="text-center mb-4">
-              {/* Spinning red goal light */}
-              <div className="relative w-16 h-16 mx-auto mb-3">
-                <div className="absolute inset-0 rounded-full bg-red-600 animate-ping opacity-40" />
-                <div className="absolute inset-1 rounded-full bg-red-500 animate-spin" style={{animationDuration:'0.8s'}} />
-                <div className="absolute inset-3 rounded-full bg-red-300" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-3 h-3 rounded-full bg-white" />
-                </div>
-              </div>
-              <h3 className="text-white font-black text-lg">GOAL!</h3>
-              <p className="text-slate-400 text-sm mb-1">Which line was on ice?</p>
-              <p className="text-slate-600 text-xs">Tap a line or skip to log without line info</p>
-            </div>
-            <div className="grid grid-cols-2 gap-2 mb-3">
-              {(['Line 1', 'Line 2', 'Line 3', 'Line 4'] as const).map(line => (
-                <button
-                  key={line}
-                  type="button"
-                  onPointerDown={(e) => { e.stopPropagation(); confirmGoal(line); }}
-                  className="py-3 bg-green-700/40 hover:bg-green-600/60 active:bg-green-600 border border-green-500/30 text-white font-black rounded-xl text-sm transition-colors cursor-pointer select-none"
-                >
-                  {line}
-                </button>
-              ))}
-            </div>
-            <div className="grid grid-cols-3 gap-2 mb-4">
-              {(['Pair 1', 'Pair 2', 'Pair 3'] as const).map(pair => (
-                <button
-                  key={pair}
-                  type="button"
-                  onPointerDown={(e) => { e.stopPropagation(); confirmGoal(pair); }}
-                  className="py-2.5 bg-blue-700/40 hover:bg-blue-600/60 active:bg-blue-600 border border-blue-500/30 text-white font-black rounded-xl text-xs transition-colors cursor-pointer select-none"
-                >
-                  {pair}
-                </button>
-              ))}
-            </div>
-            <button
-              type="button"
-              onPointerDown={(e) => { e.stopPropagation(); confirmGoal(undefined); }}
-              className="w-full py-2.5 bg-white/5 hover:bg-white/10 active:bg-white/20 text-slate-400 font-bold rounded-xl text-sm transition-colors cursor-pointer select-none"
+      {/* Line on ice popup for goals - rendered at top level with highest z-index */}
+      {pendingGoal !== null && (() => {
+        const scoringTeamName = pendingGoal.team === Team.HOME ? homeName : awayName;
+        const teamColor = pendingGoal.team === Team.HOME ? 'blue' : 'red';
+        return (
+          <div 
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center px-4"
+            style={{zIndex: 99999, pointerEvents: 'all'}}
+          >
+            <div 
+              className="bg-[#0f1620] border border-white/10 rounded-2xl p-6 w-full shadow-2xl"
+              style={{maxWidth: '360px', pointerEvents: 'all'}}
+              onClick={(e) => e.stopPropagation()}
             >
-              Skip — log without line info
-            </button>
+              <div className="text-center mb-5">
+                <div className="relative w-16 h-16 mx-auto mb-3">
+                  <div className="absolute inset-0 rounded-full bg-red-600 animate-ping opacity-40" />
+                  <div className="absolute inset-1 rounded-full bg-red-500 animate-spin" style={{animationDuration:'0.8s'}} />
+                  <div className="absolute inset-3 rounded-full bg-red-300" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-3 h-3 rounded-full bg-white" />
+                  </div>
+                </div>
+                <h3 className="text-white font-black text-xl mb-1">GOAL!</h3>
+                <div className={`inline-block px-3 py-1 rounded-full text-xs font-black mb-2 ${teamColor === 'blue' ? 'bg-blue-600 text-white' : 'bg-red-600 text-white'}`}>
+                  {scoringTeamName}
+                </div>
+                <p className="text-slate-400 text-sm">Which {scoringTeamName} line was on ice?</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                {['Line 1', 'Line 2', 'Line 3', 'Line 4'].map(line => (
+                  <button
+                    key={line}
+                    onClick={() => confirmGoal(line)}
+                    className="py-4 bg-green-700/40 hover:bg-green-600/60 active:bg-green-700 border border-green-500/30 text-white font-black rounded-xl text-sm transition-colors"
+                    style={{touchAction: 'manipulation'}}
+                  >
+                    {scoringTeamName} {line}
+                  </button>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 mb-4">
+                {['Pair 1', 'Pair 2', 'Pair 3'].map(pair => (
+                  <button
+                    key={pair}
+                    onClick={() => confirmGoal(pair)}
+                    className="py-3 bg-blue-700/40 hover:bg-blue-600/60 active:bg-blue-700 border border-blue-500/30 text-white font-black rounded-xl text-xs transition-colors"
+                    style={{touchAction: 'manipulation'}}
+                  >
+                    {pair}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                onClick={() => confirmGoal(undefined)}
+                className="w-full py-3 bg-white/5 hover:bg-white/10 text-slate-400 font-bold rounded-xl text-sm transition-colors"
+                style={{touchAction: 'manipulation'}}
+              >
+                Skip — log without line info
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {legalPage && <LegalPages page={legalPage} onClose={() => setLegalPage(null)} />}
       <PlayerStats isOpen={showPlayerStats} onClose={() => setShowPlayerStats(false)} events={events} homeRoster={homeRoster} awayRoster={awayRoster} homeName={homeName} awayName={awayName} />
