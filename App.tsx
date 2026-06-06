@@ -260,14 +260,22 @@ const App: React.FC = () => {
     EventType.BLOCK, EventType.FACEOFF_WIN, EventType.FACEOFF_LOSS,
     EventType.PP_SHOT_FOR, EventType.PP_SHOT_AGAINST
   ]);
-  const [homeName, setHomeName] = useState("HOME");
-  const [awayName, setAwayName] = useState("AWAY");
+  const [homeName, setHomeName] = useState(() => {
+    try { return sessionStorage.getItem('tch_homeName') || 'HOME'; } catch { return 'HOME'; }
+  });
+  const [awayName, setAwayName] = useState(() => {
+    try { return sessionStorage.getItem('tch_awayName') || 'AWAY'; } catch { return 'AWAY'; }
+  });
   const [homeLogo, setHomeLogo] = useState("");
   const [awayLogo, setAwayLogo] = useState("");
   const [homeRosterUrl, setHomeRosterUrl] = useState("");
   const [awayRosterUrl, setAwayRosterUrl] = useState("");
-  const [homeRoster, setHomeRoster] = useState<Player[]>([]);
-  const [awayRoster, setAwayRoster] = useState<Player[]>([]);
+  const [homeRoster, setHomeRoster] = useState<Player[]>(() => {
+    try { const s = sessionStorage.getItem('tch_homeRoster'); return s ? JSON.parse(s) : []; } catch { return []; }
+  });
+  const [awayRoster, setAwayRoster] = useState<Player[]>(() => {
+    try { const s = sessionStorage.getItem('tch_awayRoster'); return s ? JSON.parse(s) : []; } catch { return []; }
+  });
   const [homeSources, setHomeSources] = useState<{ uri: string; title: string }[]>([]);
   const [awaySources, setAwaySources] = useState<{ uri: string; title: string }[]>([]);
   const [manualHome, setManualHome] = useState({ number: '', name: '', pos: 'F', line: '1' });
@@ -293,6 +301,21 @@ const App: React.FC = () => {
   useEffect(() => {
     if (!visibleTypes.includes(mapPlotType)) setVisibleTypes(prev => [...prev, mapPlotType]);
   }, [mapPlotType]);
+
+  useEffect(() => {
+    try { sessionStorage.setItem('tch_homeRoster', JSON.stringify(homeRoster)); } catch {}
+  }, [homeRoster]);
+
+  useEffect(() => {
+    try { sessionStorage.setItem('tch_awayRoster', JSON.stringify(awayRoster)); } catch {}
+  }, [awayRoster]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('tch_homeName', homeName);
+      sessionStorage.setItem('tch_awayName', awayName);
+    } catch {}
+  }, [homeName, awayName]);
 
   const sortByNumber = (roster: Player[]) => [...roster].sort((a, b) => (parseInt(a.number, 10) || 0) - (parseInt(b.number, 10) || 0));
 
@@ -445,6 +468,7 @@ const App: React.FC = () => {
     setAwayLogo('');
     setSummaries({ 'total': 'Game tracking active. Generate coaching analysis after logging more events.' });
     localStorage.removeItem('tch_game_state');
+    try { ['tch_homeRoster','tch_awayRoster','tch_homeName','tch_awayName'].forEach(k => sessionStorage.removeItem(k)); } catch {}
     sessionStorage.setItem('tch_launched', 'true');
     setShowNewGameConfirm(false);
   };
@@ -722,10 +746,10 @@ const App: React.FC = () => {
           <div className="w-full px-2 py-2 bg-white/5 border-b border-white/10 flex flex-wrap items-center justify-between gap-2 shadow-inner shrink-0">
             {/* Shot counters */}
             <div className="flex items-center gap-2">
-              <div className="w-1 h-6 bg-blue-600 rounded-full"></div>
+              <div className="w-1.5 h-8 bg-blue-600 rounded-full shadow-[0_0_8px_rgba(37,99,235,0.5)]"></div>
               <div className="flex flex-col leading-tight">
-                <span className="text-[8px] font-black text-blue-500 uppercase tracking-wider">{homeName}</span>
-                <span className="text-lg font-black text-white italic leading-none">{stats.home.shots} <span className="text-[9px] font-bold text-slate-500">shots</span></span>
+                <span className="text-[9px] font-black text-blue-500 uppercase tracking-wider">{homeName}</span>
+                <span className="text-2xl sm:text-3xl font-black text-white italic leading-none">{stats.home.shots} <span className="text-[10px] font-bold text-slate-500">shots</span></span>
               </div>
             </div>
 
@@ -744,10 +768,10 @@ const App: React.FC = () => {
             {/* Away shot counter */}
             <div className="flex items-center gap-2">
               <div className="flex flex-col items-end leading-tight">
-                <span className="text-[8px] font-black text-red-500 uppercase tracking-wider">{awayName}</span>
-                <span className="text-lg font-black text-white italic leading-none">{stats.away.shots} <span className="text-[9px] font-bold text-slate-500">shots</span></span>
+                <span className="text-[9px] font-black text-red-500 uppercase tracking-wider">{awayName}</span>
+                <span className="text-2xl sm:text-3xl font-black text-white italic leading-none">{stats.away.shots} <span className="text-[10px] font-bold text-slate-500">shots</span></span>
               </div>
-              <div className="w-1 h-6 bg-red-600 rounded-full"></div>
+              <div className="w-1.5 h-8 bg-red-600 rounded-full shadow-[0_0_8px_rgba(220,38,38,0.5)]"></div>
             </div>
           </div>
 
