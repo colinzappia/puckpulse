@@ -719,24 +719,17 @@ const App: React.FC = () => {
 
         {/* RINK */}
         <div className="bg-black relative flex flex-col min-h-[420px] sm:min-h-[500px] md:min-h-[600px] shadow-inner overflow-hidden">
-          <div className="w-full bg-black/40 border-b border-white/5 py-3 px-6 sm:px-12 flex items-center justify-between shrink-0">
-            <div className="flex items-center gap-3">
-              <div className="w-1.5 h-8 bg-blue-600 rounded-full shadow-[0_0_10px_rgba(37,99,235,0.4)]"></div>
-              <div className="flex flex-col">
-                <span className="text-[8px] sm:text-[10px] font-black text-blue-500 uppercase tracking-[0.2em]">{homeName} SHOTS</span>
-                <span className="text-xl sm:text-3xl font-black text-white italic leading-none">{stats.home.shots}</span>
+          <div className="w-full px-2 py-2 bg-white/5 border-b border-white/10 flex flex-wrap items-center justify-between gap-2 shadow-inner shrink-0">
+            {/* Shot counters */}
+            <div className="flex items-center gap-2">
+              <div className="w-1 h-6 bg-blue-600 rounded-full"></div>
+              <div className="flex flex-col leading-tight">
+                <span className="text-[8px] font-black text-blue-500 uppercase tracking-wider">{homeName}</span>
+                <span className="text-lg font-black text-white italic leading-none">{stats.home.shots} <span className="text-[9px] font-bold text-slate-500">shots</span></span>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="flex flex-col items-end">
-                <span className="text-[8px] sm:text-[10px] font-black text-red-500 uppercase tracking-[0.2em]">{awayName} SHOTS</span>
-                <span className="text-xl sm:text-3xl font-black text-white italic leading-none">{stats.away.shots}</span>
-              </div>
-              <div className="w-1.5 h-8 bg-red-600 rounded-full shadow-[0_0_10px_rgba(220,38,38,0.4)]"></div>
-            </div>
-          </div>
 
-          <div className="w-full px-2 py-2 bg-white/5 border-b border-white/10 flex flex-wrap items-center justify-center gap-2 shadow-inner shrink-0">
+            {/* Home/Away/Hide Rosters */}
             <div className="flex flex-wrap items-center bg-white/5 p-1 rounded-xl border border-white/10 shrink-0 shadow-inner gap-1">
               <div className="flex">
                 <button onClick={() => setActiveTeam(Team.HOME)} className={`px-4 sm:px-6 md:px-8 py-2.5 md:py-3 rounded-lg text-xs md:text-sm font-black uppercase transition-all ${activeTeam === Team.HOME ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>{homeName}</button>
@@ -746,6 +739,15 @@ const App: React.FC = () => {
               <button onClick={() => setShowLineups(!showLineups)} className={`px-4 md:px-6 py-2.5 md:py-3 rounded-lg text-[10px] md:text-xs font-black uppercase transition-all border ${showLineups ? 'bg-blue-600 text-white border-blue-400 shadow-lg' : 'bg-white/5 text-slate-500 border-white/5 hover:bg-white/10'}`}>
                 {showLineups ? 'HIDE ROSTERS' : 'SHOW ROSTERS'}
               </button>
+            </div>
+
+            {/* Away shot counter */}
+            <div className="flex items-center gap-2">
+              <div className="flex flex-col items-end leading-tight">
+                <span className="text-[8px] font-black text-red-500 uppercase tracking-wider">{awayName}</span>
+                <span className="text-lg font-black text-white italic leading-none">{stats.away.shots} <span className="text-[9px] font-bold text-slate-500">shots</span></span>
+              </div>
+              <div className="w-1 h-6 bg-red-600 rounded-full"></div>
             </div>
           </div>
 
