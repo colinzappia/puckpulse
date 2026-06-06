@@ -736,7 +736,7 @@ const App: React.FC = () => {
             </div>
           </div>
 
-          <div className="w-full px-2 py-3 bg-white/5 border-b border-white/10 flex flex-wrap items-center justify-center gap-3 shadow-2xl shrink-0">
+          <div className="w-full px-2 py-2 bg-white/5 border-b border-white/10 flex flex-wrap items-center justify-center gap-2 shadow-inner shrink-0">
             <div className="flex flex-wrap items-center bg-white/5 p-1 rounded-xl border border-white/10 shrink-0 shadow-inner gap-1">
               <div className="flex">
                 <button onClick={() => setActiveTeam(Team.HOME)} className={`px-4 sm:px-6 md:px-8 py-2.5 md:py-3 rounded-lg text-xs md:text-sm font-black uppercase transition-all ${activeTeam === Team.HOME ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>{homeName}</button>
@@ -747,7 +747,10 @@ const App: React.FC = () => {
                 {showLineups ? 'HIDE ROSTERS' : 'SHOW ROSTERS'}
               </button>
             </div>
-            <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-3 px-2 border-l border-r border-white/10">
+          </div>
+
+          <div className="w-full px-2 py-3 bg-white/5 border-b border-white/10 flex flex-wrap items-center justify-center gap-3 shadow-2xl shrink-0">
+            <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-3">
               {toolbarButtons.map(btn => (
                 <button key={btn.type} onClick={() => setMapPlotType(btn.type)} className={`px-3 sm:px-6 md:px-8 py-2.5 md:py-3 rounded-xl text-[10px] sm:text-[11px] md:text-xs font-black uppercase transition-all flex items-center justify-center shadow-lg active:scale-90 ${mapPlotType === btn.type ? `${btn.color} text-white ring-2 ring-white/20` : 'bg-white/5 text-slate-500 hover:bg-white/10'}`}>{btn.label}</button>
               ))}
