@@ -166,6 +166,7 @@ const App: React.FC = () => {
   const [legalPage, setLegalPage] = useState<'terms' | 'privacy' | null>(null);
   const [showContact, setShowContact] = useState(false);
   const [showPlayerStats, setShowPlayerStats] = useState(false);
+  const [showFaceoffPanel, setShowFaceoffPanel] = useState(false);
 
   const { isSignedIn, userId } = useAuth();
   const { user } = useClerk();
@@ -780,6 +781,7 @@ const App: React.FC = () => {
               {toolbarButtons.map(btn => (
                 <button key={btn.type} onClick={() => setMapPlotType(btn.type)} className={`px-3 sm:px-6 md:px-8 py-2.5 md:py-3 rounded-xl text-[10px] sm:text-[11px] md:text-xs font-black uppercase transition-all flex items-center justify-center shadow-lg active:scale-90 ${mapPlotType === btn.type ? `${btn.color} text-white ring-2 ring-white/20` : 'bg-white/5 text-slate-500 hover:bg-white/10'}`}>{btn.label}</button>
               ))}
+              <button onClick={() => setShowFaceoffPanel(true)} className={`px-3 sm:px-6 md:px-8 py-2.5 md:py-3 rounded-xl text-[10px] sm:text-[11px] md:text-xs font-black uppercase transition-all flex items-center justify-center shadow-lg active:scale-90 bg-yellow-600/20 text-yellow-400 border border-yellow-500/30 hover:bg-yellow-600/40`}>🏒 FO</button>
             </div>
             <div className="flex items-center gap-2 shrink-0">
               {playerNumber && (
@@ -801,20 +803,33 @@ const App: React.FC = () => {
             <button onClick={() => setShowPlayerStats(true)} className="absolute bottom-4 right-4 sm:bottom-12 sm:right-12 flex items-center gap-2 bg-blue-600/90 hover:bg-blue-500 text-white text-xs font-black uppercase tracking-wider px-4 py-2.5 rounded-full shadow-xl border border-blue-400/30 transition-all active:scale-95 backdrop-blur-sm">
               <span>📊</span><span>Player Stats</span>
             </button>
-            <FaceoffWidget
-              events={events} homeRoster={homeRoster} awayRoster={awayRoster}
-              homeName={homeName} awayName={awayName}
-              fowHomeCenter={fowHomeCenter} fowAwayCenter={fowAwayCenter}
-              onSetHomeCenter={setFowHomeCenter} onSetAwayCenter={setFowAwayCenter}
-              onLogFaceoff={(win) => {
-                const homeFO: GameEvent = { id: `fo-h-${Date.now()}`, timestamp: Date.now(), gameTime: `P${currentPeriod}`, period: currentPeriod, type: win ? EventType.FACEOFF_WIN : EventType.FACEOFF_LOSS, team: Team.HOME, zone: Zone.NEUTRAL, playerNumber: fowHomeCenter };
-                const awayFO: GameEvent = { id: `fo-a-${Date.now()}`, timestamp: Date.now() + 1, gameTime: `P${currentPeriod}`, period: currentPeriod, type: win ? EventType.FACEOFF_LOSS : EventType.FACEOFF_WIN, team: Team.AWAY, zone: Zone.NEUTRAL, playerNumber: fowAwayCenter };
-                setEvents(prev => [...prev, homeFO, awayFO]);
-              }}
-              mapPlotType={mapPlotType} onSetPlotType={setMapPlotType}
-            />
+
           </div>
         </div>
+
+        {/* FACEOFF PANEL - slides up from bottom */}
+        {showFaceoffPanel && (
+          <div className="fixed inset-x-0 bottom-0 z-[300] flex flex-col" style={{maxHeight: '70vh'}}>
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm -top-screen" onClick={() => setShowFaceoffPanel(false)} style={{top: '-100vh'}} />
+            <div className="relative bg-[#0a0e14] border-t border-white/10 shadow-2xl flex flex-col rounded-t-2xl overflow-hidden" style={{maxHeight: '70vh'}}>
+              <FaceoffWidget
+                events={events} homeRoster={homeRoster} awayRoster={awayRoster}
+                homeName={homeName} awayName={awayName}
+                fowHomeCenter={fowHomeCenter} fowAwayCenter={fowAwayCenter}
+                onSetHomeCenter={setFowHomeCenter} onSetAwayCenter={setFowAwayCenter}
+                onLogFaceoff={(win) => {
+                  const homeFO: GameEvent = { id: `fo-h-${Date.now()}`, timestamp: Date.now(), gameTime: `P${currentPeriod}`, period: currentPeriod, type: win ? EventType.FACEOFF_WIN : EventType.FACEOFF_LOSS, team: Team.HOME, zone: Zone.NEUTRAL, playerNumber: fowHomeCenter };
+                  const awayFO: GameEvent = { id: `fo-a-${Date.now()}`, timestamp: Date.now() + 1, gameTime: `P${currentPeriod}`, period: currentPeriod, type: win ? EventType.FACEOFF_LOSS : EventType.FACEOFF_WIN, team: Team.AWAY, zone: Zone.NEUTRAL, playerNumber: fowAwayCenter };
+                  setEvents(prev => [...prev, homeFO, awayFO]);
+                  setShowFaceoffPanel(false);
+                }}
+                mapPlotType={mapPlotType} onSetPlotType={setMapPlotType}
+                onClose={() => setShowFaceoffPanel(false)}
+                isBottomPanel={true}
+              />
+            </div>
+          </div>
+        )}
 
         {/* MAP FILTERS */}
         <div className="w-full px-4 py-3 bg-black/40 border-b border-white/5 flex items-center justify-center gap-2 overflow-x-auto scrollbar-none shadow-inner">
