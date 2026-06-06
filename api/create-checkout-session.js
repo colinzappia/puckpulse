@@ -7,7 +7,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { priceId, userId, planName, couponCode } = req.body;
+  const { priceId, userId, planName, couponCode, email } = req.body;
 
   if (!priceId || !userId) {
     return res.status(400).json({ error: 'Missing required fields' });
@@ -26,6 +26,7 @@ export default async function handler(req, res) {
       subscription_data: subscriptionData,
       metadata: { userId, planName },
       allow_promotion_codes: false,
+      ...(email ? { customer_email: email } : {}),
       success_url: `${process.env.VITE_APP_URL || 'https://topcheesehockey.com'}?subscribed=true`,
       cancel_url: `${process.env.VITE_APP_URL || 'https://topcheesehockey.com'}?cancelled=true`,
     };
