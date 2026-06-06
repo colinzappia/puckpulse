@@ -258,6 +258,7 @@ const App: React.FC = () => {
   const [lastEvent, setLastEvent] = useState<{type: EventType; playerNumber: string; team: Team} | null>(null);
   const [plotFlash, setPlotFlash] = useState(false);
   const [showEndGame, setShowEndGame] = useState(false);
+  const [pendingGoal, setPendingGoal] = useState<{x: number; y: number; team: Team; playerNumber: string} | null>(null);
   const [isRosterSwapped, setIsRosterSwapped] = useState(false);
 
   const toolbarButtons = useMemo(() => [
@@ -452,6 +453,20 @@ const App: React.FC = () => {
     return { name: awayName, score: stats.away.goals, logo: awayLogo, colorClass: 'red' };
   }, [isCurrentlySwapped, homeName, awayName, stats, homeLogo, awayLogo]);
 
+  const getShotQuality = (x: number, y: number, team: Team): 'high' | 'medium' | 'low' => {
+    // Rink is 200x85 units. Goals are at x=11 (left) and x=189 (right)
+    // High danger: slot area in front of net
+    // Determine which end the team is attacking
+    const attackingLeft = team === Team.HOME; // home attacks left by default
+    const goalX = attackingLeft ? 11 : 189;
+    const distFromGoal = Math.abs(x - goalX);
+    const distFromCenter = Math.abs(y - 42.5);
+    
+    if (distFromGoal < 30 && distFromCenter < 15) return 'high';
+    if (distFromGoal < 55 && distFromCenter < 25) return 'medium';
+    return 'low';
+  };
+
   const handlePlot = (x: number, y: number) => {
     const isHomeOnLeft = !isCurrentlySwapped;
 
@@ -501,6 +516,16 @@ const App: React.FC = () => {
       return;
     }
 
+    const quality = (mapPlotType === EventType.SHOT || mapPlotType === EventType.GOAL) 
+      ? getShotQuality(x, y, activeTeam) 
+      : undefined;
+
+    // For goals, show line selection popup first
+    if (mapPlotType === EventType.GOAL) {
+      setPendingGoal({ x, y, team: activeTeam, playerNumber: playerNumber || '' });
+      return;
+    }
+
     const newEvent = {
       id: Math.random().toString(36).substr(2, 9),
       timestamp: Date.now(),
@@ -510,7 +535,8 @@ const App: React.FC = () => {
       team: activeTeam,
       zone: getTeamZone(activeTeam, x),
       playerNumber: playerNumber || undefined,
-      coordinates: { x, y }
+      coordinates: { x, y },
+      metadata: quality ? { shotQuality: quality } : undefined
     };
     setEvents(prev => [...prev, newEvent]);
     setLastEvent({ type: mapPlotType, playerNumber: playerNumber, team: activeTeam });
@@ -527,6 +553,29 @@ const App: React.FC = () => {
       handleExportPDF();
     } catch {}
     setShowEndGame(false);
+  };
+
+  const confirmGoal = (lineOnIce?: string) => {
+    if (!pendingGoal) return;
+    const { x, y, team, playerNumber: pNum } = pendingGoal;
+    const quality = getShotQuality(x, y, team);
+    const newEvent = {
+      id: Math.random().toString(36).substr(2, 9),
+      timestamp: Date.now(),
+      gameTime: '20:00',
+      period: currentPeriod,
+      type: EventType.GOAL,
+      team,
+      zone: getTeamZone(team, x),
+      playerNumber: pNum || undefined,
+      coordinates: { x, y },
+      metadata: { shotQuality: quality, lineOnIce }
+    };
+    setEvents(prev => [...prev, newEvent]);
+    setLastEvent({ type: EventType.GOAL, playerNumber: pNum, team });
+    setPendingGoal(null);
+    setPlotFlash(true);
+    setTimeout(() => setPlotFlash(false), 600);
   };
 
   const handleRepeatLast = () => {
@@ -1291,6 +1340,39 @@ const App: React.FC = () => {
           >⚙ Manage Subscription</button>
         )}
       </div>
+      {/* Line on ice popup for goals */}
+      {pendingGoal && (
+        <div className="fixed inset-0 z-[400] bg-black/80 backdrop-blur-sm flex items-center justify-center px-4">
+          <div className="bg-[#0f1620] border border-white/10 rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+            <div className="text-center mb-4">
+              <div className="text-3xl mb-2">⚽</div>
+              <h3 className="text-white font-black text-lg">GOAL! Which line was on ice?</h3>
+              <p className="text-slate-500 text-xs mt-1">Tap a line or skip to log without line info</p>
+            </div>
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              {['Line 1', 'Line 2', 'Line 3', 'Line 4'].map(line => (
+                <button key={line} onClick={() => confirmGoal(line)}
+                  className="py-3 bg-green-700/40 hover:bg-green-600/60 border border-green-500/30 text-white font-black rounded-xl text-sm transition-colors">
+                  {line}
+                </button>
+              ))}
+            </div>
+            <div className="grid grid-cols-3 gap-2 mb-4">
+              {['Pair 1', 'Pair 2', 'Pair 3'].map(pair => (
+                <button key={pair} onClick={() => confirmGoal(pair)}
+                  className="py-2.5 bg-blue-700/40 hover:bg-blue-600/60 border border-blue-500/30 text-white font-black rounded-xl text-xs transition-colors">
+                  {pair}
+                </button>
+              ))}
+            </div>
+            <button onClick={() => confirmGoal(undefined)}
+              className="w-full py-2.5 bg-white/5 hover:bg-white/10 text-slate-400 font-bold rounded-xl text-sm transition-colors">
+              Skip — log without line info
+            </button>
+          </div>
+        </div>
+      )}
+
       {legalPage && <LegalPages page={legalPage} onClose={() => setLegalPage(null)} />}
       <PlayerStats isOpen={showPlayerStats} onClose={() => setShowPlayerStats(false)} events={events} homeRoster={homeRoster} awayRoster={awayRoster} homeName={homeName} awayName={awayName} />
       {showContact && <ContactPage onClose={() => setShowContact(false)} />}
