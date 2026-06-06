@@ -806,24 +806,6 @@ const App: React.FC = () => {
           </div>
         </div>
 
-        {/* MAP FILTERS */}
-        <div className="w-full px-4 py-3 bg-black/40 border-b border-white/5 flex items-center justify-center gap-2 overflow-x-auto scrollbar-none shadow-inner">
-          <button onClick={toggleAllFilters} className="shrink-0 px-4 py-2 rounded-xl bg-white/10 text-[9px] font-black uppercase text-slate-300 border border-white/10 active:scale-95 transition-all">
-            {toolbarButtons.every(t => visibleTypes.includes(t.type)) ? 'Isolate' : 'Show All'}
-          </button>
-          <div className="flex items-center gap-2">
-            {toolbarButtons.map(btn => {
-              const isActive = visibleTypes.includes(btn.type);
-              return (
-                <button key={`filter-${btn.type}`} onClick={() => toggleVisibleType(btn.type)} className={`shrink-0 px-4 py-2.5 rounded-xl text-[9px] font-black uppercase transition-all flex items-center gap-2 border shadow-sm ${isActive ? 'bg-white/10 text-white border-white/20' : 'opacity-20 border-transparent bg-transparent'}`}>
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: (btn as any).dotColor }} />
-                  <span>{btn.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
         {/* FACEOFF INLINE PANEL */}
         {showFaceoffPanel && (
           <div className="w-full bg-[#0a0e14] border-b border-yellow-500/20 animate-in slide-in-from-top duration-200">
