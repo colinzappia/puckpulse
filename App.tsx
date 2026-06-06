@@ -807,30 +807,6 @@ const App: React.FC = () => {
           </div>
         </div>
 
-        {/* FACEOFF PANEL - slides up from bottom */}
-        {showFaceoffPanel && (
-          <div className="fixed inset-x-0 bottom-0 z-[300] flex flex-col" style={{maxHeight: '70vh'}}>
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm -top-screen" onClick={() => setShowFaceoffPanel(false)} style={{top: '-100vh'}} />
-            <div className="relative bg-[#0a0e14] border-t border-white/10 shadow-2xl flex flex-col rounded-t-2xl overflow-hidden" style={{maxHeight: '70vh'}}>
-              <FaceoffWidget
-                events={events} homeRoster={homeRoster} awayRoster={awayRoster}
-                homeName={homeName} awayName={awayName}
-                fowHomeCenter={fowHomeCenter} fowAwayCenter={fowAwayCenter}
-                onSetHomeCenter={setFowHomeCenter} onSetAwayCenter={setFowAwayCenter}
-                onLogFaceoff={(win) => {
-                  const homeFO: GameEvent = { id: `fo-h-${Date.now()}`, timestamp: Date.now(), gameTime: `P${currentPeriod}`, period: currentPeriod, type: win ? EventType.FACEOFF_WIN : EventType.FACEOFF_LOSS, team: Team.HOME, zone: Zone.NEUTRAL, playerNumber: fowHomeCenter };
-                  const awayFO: GameEvent = { id: `fo-a-${Date.now()}`, timestamp: Date.now() + 1, gameTime: `P${currentPeriod}`, period: currentPeriod, type: win ? EventType.FACEOFF_LOSS : EventType.FACEOFF_WIN, team: Team.AWAY, zone: Zone.NEUTRAL, playerNumber: fowAwayCenter };
-                  setEvents(prev => [...prev, homeFO, awayFO]);
-                  setShowFaceoffPanel(false);
-                }}
-                mapPlotType={mapPlotType} onSetPlotType={setMapPlotType}
-                onClose={() => setShowFaceoffPanel(false)}
-                isBottomPanel={true}
-              />
-            </div>
-          </div>
-        )}
-
         {/* MAP FILTERS */}
         <div className="w-full px-4 py-3 bg-black/40 border-b border-white/5 flex items-center justify-center gap-2 overflow-x-auto scrollbar-none shadow-inner">
           <button onClick={toggleAllFilters} className="shrink-0 px-4 py-2 rounded-xl bg-white/10 text-[9px] font-black uppercase text-slate-300 border border-white/10 active:scale-95 transition-all">
@@ -848,6 +824,71 @@ const App: React.FC = () => {
             })}
           </div>
         </div>
+
+        {/* FACEOFF INLINE PANEL */}
+        {showFaceoffPanel && (
+          <div className="w-full bg-[#0a0e14] border-b border-yellow-500/20 animate-in slide-in-from-top duration-200">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
+              <div className="flex items-center gap-2">
+                <span className="text-yellow-400 font-black text-sm">🏒 Faceoff Hub</span>
+                {(() => { const fo = events.filter(e => e.type === EventType.FACEOFF_WIN || e.type === EventType.FACEOFF_LOSS); const wins = fo.filter(e => e.team === Team.HOME && e.type === EventType.FACEOFF_WIN).length; const total = fo.length / 2 | 0; return total > 0 ? <span className="text-xs text-slate-400">{homeName}: {wins}/{total} ({Math.round(wins/total*100)}%)</span> : null; })()}
+              </div>
+              <button onClick={() => setShowFaceoffPanel(false)} className="text-slate-500 hover:text-white text-lg font-bold px-2">×</button>
+            </div>
+            <div className="p-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* Home centre */}
+              <div className="bg-blue-900/20 border border-blue-500/20 rounded-xl p-3">
+                <p className="text-xs font-black text-blue-400 uppercase tracking-wider mb-2">{homeName} Centre</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {homeRoster.filter(p => ['C','LW','RW','F'].includes(p.position?.toUpperCase() || '')).map(p => (
+                    <button key={p.number} onClick={() => setFowHomeCenter(p.number)}
+                      className={`px-2.5 py-1.5 rounded-lg text-xs font-black transition-all border ${fowHomeCenter === p.number ? 'bg-blue-600 text-white border-blue-400' : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'}`}>
+                      #{p.number} {p.name.split(' ').pop()}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* WIN / LOSS */}
+              <div className="flex flex-col gap-3 items-center justify-center">
+                <div className="grid grid-cols-2 gap-3 w-full">
+                  <button
+                    onClick={() => {
+                      if (!fowHomeCenter || !fowAwayCenter) { alert('Select both centres first'); return; }
+                      const homeFO: GameEvent = { id: `fo-h-${Date.now()}`, timestamp: Date.now(), gameTime: `P${currentPeriod}`, period: currentPeriod, type: EventType.FACEOFF_WIN, team: Team.HOME, zone: Zone.NEUTRAL, playerNumber: fowHomeCenter };
+                      const awayFO: GameEvent = { id: `fo-a-${Date.now()}`, timestamp: Date.now() + 1, gameTime: `P${currentPeriod}`, period: currentPeriod, type: EventType.FACEOFF_LOSS, team: Team.AWAY, zone: Zone.NEUTRAL, playerNumber: fowAwayCenter };
+                      setEvents(prev => [...prev, homeFO, awayFO]);
+                    }}
+                    className="py-4 bg-yellow-600 hover:bg-yellow-500 text-white font-black rounded-xl text-sm transition-all active:scale-95 shadow-lg"
+                  >✓ WIN</button>
+                  <button
+                    onClick={() => {
+                      if (!fowHomeCenter || !fowAwayCenter) { alert('Select both centres first'); return; }
+                      const homeFO: GameEvent = { id: `fo-h-${Date.now()}`, timestamp: Date.now(), gameTime: `P${currentPeriod}`, period: currentPeriod, type: EventType.FACEOFF_LOSS, team: Team.HOME, zone: Zone.NEUTRAL, playerNumber: fowHomeCenter };
+                      const awayFO: GameEvent = { id: `fo-a-${Date.now()}`, timestamp: Date.now() + 1, gameTime: `P${currentPeriod}`, period: currentPeriod, type: EventType.FACEOFF_WIN, team: Team.AWAY, zone: Zone.NEUTRAL, playerNumber: fowAwayCenter };
+                      setEvents(prev => [...prev, homeFO, awayFO]);
+                    }}
+                    className="py-4 bg-slate-700 hover:bg-slate-600 text-white font-black rounded-xl text-sm transition-all active:scale-95 shadow-lg"
+                  >✗ LOSS</button>
+                </div>
+                {(!fowHomeCenter || !fowAwayCenter) && <p className="text-xs text-slate-600 text-center">Select both centres to log</p>}
+              </div>
+
+              {/* Away centre */}
+              <div className="bg-red-900/20 border border-red-500/20 rounded-xl p-3">
+                <p className="text-xs font-black text-red-400 uppercase tracking-wider mb-2">{awayName} Centre</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {awayRoster.filter(p => ['C','LW','RW','F'].includes(p.position?.toUpperCase() || '')).map(p => (
+                    <button key={p.number} onClick={() => setFowAwayCenter(p.number)}
+                      className={`px-2.5 py-1.5 rounded-lg text-xs font-black transition-all border ${fowAwayCenter === p.number ? 'bg-red-600 text-white border-red-400' : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'}`}>
+                      #{p.number} {p.name.split(' ').pop()}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* DATA COMMAND CENTER */}
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 px-2 sm:px-4 md:px-6 mt-6">
