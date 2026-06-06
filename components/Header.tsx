@@ -76,12 +76,10 @@ const Header: React.FC<HeaderProps> = ({ leftTeam, rightTeam, period, onOpenSetu
             <div className="flex items-center gap-2 sm:gap-6 shrink-0 px-4">
               <button 
                 onClick={onOpenManual} 
-                className="p-1.5 sm:p-2 bg-blue-900/40 hover:bg-blue-800/60 rounded-lg border border-blue-500/30 text-blue-400 active:scale-90 transition-all shadow-xl group hover:border-blue-400"
+                className="px-3 py-1.5 sm:px-4 sm:py-2 bg-slate-700 hover:bg-slate-600 rounded-lg border border-slate-500/50 text-white active:scale-95 transition-all shadow-lg flex items-center gap-2"
                 title="User Manual"
               >
-                <svg className="w-3.5 h-3.5 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+                <span className="text-[9px] sm:text-[11px] font-black uppercase tracking-widest">📋 Manual</span>
               </button>
 
               <div className="w-px h-3 sm:h-4 bg-white/10"></div>
