@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { GameEvent, EventType, Team, TeamStats, Zone, Player, PenaltyType } from './types';
 import Header from './components/Header';
 import RinkChart from './components/RinkChart';
@@ -87,6 +88,109 @@ const DroppableSlot: React.FC<{ id: string, children: React.ReactNode, label: st
             <span className="text-[7px] font-black uppercase tracking-widest">{label}</span>
           </div>
         )}
+      </div>
+    </div>
+  );
+};
+
+interface GoalLinePopupProps {
+  pendingGoal: { team: any; playerNumber: string; x: number; y: number };
+  homeName: string;
+  awayName: string;
+  onConfirm: (line?: string) => void;
+}
+
+const GoalLinePopup: React.FC<GoalLinePopupProps> = ({ pendingGoal, homeName, awayName, onConfirm }) => {
+  const scoringTeamName = pendingGoal.team === Team.HOME ? homeName : awayName;
+  const isHome = pendingGoal.team === Team.HOME;
+
+  return (
+    <div
+      style={{
+        position: 'fixed', inset: 0, zIndex: 999999,
+        background: 'rgba(0,0,0,0.85)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '1rem',
+      }}
+    >
+      <div
+        style={{
+          background: '#0f1620', border: '1px solid rgba(255,255,255,0.1)',
+          borderRadius: '1rem', padding: '1.5rem', width: '100%', maxWidth: '360px',
+          boxShadow: '0 25px 50px rgba(0,0,0,0.8)',
+        }}
+      >
+        {/* Spinning red light */}
+        <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
+          <div style={{ position: 'relative', width: '64px', height: '64px', margin: '0 auto 0.75rem' }}>
+            <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: '#dc2626', opacity: 0.4, animation: 'ping 1s cubic-bezier(0,0,0.2,1) infinite' }} />
+            <div style={{ position: 'absolute', inset: '4px', borderRadius: '50%', background: '#ef4444', animation: 'spin 0.8s linear infinite' }} />
+            <div style={{ position: 'absolute', inset: '12px', borderRadius: '50%', background: '#fca5a5' }} />
+            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: 'white' }} />
+            </div>
+          </div>
+          <div style={{ color: 'white', fontWeight: 900, fontSize: '1.25rem', marginBottom: '0.25rem' }}>GOAL!</div>
+          <div style={{
+            display: 'inline-block', padding: '0.2rem 0.75rem', borderRadius: '999px',
+            background: isHome ? '#2563eb' : '#dc2626', color: 'white',
+            fontSize: '0.75rem', fontWeight: 900, marginBottom: '0.5rem'
+          }}>
+            {scoringTeamName}
+          </div>
+          <div style={{ color: '#94a3b8', fontSize: '0.875rem' }}>
+            Which {scoringTeamName} line was on ice?
+          </div>
+        </div>
+
+        {/* Forward lines */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '0.5rem' }}>
+          {['Line 1', 'Line 2', 'Line 3', 'Line 4'].map(line => (
+            <button
+              key={line}
+              onClick={() => onConfirm(`${scoringTeamName} ${line}`)}
+              style={{
+                padding: '0.875rem', background: 'rgba(21,128,61,0.3)',
+                border: '1px solid rgba(34,197,94,0.3)', color: 'white',
+                fontWeight: 900, borderRadius: '0.75rem', fontSize: '0.875rem',
+                cursor: 'pointer', touchAction: 'manipulation',
+              }}
+            >
+              {scoringTeamName} {line}
+            </button>
+          ))}
+        </div>
+
+        {/* Defense pairings */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem', marginBottom: '0.75rem' }}>
+          {['Pair 1', 'Pair 2', 'Pair 3'].map(pair => (
+            <button
+              key={pair}
+              onClick={() => onConfirm(`${scoringTeamName} ${pair}`)}
+              style={{
+                padding: '0.75rem 0.5rem', background: 'rgba(29,78,216,0.3)',
+                border: '1px solid rgba(59,130,246,0.3)', color: 'white',
+                fontWeight: 900, borderRadius: '0.75rem', fontSize: '0.75rem',
+                cursor: 'pointer', touchAction: 'manipulation',
+              }}
+            >
+              {pair}
+            </button>
+          ))}
+        </div>
+
+        {/* Skip */}
+        <button
+          onClick={() => onConfirm(undefined)}
+          style={{
+            width: '100%', padding: '0.75rem',
+            background: 'rgba(255,255,255,0.05)', color: '#94a3b8',
+            fontWeight: 700, borderRadius: '0.75rem', fontSize: '0.875rem',
+            cursor: 'pointer', border: 'none', touchAction: 'manipulation',
+          }}
+        >
+          Skip — log without line info
+        </button>
       </div>
     </div>
   );
@@ -1338,73 +1442,15 @@ const App: React.FC = () => {
           >⚙ Manage Subscription</button>
         )}
       </div>
-      {/* Line on ice popup for goals - rendered at top level with highest z-index */}
-      {pendingGoal !== null && (() => {
-        const scoringTeamName = pendingGoal.team === Team.HOME ? homeName : awayName;
-        const teamColor = pendingGoal.team === Team.HOME ? 'blue' : 'red';
-        return (
-          <div 
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center px-4"
-            style={{zIndex: 99999, pointerEvents: 'all'}}
-          >
-            <div 
-              className="bg-[#0f1620] border border-white/10 rounded-2xl p-6 w-full shadow-2xl"
-              style={{maxWidth: '360px', pointerEvents: 'all'}}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="text-center mb-5">
-                <div className="relative w-16 h-16 mx-auto mb-3">
-                  <div className="absolute inset-0 rounded-full bg-red-600 animate-ping opacity-40" />
-                  <div className="absolute inset-1 rounded-full bg-red-500 animate-spin" style={{animationDuration:'0.8s'}} />
-                  <div className="absolute inset-3 rounded-full bg-red-300" />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-3 h-3 rounded-full bg-white" />
-                  </div>
-                </div>
-                <h3 className="text-white font-black text-xl mb-1">GOAL!</h3>
-                <div className={`inline-block px-3 py-1 rounded-full text-xs font-black mb-2 ${teamColor === 'blue' ? 'bg-blue-600 text-white' : 'bg-red-600 text-white'}`}>
-                  {scoringTeamName}
-                </div>
-                <p className="text-slate-400 text-sm">Which {scoringTeamName} line was on ice?</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 mb-3">
-                {['Line 1', 'Line 2', 'Line 3', 'Line 4'].map(line => (
-                  <button
-                    key={line}
-                    onClick={() => confirmGoal(line)}
-                    className="py-4 bg-green-700/40 hover:bg-green-600/60 active:bg-green-700 border border-green-500/30 text-white font-black rounded-xl text-sm transition-colors"
-                    style={{touchAction: 'manipulation'}}
-                  >
-                    {scoringTeamName} {line}
-                  </button>
-                ))}
-              </div>
-
-              <div className="grid grid-cols-3 gap-2 mb-4">
-                {['Pair 1', 'Pair 2', 'Pair 3'].map(pair => (
-                  <button
-                    key={pair}
-                    onClick={() => confirmGoal(pair)}
-                    className="py-3 bg-blue-700/40 hover:bg-blue-600/60 active:bg-blue-700 border border-blue-500/30 text-white font-black rounded-xl text-xs transition-colors"
-                    style={{touchAction: 'manipulation'}}
-                  >
-                    {pair}
-                  </button>
-                ))}
-              </div>
-
-              <button
-                onClick={() => confirmGoal(undefined)}
-                className="w-full py-3 bg-white/5 hover:bg-white/10 text-slate-400 font-bold rounded-xl text-sm transition-colors"
-                style={{touchAction: 'manipulation'}}
-              >
-                Skip — log without line info
-              </button>
-            </div>
-          </div>
-        );
-      })()}
+      {pendingGoal !== null && createPortal(
+        <GoalLinePopup
+          pendingGoal={pendingGoal}
+          homeName={homeName}
+          awayName={awayName}
+          onConfirm={confirmGoal}
+        />,
+        document.body
+      )}
 
       {legalPage && <LegalPages page={legalPage} onClose={() => setLegalPage(null)} />}
       <PlayerStats isOpen={showPlayerStats} onClose={() => setShowPlayerStats(false)} events={events} homeRoster={homeRoster} awayRoster={awayRoster} homeName={homeName} awayName={awayName} />
