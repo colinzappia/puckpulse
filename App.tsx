@@ -981,9 +981,7 @@ const App: React.FC = () => {
             <div className={`w-full max-w-6xl aspect-[200/85] transition-all duration-700 rounded-[5rem] sm:rounded-[8.5rem] p-2 border-4 shadow-2xl ${activeTeam === Team.HOME ? 'border-blue-500/20' : 'border-red-500/20'}`}>
               <RinkChart events={events.filter(e => e.period === currentPeriod && visibleTypes.includes(e.type))} leftLogo={leftTeamDisplay.logo} rightLogo={rightTeamDisplay.logo} onPlot={handlePlot} onMoveEvent={handleMoveEvent} activeEventType={mapPlotType} />
             </div>
-            {plotFlash && (
-              <div className="absolute inset-0 bg-green-500/10 border-2 border-green-400/40 rounded-[5rem] sm:rounded-[8.5rem] pointer-events-none animate-ping" style={{animationDuration:'0.5s', animationIterationCount:1}} />
-            )}
+
             <button
               onClick={() => setShowPlayerStats(true)}
               className="absolute bottom-4 right-4 sm:bottom-12 sm:right-12 flex items-center gap-2 bg-blue-600/90 hover:bg-blue-500 text-white text-xs font-black uppercase tracking-wider px-4 py-2.5 rounded-full shadow-xl border border-blue-400/30 transition-all active:scale-95 backdrop-blur-sm"
@@ -1342,31 +1340,51 @@ const App: React.FC = () => {
       </div>
       {/* Line on ice popup for goals */}
       {pendingGoal && (
-        <div className="fixed inset-0 z-[400] bg-black/80 backdrop-blur-sm flex items-center justify-center px-4">
+        <div className="fixed inset-0 z-[400] bg-black/80 backdrop-blur-sm flex items-center justify-center px-4" style={{pointerEvents:'all'}}>
           <div className="bg-[#0f1620] border border-white/10 rounded-2xl p-6 max-w-sm w-full shadow-2xl">
             <div className="text-center mb-4">
-              <div className="text-3xl mb-2">⚽</div>
-              <h3 className="text-white font-black text-lg">GOAL! Which line was on ice?</h3>
-              <p className="text-slate-500 text-xs mt-1">Tap a line or skip to log without line info</p>
+              {/* Spinning red goal light */}
+              <div className="relative w-16 h-16 mx-auto mb-3">
+                <div className="absolute inset-0 rounded-full bg-red-600 animate-ping opacity-40" />
+                <div className="absolute inset-1 rounded-full bg-red-500 animate-spin" style={{animationDuration:'0.8s'}} />
+                <div className="absolute inset-3 rounded-full bg-red-300" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-3 h-3 rounded-full bg-white" />
+                </div>
+              </div>
+              <h3 className="text-white font-black text-lg">GOAL!</h3>
+              <p className="text-slate-400 text-sm mb-1">Which line was on ice?</p>
+              <p className="text-slate-600 text-xs">Tap a line or skip to log without line info</p>
             </div>
             <div className="grid grid-cols-2 gap-2 mb-3">
-              {['Line 1', 'Line 2', 'Line 3', 'Line 4'].map(line => (
-                <button key={line} onClick={() => confirmGoal(line)}
-                  className="py-3 bg-green-700/40 hover:bg-green-600/60 border border-green-500/30 text-white font-black rounded-xl text-sm transition-colors">
+              {(['Line 1', 'Line 2', 'Line 3', 'Line 4'] as const).map(line => (
+                <button
+                  key={line}
+                  type="button"
+                  onPointerDown={(e) => { e.stopPropagation(); confirmGoal(line); }}
+                  className="py-3 bg-green-700/40 hover:bg-green-600/60 active:bg-green-600 border border-green-500/30 text-white font-black rounded-xl text-sm transition-colors cursor-pointer select-none"
+                >
                   {line}
                 </button>
               ))}
             </div>
             <div className="grid grid-cols-3 gap-2 mb-4">
-              {['Pair 1', 'Pair 2', 'Pair 3'].map(pair => (
-                <button key={pair} onClick={() => confirmGoal(pair)}
-                  className="py-2.5 bg-blue-700/40 hover:bg-blue-600/60 border border-blue-500/30 text-white font-black rounded-xl text-xs transition-colors">
+              {(['Pair 1', 'Pair 2', 'Pair 3'] as const).map(pair => (
+                <button
+                  key={pair}
+                  type="button"
+                  onPointerDown={(e) => { e.stopPropagation(); confirmGoal(pair); }}
+                  className="py-2.5 bg-blue-700/40 hover:bg-blue-600/60 active:bg-blue-600 border border-blue-500/30 text-white font-black rounded-xl text-xs transition-colors cursor-pointer select-none"
+                >
                   {pair}
                 </button>
               ))}
             </div>
-            <button onClick={() => confirmGoal(undefined)}
-              className="w-full py-2.5 bg-white/5 hover:bg-white/10 text-slate-400 font-bold rounded-xl text-sm transition-colors">
+            <button
+              type="button"
+              onPointerDown={(e) => { e.stopPropagation(); confirmGoal(undefined); }}
+              className="w-full py-2.5 bg-white/5 hover:bg-white/10 active:bg-white/20 text-slate-400 font-bold rounded-xl text-sm transition-colors cursor-pointer select-none"
+            >
               Skip — log without line info
             </button>
           </div>
