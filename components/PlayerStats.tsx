@@ -34,10 +34,23 @@ function buildPlayerStats(events: GameEvent[], roster: Player[], team: Team): Pl
     return { name: p?.name || `#${num}`, position: p?.position || '?' };
   };
 
-  // Only build rows from actual events — never pre-populate from roster
+  // Pre-populate centres only
+  roster.filter(p => p.position?.toUpperCase() === 'C').forEach(p => {
+    map.set(p.number, {
+      number: p.number, name: p.name, position: p.position,
+      goals: 0, shots: 0, assists: 0, hits: 0,
+      penalties: 0, faceoffWins: 0, faceoffLosses: 0, blocks: 0, total: 0
+    });
+  });
+
+  // Add events — non-centres only get added if they took a faceoff
   events.filter(e => e.team === team && e.playerNumber).forEach(e => {
     const num = e.playerNumber!;
+    const isFaceoff = e.type === EventType.FACEOFF_WIN || e.type === EventType.FACEOFF_LOSS;
+    const isCenter = roster.find(p => p.number === num)?.position?.toUpperCase() === 'C';
+
     if (!map.has(num)) {
+      if (!isFaceoff && !isCenter) return; // skip non-centres who haven't taken a faceoff
       const info = getPlayerInfo(num);
       map.set(num, {
         number: num, name: info.name, position: info.position,
@@ -45,6 +58,7 @@ function buildPlayerStats(events: GameEvent[], roster: Player[], team: Team): Pl
         penalties: 0, faceoffWins: 0, faceoffLosses: 0, blocks: 0, total: 0
       });
     }
+
     const row = map.get(num)!;
     switch (e.type) {
       case EventType.GOAL: row.goals++; break;
@@ -55,11 +69,11 @@ function buildPlayerStats(events: GameEvent[], roster: Player[], team: Team): Pl
       case EventType.FACEOFF_LOSS: row.faceoffLosses++; break;
       case EventType.BLOCK: row.blocks++; break;
     }
-    row.total = row.goals + row.shots + row.hits + row.blocks;
+    row.total = row.faceoffWins + row.faceoffLosses;
   });
 
   return Array.from(map.values())
-    .sort((a, b) => b.total - a.total);
+    .sort((a, b) => (b.faceoffWins + b.faceoffLosses) - (a.faceoffWins + a.faceoffLosses));
 }
 
 const StatBadge = ({ value, color }: { value: number; color: string }) => (
