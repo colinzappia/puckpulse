@@ -411,12 +411,13 @@ const App: React.FC = () => {
         toast.error("Please select centers in the Faceoff Hub before plotting.");
         return;
       }
-      const isFowActive = mapPlotType === EventType.FACEOFF_WIN;
-      const isHomeWin = (activeTeam === Team.HOME && isFowActive) || (activeTeam === Team.AWAY && !isFowActive);
+      // WIN button = home wins, LOSS button = home loses
+      const homeWins = mapPlotType === EventType.FACEOFF_WIN;
       setEvents(prev => [...prev,
-        { id: Math.random().toString(36).substr(2, 9), timestamp: Date.now(), gameTime: '20:00', period: currentPeriod, type: isHomeWin ? EventType.FACEOFF_WIN : EventType.FACEOFF_LOSS, team: Team.HOME, zone: getTeamZone(Team.HOME, x), playerNumber: fowHomeCenter, coordinates: { x, y } },
-        { id: Math.random().toString(36).substr(2, 9), timestamp: Date.now() + 1, gameTime: '20:00', period: currentPeriod, type: isHomeWin ? EventType.FACEOFF_LOSS : EventType.FACEOFF_WIN, team: Team.AWAY, zone: getTeamZone(Team.AWAY, x), playerNumber: fowAwayCenter, coordinates: { x, y } }
+        { id: Math.random().toString(36).substr(2, 9), timestamp: Date.now(), gameTime: '20:00', period: currentPeriod, type: homeWins ? EventType.FACEOFF_WIN : EventType.FACEOFF_LOSS, team: Team.HOME, zone: getTeamZone(Team.HOME, x), playerNumber: fowHomeCenter, coordinates: { x, y } },
+        { id: Math.random().toString(36).substr(2, 9), timestamp: Date.now() + 1, gameTime: '20:00', period: currentPeriod, type: homeWins ? EventType.FACEOFF_LOSS : EventType.FACEOFF_WIN, team: Team.AWAY, zone: getTeamZone(Team.AWAY, x), playerNumber: fowAwayCenter, coordinates: { x, y } }
       ]);
+      // Keep panel open for quick successive faceoffs — user can close manually
       return;
     }
 
@@ -820,17 +821,29 @@ const App: React.FC = () => {
               {/* Home centre */}
               <div className="bg-blue-900/20 border border-blue-500/20 rounded-xl p-3">
                 <p className="text-xs font-black text-blue-400 uppercase tracking-wider mb-2">{homeName} Centre</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {homeRoster.filter(p => ['C','LW','RW','F'].includes(p.position?.toUpperCase() || '')).map(p => (
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {homeRoster.filter(p => p.position?.toUpperCase() === 'C').map(p => (
                     <button key={p.number} onClick={() => setFowHomeCenter(p.number)}
                       className={`px-2.5 py-1.5 rounded-lg text-xs font-black transition-all border ${fowHomeCenter === p.number ? 'bg-blue-600 text-white border-blue-400' : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'}`}>
                       #{p.number} {p.name.split(' ').pop()}
                     </button>
                   ))}
-                  {homeRoster.filter(p => ['C','LW','RW','F'].includes(p.position?.toUpperCase() || '')).length === 0 && (
-                    <span className="text-xs text-slate-600">Load a roster first</span>
+                  {homeRoster.filter(p => p.position?.toUpperCase() === 'C').length === 0 && (
+                    <span className="text-xs text-slate-600">No centres found</span>
                   )}
                 </div>
+                {homeRoster.filter(p => p.position?.toUpperCase() !== 'C' && p.position?.toUpperCase() !== 'G').length > 0 && (
+                  <select
+                    onChange={e => e.target.value && setFowHomeCenter(e.target.value)}
+                    className="w-full bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-slate-400 outline-none"
+                    value=""
+                  >
+                    <option value="">Other player...</option>
+                    {homeRoster.filter(p => p.position?.toUpperCase() !== 'C' && p.position?.toUpperCase() !== 'G').map(p => (
+                      <option key={p.number} value={p.number}>#{p.number} {p.name} ({p.position})</option>
+                    ))}
+                  </select>
+                )}
               </div>
 
               {/* WIN / LOSS — sets plot type then user taps rink */}
@@ -856,17 +869,29 @@ const App: React.FC = () => {
               {/* Away centre */}
               <div className="bg-red-900/20 border border-red-500/20 rounded-xl p-3">
                 <p className="text-xs font-black text-red-400 uppercase tracking-wider mb-2">{awayName} Centre</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {awayRoster.filter(p => ['C','LW','RW','F'].includes(p.position?.toUpperCase() || '')).map(p => (
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {awayRoster.filter(p => p.position?.toUpperCase() === 'C').map(p => (
                     <button key={p.number} onClick={() => setFowAwayCenter(p.number)}
                       className={`px-2.5 py-1.5 rounded-lg text-xs font-black transition-all border ${fowAwayCenter === p.number ? 'bg-red-600 text-white border-red-400' : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'}`}>
                       #{p.number} {p.name.split(' ').pop()}
                     </button>
                   ))}
-                  {awayRoster.filter(p => ['C','LW','RW','F'].includes(p.position?.toUpperCase() || '')).length === 0 && (
-                    <span className="text-xs text-slate-600">Load a roster first</span>
+                  {awayRoster.filter(p => p.position?.toUpperCase() === 'C').length === 0 && (
+                    <span className="text-xs text-slate-600">No centres found</span>
                   )}
                 </div>
+                {awayRoster.filter(p => p.position?.toUpperCase() !== 'C' && p.position?.toUpperCase() !== 'G').length > 0 && (
+                  <select
+                    onChange={e => e.target.value && setFowAwayCenter(e.target.value)}
+                    className="w-full bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-slate-400 outline-none"
+                    value=""
+                  >
+                    <option value="">Other player...</option>
+                    {awayRoster.filter(p => p.position?.toUpperCase() !== 'C' && p.position?.toUpperCase() !== 'G').map(p => (
+                      <option key={p.number} value={p.number}>#{p.number} {p.name} ({p.position})</option>
+                    ))}
+                  </select>
+                )}
               </div>
             </div>
           </div>
