@@ -411,8 +411,8 @@ const App: React.FC = () => {
         toast.error("Please select centers in the Faceoff Hub before plotting.");
         return;
       }
-      // WIN button = home wins, LOSS button = home loses
-      const homeWins = mapPlotType === EventType.FACEOFF_WIN;
+      // WIN = active team wins, LOSS = active team loses
+      const homeWins = (activeTeam === Team.HOME && mapPlotType === EventType.FACEOFF_WIN) || (activeTeam === Team.AWAY && mapPlotType === EventType.FACEOFF_LOSS);
       setEvents(prev => [...prev,
         { id: Math.random().toString(36).substr(2, 9), timestamp: Date.now(), gameTime: '20:00', period: currentPeriod, type: homeWins ? EventType.FACEOFF_WIN : EventType.FACEOFF_LOSS, team: Team.HOME, zone: getTeamZone(Team.HOME, x), playerNumber: fowHomeCenter, coordinates: { x, y } },
         { id: Math.random().toString(36).substr(2, 9), timestamp: Date.now() + 1, gameTime: '20:00', period: currentPeriod, type: homeWins ? EventType.FACEOFF_LOSS : EventType.FACEOFF_WIN, team: Team.AWAY, zone: getTeamZone(Team.AWAY, x), playerNumber: fowAwayCenter, coordinates: { x, y } }
@@ -852,11 +852,11 @@ const App: React.FC = () => {
                   <button
                     onClick={() => { setMapPlotType(EventType.FACEOFF_WIN); }}
                     className={`py-4 font-black rounded-xl text-sm transition-all active:scale-95 shadow-lg border ${mapPlotType === EventType.FACEOFF_WIN ? 'bg-yellow-500 text-white border-yellow-300 ring-2 ring-yellow-300/40' : 'bg-yellow-600/30 text-yellow-300 border-yellow-500/30 hover:bg-yellow-600/50'}`}
-                  >✓ {homeName} WIN</button>
+                  >✓ {activeTeam === Team.HOME ? homeName : awayName} WIN</button>
                   <button
                     onClick={() => { setMapPlotType(EventType.FACEOFF_LOSS); }}
                     className={`py-4 font-black rounded-xl text-sm transition-all active:scale-95 shadow-lg border ${mapPlotType === EventType.FACEOFF_LOSS ? 'bg-slate-500 text-white border-slate-300 ring-2 ring-slate-300/40' : 'bg-slate-700/50 text-slate-300 border-slate-500/30 hover:bg-slate-600/50'}`}
-                  >✗ {homeName} LOSS</button>
+                  >✗ {activeTeam === Team.HOME ? homeName : awayName} LOSS</button>
                 </div>
                 {(mapPlotType === EventType.FACEOFF_WIN || mapPlotType === EventType.FACEOFF_LOSS) && (
                   <p className="text-xs text-yellow-400 animate-pulse text-center">👆 Now tap a faceoff dot on the rink</p>
