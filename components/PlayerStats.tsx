@@ -29,23 +29,18 @@ interface PlayerRow {
 function buildPlayerStats(events: GameEvent[], roster: Player[], team: Team): PlayerRow[] {
   const map = new Map<string, PlayerRow>();
 
-  // Initialize from roster
-  roster.forEach(p => {
-    map.set(p.number, {
-      number: p.number,
-      name: p.name,
-      position: p.position,
-      goals: 0, shots: 0, assists: 0, hits: 0,
-      penalties: 0, faceoffWins: 0, faceoffLosses: 0, blocks: 0, total: 0
-    });
-  });
+  const getPlayerInfo = (num: string) => {
+    const p = roster.find(r => r.number === num);
+    return { name: p?.name || `#${num}`, position: p?.position || '?' };
+  };
 
-  // Count events
+  // Only build rows from actual events — never pre-populate from roster
   events.filter(e => e.team === team && e.playerNumber).forEach(e => {
     const num = e.playerNumber!;
     if (!map.has(num)) {
+      const info = getPlayerInfo(num);
       map.set(num, {
-        number: num, name: `#${num}`, position: '?',
+        number: num, name: info.name, position: info.position,
         goals: 0, shots: 0, assists: 0, hits: 0,
         penalties: 0, faceoffWins: 0, faceoffLosses: 0, blocks: 0, total: 0
       });
@@ -64,7 +59,6 @@ function buildPlayerStats(events: GameEvent[], roster: Player[], team: Team): Pl
   });
 
   return Array.from(map.values())
-    .filter(r => r.total > 0 || r.goals > 0 || r.shots > 0)
     .sort((a, b) => b.total - a.total);
 }
 
