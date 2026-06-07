@@ -605,6 +605,18 @@ const App: React.FC = () => {
 
   const orderedTeams = useMemo(() => isCurrentlySwapped ? [Team.AWAY, Team.HOME] : [Team.HOME, Team.AWAY], [isCurrentlySwapped]);
 
+  // Handle terms/privacy links from AuthGate
+  React.useEffect(() => {
+    const showTerms = () => setLegalPage('terms');
+    const showPrivacy = () => setLegalPage('privacy');
+    window.addEventListener('tch_show_terms', showTerms);
+    window.addEventListener('tch_show_privacy', showPrivacy);
+    return () => {
+      window.removeEventListener('tch_show_terms', showTerms);
+      window.removeEventListener('tch_show_privacy', showPrivacy);
+    };
+  }, []);
+
   React.useEffect(() => {
     const handlePopState = () => { sessionStorage.removeItem('tch_launched'); setShowLanding(true); };
     window.addEventListener('popstate', handlePopState);
