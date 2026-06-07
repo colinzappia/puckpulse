@@ -83,7 +83,21 @@ const AuthGate: React.FC<AuthGateProps> = ({ onAuthenticated }) => {
         )}
       </div>
 
-      <p className="text-slate-600 text-xs mt-6">
+      {/* PIPEDA consent */}
+      <p className="text-slate-500 text-xs mt-4 text-center max-w-sm">
+        By creating an account you agree to our{' '}
+        <a href="https://topcheesehockey.com" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent('tch_show_terms')); }} className="text-cyan-400 hover:text-cyan-300 underline">Terms of Service</a>
+        {' '}and{' '}
+        <a href="https://topcheesehockey.com" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent('tch_show_privacy')); }} className="text-cyan-400 hover:text-cyan-300 underline">Privacy Policy</a>.
+        We collect your email address and usage data to provide the service.
+      </p>
+
+      {/* Cookie notice */}
+      <div className="mt-3 max-w-sm w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-slate-500 text-center">
+        🍪 This app uses cookies from Clerk (authentication) and Stripe (payments) to function. By continuing you consent to their use.
+      </div>
+
+      <p className="text-slate-600 text-xs mt-4">
         © 2026 Top Cheese Hockey · Built for hockey people, by hockey people
       </p>
     </div>
