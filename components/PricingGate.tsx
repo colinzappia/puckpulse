@@ -154,7 +154,10 @@ const PricingGate: React.FC<PricingGateProps> = ({ onSubscribed }) => {
         ))}
       </div>
 
-      <p className="text-slate-600 text-xs mt-8">
+      <p className="text-slate-500 text-xs mt-6 text-center max-w-md px-4">
+        By subscribing you agree to our <a href="/terms" className="text-cyan-400 hover:text-cyan-300 underline">Terms of Service</a> and <a href="/privacy" className="text-cyan-400 hover:text-cyan-300 underline">Privacy Policy</a>. Cancel any time.
+      </p>
+      <p className="text-slate-600 text-xs mt-3">
         © 2026 Top Cheese Hockey · Built for hockey people, by hockey people
       </p>
     </div>
