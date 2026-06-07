@@ -60,7 +60,7 @@ function buildPlayerStats(events: GameEvent[], roster: Player[], team: Team): Pl
       case EventType.FACEOFF_LOSS: row.faceoffLosses++; break;
       case EventType.BLOCK: row.blocks++; break;
     }
-    row.total = row.goals + row.shots + row.hits + row.faceoffWins + row.blocks;
+    row.total = row.goals + row.shots + row.hits + row.blocks;
   });
 
   return Array.from(map.values())
@@ -70,7 +70,7 @@ function buildPlayerStats(events: GameEvent[], roster: Player[], team: Team): Pl
 
 const StatBadge = ({ value, color }: { value: number; color: string }) => (
   <span className={`inline-flex items-center justify-center w-7 h-7 rounded-lg text-xs font-black ${value > 0 ? color : 'text-slate-700 bg-transparent'}`}>
-    {value > 0 ? value : '—'}
+    {value === -1 ? '' : value > 0 ? value : '—'}
   </span>
 );
 
@@ -156,8 +156,8 @@ const PlayerStats: React.FC<PlayerStatsProps> = ({
                   <StatBadge value={row.shots} color="text-blue-400 bg-blue-500/10" />
                   <StatBadge value={row.hits} color="text-orange-400 bg-orange-500/10" />
                   <StatBadge value={row.penalties} color="text-red-400 bg-red-500/10" />
-                  <StatBadge value={row.faceoffWins} color="text-green-400 bg-green-500/10" />
-                  <StatBadge value={row.faceoffLosses} color="text-slate-400 bg-white/5" />
+                  <StatBadge value={row.faceoffWins > 0 || row.faceoffLosses > 0 ? row.faceoffWins : -1} color="text-green-400 bg-green-500/10" />
+                  <StatBadge value={row.faceoffWins > 0 || row.faceoffLosses > 0 ? row.faceoffLosses : -1} color="text-slate-400 bg-white/5" />
                   <StatBadge value={row.blocks} color="text-cyan-400 bg-cyan-500/10" />
                 </div>
               ))}
