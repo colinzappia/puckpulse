@@ -13,6 +13,7 @@ import AuthGate from './components/AuthGate';
 import PricingGate from './components/PricingGate';
 import LegalPages from './components/LegalPages';
 import ContactPage from './components/ContactPage';
+import AdvertisePage from './components/AdvertisePage';
 import { useAuth, UserButton, useClerk, useUser } from '@clerk/clerk-react';
 import { generateNarrative, fetchRosterByAI } from './services/geminiService';
 import { downloadPDFReport, downloadExcelReport, downloadHTMLExport } from './services/exportService';
@@ -164,6 +165,7 @@ const App: React.FC = () => {
   const [checkingSubscription, setCheckingSubscription] = useState(false);
   const [legalPage, setLegalPage] = useState<'terms' | 'privacy' | null>(null);
   const [showContact, setShowContact] = useState(false);
+  const [showAdvertise, setShowAdvertise] = useState(false);
   const [showPlayerStats, setShowPlayerStats] = useState(false);
   const [showFaceoffPanel, setShowFaceoffPanel] = useState(false);
 
