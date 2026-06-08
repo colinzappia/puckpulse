@@ -6,6 +6,7 @@ interface RinkChartProps {
   leftLogo?: string;
   rightLogo?: string;
   onPlot?: (x: number, y: number) => void;
+  onMoveEvent?: (eventId: string, x: number, y: number) => void;
   activeEventType?: EventType;
 }
 
@@ -34,41 +35,75 @@ const RinkChart: React.FC<RinkChartProps> = ({
   leftLogo,
   rightLogo,
   onPlot,
+  onMoveEvent,
   activeEventType
 }) => {
-  const handlePointerDown = (e: React.PointerEvent<SVGSVGElement>) => {
-    if (!onPlot) return;
-    const svg = e.currentTarget;
+  const draggingRef = React.useRef<{ id: string } | null>(null);
+  const getSVGCoords = (e: React.PointerEvent<SVGSVGElement>) => {
+    const svg = e.currentTarget as SVGSVGElement;
     const pt = svg.createSVGPoint();
     pt.x = e.clientX;
     pt.y = e.clientY;
     const ctm = svg.getScreenCTM();
-    if (!ctm) return;
+    if (!ctm) return null;
     const cursor = pt.matrixTransform(ctm.inverse());
-    
-    let x = cursor.x / 5;
-    let y = cursor.y / 5;
+    return { x: cursor.x / 5, y: cursor.y / 5 };
+  };
+
+  const handlePointerDown = (e: React.PointerEvent<SVGSVGElement>) => {
+    const coords = getSVGCoords(e);
+    if (!coords) return;
+    const { x, y } = coords;
+
+    // Check if clicking near an existing event dot — if so, start dragging it
+    if (onMoveEvent) {
+      const DRAG_THRESHOLD = 8;
+      const hit = events.find(ev => {
+        if (!ev.coordinates) return false;
+        const dx = ev.coordinates.x - x;
+        const dy = ev.coordinates.y - y;
+        return Math.sqrt(dx * dx + dy * dy) < DRAG_THRESHOLD;
+      });
+      if (hit) {
+        draggingRef.current = { id: hit.id };
+        e.currentTarget.setPointerCapture(e.pointerId);
+        return;
+      }
+    }
+
+    // Otherwise plot a new event
+    if (!onPlot) return;
+
+    let px = x;
+    let py = y;
 
     const isFaceoff = activeEventType === EventType.FACEOFF_WIN || activeEventType === EventType.FACEOFF_LOSS;
     if (isFaceoff) {
       let closestDot = FACEOFF_DOTS[0];
       let minDistance = Infinity;
-      
       FACEOFF_DOTS.forEach(dot => {
-        const dist = Math.sqrt(Math.pow(dot.x - x, 2) + Math.pow(dot.y - y, 2));
-        if (dist < minDistance) {
-          minDistance = dist;
-          closestDot = dot;
-        }
+        const dist = Math.sqrt(Math.pow(dot.x - px, 2) + Math.pow(dot.y - py, 2));
+        if (dist < minDistance) { minDistance = dist; closestDot = dot; }
       });
-
-      if (minDistance < 20) {
-        x = closestDot.x;
-        y = closestDot.y;
-      }
+      px = closestDot.x; py = closestDot.y; // always snap to nearest dot
     }
 
-    onPlot(x, y);
+    onPlot(px, py);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
+    if (!draggingRef.current || !onMoveEvent) return;
+    const coords = getSVGCoords(e);
+    if (!coords) return;
+    // Clamp to rink bounds
+    const x = Math.max(2, Math.min(198, coords.x));
+    const y = Math.max(2, Math.min(83, coords.y));
+    onMoveEvent(draggingRef.current.id, x, y);
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<SVGSVGElement>) => {
+    draggingRef.current = null;
+    e.currentTarget.releasePointerCapture(e.pointerId);
   };
 
   const getEventStyle = (event: GameEvent) => {
@@ -77,7 +112,7 @@ const RinkChart: React.FC<RinkChartProps> = ({
     const GOAL_GREEN = '#22c55e';
     const TURNOVER_ORANGE = '#f97316';
     const PENALTY_RED = '#ef4444';
-    const HIT_GRAY = '#64748b';
+    const HIT_GRAY = '#a855f7';
     const BLOCK_SLATE = '#94a3b8';
     const PP_FOR_GOLD = '#eab308';
     const PP_AGAINST_PINK = '#ec4899';
@@ -102,7 +137,7 @@ const RinkChart: React.FC<RinkChartProps> = ({
       case EventType.FACEOFF_LOSS: 
         return { color: 'none', size: 4, opacity: 0.4 };
       case EventType.HIT: 
-        return { color: HIT_GRAY, size: 6, opacity: 0.7 };
+        return { color: HIT_GRAY, size: 5, opacity: 0.85, shape: 'diamond' };
       default: 
         return { color: '#ffffff', size: 5, opacity: 0.8 };
     }
@@ -128,7 +163,7 @@ const RinkChart: React.FC<RinkChartProps> = ({
 
   return (
     <div className="relative aspect-[200/85] bg-transparent overflow-hidden touch-none group">
-      <svg viewBox={`0 0 ${rinkWidth} ${rinkHeight}`} className="w-full h-full cursor-crosshair select-none" onPointerDown={handlePointerDown}>
+      <svg viewBox={`0 0 ${rinkWidth} ${rinkHeight}`} className="w-full h-full cursor-crosshair select-none" onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp}>
         <defs>
           <filter id="grayscale">
             <feColorMatrix type="matrix" values="0.3333 0.3333 0.3333 0 0 0.3333 0.3333 0.3333 0 0 0.3333 0.3333 0.3333 0 0 0 0 0 1 0"/>
@@ -214,8 +249,11 @@ const RinkChart: React.FC<RinkChartProps> = ({
           const style = getEventStyle(e);
           const cx = e.coordinates.x * 5;
           const cy = e.coordinates.y * 5;
+          const isDragging = draggingRef.current?.id === e.id;
           return (
-            <g key={e.id} className="animate-in fade-in zoom-in duration-300">
+            <g key={e.id} className="animate-in fade-in zoom-in duration-300" style={{ cursor: 'grab' }}>
+              {/* Invisible larger hit target for easier grabbing */}
+              <circle cx={cx} cy={cy} r={style.size * 2.5} fill="transparent" />
               {style.glow && (
                 <>
                   <circle 
