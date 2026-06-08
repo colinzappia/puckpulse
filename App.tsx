@@ -205,7 +205,7 @@ const App: React.FC = () => {
   const [activeTeam, setActiveTeam] = useState<Team>(Team.HOME);
   const [playerNumber, setPlayerNumber] = useState('');
   const [currentPeriod, setCurrentPeriod] = useState(1);
-  const [breakdownFilter, setBreakdownFilter] = useState<number | 'total'>('total');
+  const [breakdownFilter, setBreakdownFilter] = useState<number | 'total'>(1);
   const [summaries, setSummaries] = useState<Record<string, string>>({ 'total': "Game tracking active. Generate coaching analysis after logging more events." });
   const [isGeneratingInsights, setIsGeneratingInsights] = useState(false);
   const [isSyncingHome, setIsSyncingHome] = useState(false);
@@ -303,6 +303,11 @@ const App: React.FC = () => {
   useEffect(() => {
     if (!visibleTypes.includes(mapPlotType)) setVisibleTypes(prev => [...prev, mapPlotType]);
   }, [mapPlotType]);
+
+  // Keep breakdown filter in sync with current period
+  useEffect(() => {
+    setBreakdownFilter(currentPeriod);
+  }, [currentPeriod]);
 
   useEffect(() => {
     try { sessionStorage.setItem('tch_homeRoster', JSON.stringify(homeRoster)); } catch {}
