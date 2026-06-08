@@ -57,7 +57,7 @@ const DraggablePlayer: React.FC<{ p: Player, team: Team, isHome: boolean, isSele
       {...attributes}
       {...listeners}
       onClick={() => onSelect(p.number, team)}
-      className={`relative h-12 md:h-14 rounded-xl font-black flex flex-col items-center justify-center transition-all border group active:scale-95 touch-none ${isSelected ? (isHome ? 'bg-blue-600 border-blue-400 shadow-blue-500/40 shadow-xl' : 'bg-red-600 border-red-400 shadow-red-500/40 shadow-xl') : 'bg-black/30 border-white/5 text-slate-400 hover:bg-white/10'}`}
+      className={`relative h-10 md:h-11 rounded-xl font-black flex flex-col items-center justify-center transition-all border group active:scale-95 touch-none ${isSelected ? (isHome ? 'bg-blue-600 border-blue-400 shadow-blue-500/40 shadow-xl' : 'bg-red-600 border-red-400 shadow-red-500/40 shadow-xl') : 'bg-black/30 border-white/5 text-slate-400 hover:bg-white/10'}`}
     >
       <span className="text-xs md:text-sm lg:text-base leading-none">#{p.number}</span>
       <span className="text-[6px] md:text-[7px] uppercase font-bold text-slate-500 truncate w-full px-1 text-center mt-0.5 group-hover:text-slate-300">
@@ -685,14 +685,14 @@ const App: React.FC = () => {
         
         <main className="flex flex-col pb-20">
         {/* LIVE ROSTER LOGGING PANELS */}
-        <div className={`flex w-full gap-px bg-white/5 border-b border-white/10 shrink-0 transition-all duration-500 overflow-hidden ${showLineups ? 'h-80 sm:h-80 md:h-96 lg:h-[420px] opacity-100' : 'h-0 opacity-0 border-none'}`}>
+        <div className={`flex w-full gap-px bg-white/5 border-b border-white/10 shrink-0 transition-all duration-500 overflow-hidden ${showLineups ? 'h-52 sm:h-56 md:h-64 opacity-100' : 'h-0 opacity-0 border-none'}`}>
           {orderedTeams.map(team => {
             const isHome = team === Team.HOME;
             const roster = isHome ? homeRoster : awayRoster;
             const name = isHome ? homeName : awayName;
             return (
               <div key={team} className={`flex-1 flex flex-col min-w-0 ${isHome ? 'bg-blue-900/10 border-r border-white/5' : 'bg-red-900/10'}`}>
-                <div className={`px-4 py-3 ${isHome ? 'bg-blue-900/30' : 'bg-red-900/30'} flex flex-col gap-3 border-b border-white/10 shrink-0`}>
+                <div className={`px-3 py-2 ${isHome ? 'bg-blue-900/30' : 'bg-red-900/30'} flex flex-col gap-2 border-b border-white/10 shrink-0`}>
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2 overflow-hidden">
                       <div className={`w-2 h-2 rounded-full ${isHome ? 'bg-blue-500' : 'bg-red-500'} animate-pulse`}></div>
@@ -701,9 +701,9 @@ const App: React.FC = () => {
                     <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest">{roster.length} Dressed</span>
                   </div>
                 </div>
-                <div className="flex-1 overflow-y-auto scrollbar-none p-2 space-y-5">
+                <div className="flex-1 overflow-y-auto scrollbar-none p-1.5 space-y-3">
                   <div className="space-y-3">
-                    <h5 className="text-[8px] font-black text-slate-600 uppercase tracking-[0.3em] px-1 border-b border-white/5 pb-1">Offensive Lines</h5>
+                    <h5 className="text-[7px] font-black text-slate-600 uppercase tracking-[0.3em] px-1 border-b border-white/5 pb-0.5">Offensive Lines</h5>
                     {['1', '2', '3', '4'].map(lineNum => (
                       <div key={`line-${lineNum}`} className="space-y-0.5">
                         <span className="text-[7px] font-black text-slate-500 uppercase px-1">Line {lineNum}</span>
@@ -726,7 +726,7 @@ const App: React.FC = () => {
                     ))}
                   </div>
                   <div className="space-y-3">
-                    <h5 className="text-[8px] font-black text-slate-600 uppercase tracking-[0.3em] px-1 border-b border-white/5 pb-1">Defensive Pairings</h5>
+                    <h5 className="text-[7px] font-black text-slate-600 uppercase tracking-[0.3em] px-1 border-b border-white/5 pb-0.5">Defensive Pairings</h5>
                     {['P1', 'P2', 'P3'].map(pairNum => (
                       <div key={`pair-${pairNum}`} className="space-y-0.5">
                         <span className="text-[7px] font-black text-slate-500 uppercase px-1">Pair {pairNum}</span>
@@ -749,7 +749,7 @@ const App: React.FC = () => {
                     ))}
                   </div>
                   <div className="space-y-3">
-                    <h5 className="text-[8px] font-black text-slate-600 uppercase tracking-[0.3em] px-1 border-b border-white/5 pb-1">Goalies</h5>
+                    <h5 className="text-[7px] font-black text-slate-600 uppercase tracking-[0.3em] px-1 border-b border-white/5 pb-0.5">Goalies</h5>
                     <div className="grid grid-cols-2 gap-1.5">
                       {['G1', 'G2'].map(goalieNum => (
                         <DroppableSlot key={goalieNum} id={`line-${team}-${goalieNum}-G`} label={goalieNum === 'G1' ? 'Starter' : 'Backup'}>
@@ -760,7 +760,7 @@ const App: React.FC = () => {
                   </div>
                   {roster.filter(p => !['1','2','3','4','P1','P2','P3','G1','G2'].includes(p.line || '')).length > 0 && (
                     <div className="space-y-1.5">
-                      <h5 className="text-[8px] font-black text-slate-600 uppercase tracking-[0.3em] px-1 border-b border-white/5 pb-1">Others</h5>
+                      <h5 className="text-[7px] font-black text-slate-600 uppercase tracking-[0.3em] px-1 border-b border-white/5 pb-0.5">Others</h5>
                       <DroppableSlot id={`line-${team}-unassigned`} label="Bench" cols={2}>
                         {roster.filter(p => !['1','2','3','4','P1','P2','P3','G1','G2'].includes(p.line || '')).map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} isHome={isHome} isSelected={playerNumber === p.number && activeTeam === team} onSelect={selectPlayer} />)}
                       </DroppableSlot>
