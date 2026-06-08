@@ -260,7 +260,8 @@ const App: React.FC = () => {
   const [visibleTypes, setVisibleTypes] = useState<EventType[]>([
     EventType.GOAL, EventType.SHOT, EventType.TURNOVER, EventType.PENALTY,
     EventType.BLOCK, EventType.FACEOFF_WIN, EventType.FACEOFF_LOSS,
-    EventType.PP_SHOT_FOR, EventType.PP_SHOT_AGAINST
+    EventType.PP_SHOT_FOR, EventType.PP_SHOT_AGAINST,
+    EventType.HIT
   ]);
   const [homeName, setHomeName] = useState(() => {
     try { return sessionStorage.getItem('tch_homeName') || 'HOME'; } catch { return 'HOME'; }
@@ -298,6 +299,7 @@ const App: React.FC = () => {
     { type: EventType.PP_SHOT_AGAINST, label: 'PK SHOT', color: 'bg-pink-500', dotColor: '#ec4899' },
     { type: EventType.TURNOVER, label: 'TO', color: 'bg-orange-600', dotColor: '#f97316' },
     { type: EventType.PENALTY, label: 'PIM', color: 'bg-red-600', dotColor: '#ef4444' },
+    { type: EventType.HIT, label: 'HIT', color: 'bg-purple-600', dotColor: '#a855f7' },
   ], []);
 
   useEffect(() => {
