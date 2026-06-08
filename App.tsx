@@ -1132,8 +1132,8 @@ const App: React.FC = () => {
                             <option value="P1">P1</option><option value="P2">P2</option><option value="P3">P3</option>
                             <option value="G1">G1</option><option value="G2">G2</option>
                           </select>
-                          <button onClick={() => isHome ? setHomeRoster(prev => prev.filter((_, i) => i !== idx)) : setAwayRoster(prev => prev.filter((_, i) => i !== idx))} className="p-2 text-slate-700 hover:text-red-500 transition-colors opacity-40 group-hover:opacity-100">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7" /></svg>
+                          <button onClick={() => isHome ? setHomeRoster(prev => prev.filter((_, i) => i !== idx)) : setAwayRoster(prev => prev.filter((_, i) => i !== idx))} className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-600 hover:text-white hover:bg-red-600 transition-all opacity-40 group-hover:opacity-100 font-black text-sm shrink-0">
+                            ✕
                           </button>
                         </div>
                       ))}
