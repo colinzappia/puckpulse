@@ -705,11 +705,10 @@ const App: React.FC = () => {
                     <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest">{roster.length} Dressed</span>
                   </div>
                 </div>
-                <div className="flex-1 overflow-y-auto scrollbar-none p-1 space-y-1.5">
-                  <div className="space-y-1">
-                    <h5 className="text-[7px] font-black text-slate-600 uppercase tracking-[0.3em] px-1 border-b border-white/5 pb-0.5">Offensive Lines</h5>
+                <div className="flex-1 overflow-y-auto scrollbar-none p-1 space-y-1">
+                  <div className="space-y-0.5">
                     {['1', '2', '3', '4'].map(lineNum => (
-                      <div key={`line-${lineNum}`} className="space-y-0">
+                      <div key={`line-${lineNum}`} className="">
                         <span className="text-[6px] font-black text-slate-600 uppercase px-0.5">L{lineNum}</span>
                         <div className="grid grid-cols-3 gap-0.5">
                           {['LW', 'C', 'RW'].map((pos, posIdx) => {
@@ -729,21 +728,21 @@ const App: React.FC = () => {
                       </div>
                     ))}
                   </div>
-                  <div className="space-y-1">
-                    <h5 className="text-[7px] font-black text-slate-600 uppercase tracking-[0.3em] px-1 border-b border-white/5 pb-0.5">Defensive Pairings</h5>
+                  <div className="mt-1 space-y-0.5">
                     {['P1', 'P2', 'P3'].map(pairNum => (
-                      <div key={`pair-${pairNum}`} className="space-y-0">
+                      <div key={`pair-${pairNum}`} className="">
                         <span className="text-[6px] font-black text-slate-600 uppercase px-0.5">{pairNum}</span>
                         <div className="grid grid-cols-2 gap-0.5">
-                          {['LD', 'RD'].map((pos, posIdx) => {
+                          {['D1', 'D2'].map((pos, posIdx) => {
                             const playersOnPair = roster.filter(p => p.line === pairNum);
                             const playersInThisSlot = playersOnPair.filter(p => {
-                              if (p.position === pos) return true;
-                              if (p.position === 'D') { const dPlayers = playersOnPair.filter(pl => pl.position === 'D'); return dPlayers.indexOf(p) === posIdx; }
+                              if (p.position === 'LD' && posIdx === 0) return true;
+                              if (p.position === 'RD' && posIdx === 1) return true;
+                              if (p.position === 'D') { const dPlayers = playersOnPair.filter(pl => pl.position === 'D' || pl.position === 'LD' || pl.position === 'RD'); return dPlayers.indexOf(p) === posIdx; }
                               return false;
                             });
                             return (
-                              <DroppableSlot key={pos} id={`line-${team}-${pairNum}-${pos}`} label={pos} cols={Math.max(1, playersInThisSlot.length)}>
+                              <DroppableSlot key={pos} id={`line-${team}-${pairNum}-${posIdx === 0 ? 'LD' : 'RD'}`} label={pos} cols={Math.max(1, playersInThisSlot.length)}>
                                 {playersInThisSlot.map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} isHome={isHome} isSelected={playerNumber === p.number && activeTeam === team} onSelect={selectPlayer} />)}
                               </DroppableSlot>
                             );
@@ -752,8 +751,7 @@ const App: React.FC = () => {
                       </div>
                     ))}
                   </div>
-                  <div className="space-y-1">
-                    <h5 className="text-[7px] font-black text-slate-600 uppercase tracking-[0.3em] px-1 border-b border-white/5 pb-0.5">Goalies</h5>
+                  <div className="mt-1 space-y-0.5">
                     <div className="grid grid-cols-2 gap-0.5">
                       {['G1', 'G2'].map(goalieNum => (
                         <DroppableSlot key={goalieNum} id={`line-${team}-${goalieNum}-G`} label={goalieNum === 'G1' ? 'Starter' : 'Backup'}>
