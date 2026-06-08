@@ -640,14 +640,7 @@ const App: React.FC = () => {
     };
   }, []);
 
-  React.useEffect(() => {
-    const handlePopState = () => { sessionStorage.removeItem('tch_launched'); setShowLanding(true); };
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
-
   const handleLaunch = () => {
-    window.history.pushState({ page: 'app' }, '', '');
     sessionStorage.setItem('tch_launched', 'true');
     setShowLanding(false);
   };
