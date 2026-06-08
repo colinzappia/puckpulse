@@ -85,7 +85,7 @@ const RinkChart: React.FC<RinkChartProps> = ({
         const dist = Math.sqrt(Math.pow(dot.x - px, 2) + Math.pow(dot.y - py, 2));
         if (dist < minDistance) { minDistance = dist; closestDot = dot; }
       });
-      if (minDistance < 20) { px = closestDot.x; py = closestDot.y; }
+      px = closestDot.x; py = closestDot.y; // always snap to nearest dot
     }
 
     onPlot(px, py);
