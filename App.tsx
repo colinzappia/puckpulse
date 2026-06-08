@@ -251,7 +251,11 @@ const App: React.FC = () => {
     toast.success(`Moved #${activeNumber} to ${overLine}${overPos ? ` (${overPos})` : ''}`);
   };
 
-  const [showSetup, setShowSetup] = useState(false);
+  const [showSetup, setShowSetup] = useState(() => sessionStorage.getItem('tch_showSetup') === 'true');
+  useEffect(() => {
+    try { sessionStorage.setItem('tch_showSetup', String(showSetup)); } catch {}
+  }, [showSetup]);
+
   const [showManual, setShowManual] = useState(false);
   const [showFeed, setShowFeed] = useState(true);
   const [showLineups, setShowLineups] = useState(true);
