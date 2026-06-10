@@ -57,7 +57,7 @@ const DraggablePlayer: React.FC<{ p: Player, team: Team, isHome: boolean, isSele
       {...attributes}
       {...listeners}
       onClick={() => onSelect(p.number, team)}
-      className={`relative h-8 rounded-lg font-black flex flex-col items-center justify-center transition-all border group active:scale-95 touch-none ${isSelected ? (isHome ? 'bg-blue-600 border-blue-400 shadow-blue-500/40 shadow-xl' : 'bg-red-600 border-red-400 shadow-red-500/40 shadow-xl') : 'bg-black/30 border-white/5 text-slate-400 hover:bg-white/10'}`}
+      className={`relative h-10 rounded-xl font-black flex flex-col items-center justify-center transition-all border group active:scale-95 touch-none ${isSelected ? (isHome ? 'bg-blue-600 border-blue-400 shadow-blue-500/40 shadow-xl' : 'bg-red-600 border-red-400 shadow-red-500/40 shadow-xl') : 'bg-black/30 border-white/5 text-slate-400 hover:bg-white/10'}`}
     >
       <span className="text-[10px] leading-none">#{p.number}</span>
       <span className="text-[5px] uppercase font-bold text-slate-500 truncate w-full px-0.5 text-center group-hover:text-slate-300">
@@ -74,21 +74,18 @@ const DroppableSlot: React.FC<{ id: string, children: React.ReactNode, label: st
   const { setNodeRef, isOver } = useDroppable({ id });
 
   return (
-    <div className={`flex flex-col gap-0.5 ${className}`}>
-      <span className="text-[6px] font-black text-slate-700 uppercase tracking-widest px-1">{label}</span>
-      <div 
-        ref={setNodeRef}
-        className={`relative min-h-8 rounded-lg transition-all border border-dashed ${isOver ? 'bg-white/10 border-white/30 ring-2 ring-white/10' : 'bg-black/20 border-white/5'}`}
-      >
-        <div className={`grid gap-1 p-1 h-full`} style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
-          {children}
-        </div>
-        {!React.Children.count(children) && !isOver && (
-          <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none">
-            <span className="text-[7px] font-black uppercase tracking-widest">{label}</span>
-          </div>
-        )}
+    <div 
+      ref={setNodeRef}
+      className={`relative min-h-10 rounded-xl transition-all border border-dashed ${isOver ? 'bg-white/10 border-white/30 ring-2 ring-white/10' : 'bg-black/20 border-white/5'} ${className}`}
+    >
+      <div className={`grid gap-0.5 p-0.5 h-full`} style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
+        {children}
       </div>
+      {!React.Children.count(children) && !isOver && (
+        <div className="absolute inset-0 flex items-center justify-center opacity-20 pointer-events-none">
+          <span className="text-[6px] font-black uppercase tracking-widest text-slate-600">{label}</span>
+        </div>
+      )}
     </div>
   );
 };
@@ -330,7 +327,13 @@ const App: React.FC = () => {
     } catch {}
   }, [homeName, awayName]);
 
-  const sortByNumber = (roster: Player[]) => [...roster].sort((a, b) => (parseInt(a.number, 10) || 0) - (parseInt(b.number, 10) || 0));
+  const sortByNumber = (roster: Player[]) => [...roster].sort((a, b) => {
+    // Goalies always first
+    const aIsG = a.position?.toUpperCase() === 'G' ? 0 : 1;
+    const bIsG = b.position?.toUpperCase() === 'G' ? 0 : 1;
+    if (aIsG !== bIsG) return aIsG - bIsG;
+    return (parseInt(a.number, 10) || 0) - (parseInt(b.number, 10) || 0);
+  });
 
   const centers = useMemo(() => ({
     home: homeRoster.filter(p => p.position?.toUpperCase().includes('C')),
@@ -689,7 +692,7 @@ const App: React.FC = () => {
         
         <main className="flex flex-col pb-20">
         {/* LIVE ROSTER LOGGING PANELS */}
-        <div className={`flex w-full gap-px bg-white/5 border-b border-white/10 shrink-0 transition-all duration-500 overflow-hidden ${showLineups ? 'h-52 sm:h-56 md:h-64 opacity-100' : 'h-0 opacity-0 border-none'}`}>
+        <div className={`flex w-full gap-px bg-white/5 border-b border-white/10 shrink-0 transition-all duration-500 overflow-hidden ${showLineups ? 'h-72 sm:h-80 md:h-96 opacity-100' : 'h-0 opacity-0 border-none'}`}>
           {orderedTeams.map(team => {
             const isHome = team === Team.HOME;
             const roster = isHome ? homeRoster : awayRoster;
@@ -705,67 +708,76 @@ const App: React.FC = () => {
                     <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest">{roster.length} Dressed</span>
                   </div>
                 </div>
-                <div className="flex-1 overflow-y-auto scrollbar-none p-1">
-                  {/* Forward lines — one flat row per line */}
-                  {['1','2','3','4'].map(lineNum => {
-                    const players = roster.filter(p => p.line === lineNum);
-                    if (players.length === 0) return null;
-                    return (
-                      <div key={lineNum} className="flex items-center gap-0.5 mb-0.5">
-                        <span className={`text-[7px] font-black w-4 shrink-0 ${isHome ? 'text-blue-600' : 'text-red-600'}`}>L{lineNum}</span>
-                        <div className="flex gap-0.5 flex-1 flex-wrap">
-                          {players.map(p => (
-                            <button key={p.number} onClick={() => selectPlayer(p.number, team)}
-                              className={`h-7 px-1.5 rounded-md text-[9px] font-black transition-all border flex items-center gap-0.5 ${playerNumber === p.number && activeTeam === team ? (isHome ? 'bg-blue-600 border-blue-400 text-white' : 'bg-red-600 border-red-400 text-white') : 'bg-black/30 border-white/5 text-slate-400 hover:bg-white/10'}`}>
-                              <span>#{p.number}</span>
-                              <span className="text-[6px] text-slate-500">{p.position}</span>
-                            </button>
-                          ))}
-                        </div>
+                <div className="flex-1 overflow-y-auto scrollbar-none p-1 space-y-0.5">
+                  {/* Forward lines */}
+                  {['1','2','3','4'].map(lineNum => (
+                    <div key={`line-${lineNum}`}>
+                      <div className="flex items-center gap-0.5 mb-0.5">
+                        <span className={`text-[6px] font-black w-3 shrink-0 ${isHome ? 'text-blue-600' : 'text-red-600'}`}>L{lineNum}</span>
+                        <div className="flex-1 h-px bg-white/5" />
                       </div>
-                    );
-                  })}
-                  {/* Divider */}
-                  <div className="border-t border-white/5 my-0.5" />
+                      <div className="grid grid-cols-3 gap-0.5">
+                        {['LW','C','RW'].map((pos, posIdx) => {
+                          const playersOnLine = roster.filter(p => p.line === lineNum);
+                          const playersInThisSlot = playersOnLine.filter(p => {
+                            if (p.position === pos) return true;
+                            if (p.position === 'F') { const fPlayers = playersOnLine.filter(pl => pl.position === 'F'); return fPlayers.indexOf(p) === posIdx; }
+                            return false;
+                          });
+                          return (
+                            <DroppableSlot key={pos} id={`line-${team}-${lineNum}-${pos}`} label={pos} cols={Math.max(1, playersInThisSlot.length)}>
+                              {playersInThisSlot.map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} isHome={isHome} isSelected={playerNumber === p.number && activeTeam === team} onSelect={selectPlayer} />)}
+                            </DroppableSlot>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
                   {/* Defense pairs */}
-                  {['P1','P2','P3'].map(pairNum => {
-                    const players = roster.filter(p => p.line === pairNum);
-                    if (players.length === 0) return null;
-                    return (
-                      <div key={pairNum} className="flex items-center gap-0.5 mb-0.5">
-                        <span className={`text-[7px] font-black w-4 shrink-0 ${isHome ? 'text-blue-600' : 'text-red-600'}`}>{pairNum}</span>
-                        <div className="flex gap-0.5 flex-1">
-                          {players.map(p => (
-                            <button key={p.number} onClick={() => selectPlayer(p.number, team)}
-                              className={`h-7 px-1.5 rounded-md text-[9px] font-black transition-all border flex items-center gap-0.5 ${playerNumber === p.number && activeTeam === team ? (isHome ? 'bg-blue-600 border-blue-400 text-white' : 'bg-red-600 border-red-400 text-white') : 'bg-black/30 border-white/5 text-slate-400 hover:bg-white/10'}`}>
-                              <span>#{p.number}</span>
-                              <span className="text-[6px] text-slate-500">{p.position}</span>
-                            </button>
-                          ))}
-                        </div>
+                  {['P1','P2','P3'].map(pairNum => (
+                    <div key={`pair-${pairNum}`}>
+                      <div className="flex items-center gap-0.5 mb-0.5">
+                        <span className={`text-[6px] font-black w-3 shrink-0 ${isHome ? 'text-blue-600' : 'text-red-600'}`}>{pairNum}</span>
+                        <div className="flex-1 h-px bg-white/5" />
                       </div>
-                    );
-                  })}
-                  {/* Divider */}
-                  <div className="border-t border-white/5 my-0.5" />
+                      <div className="grid grid-cols-2 gap-0.5">
+                        {['D1','D2'].map((pos, posIdx) => {
+                          const playersOnPair = roster.filter(p => p.line === pairNum);
+                          const playersInThisSlot = playersOnPair.filter(p => {
+                            if (p.position === 'LD' && posIdx === 0) return true;
+                            if (p.position === 'RD' && posIdx === 1) return true;
+                            if (p.position === 'D') { const dPlayers = playersOnPair.filter(pl => pl.position === 'D' || pl.position === 'LD' || pl.position === 'RD'); return dPlayers.indexOf(p) === posIdx; }
+                            return false;
+                          });
+                          return (
+                            <DroppableSlot key={pos} id={`line-${team}-${pairNum}-${posIdx === 0 ? 'LD' : 'RD'}`} label={pos} cols={Math.max(1, playersInThisSlot.length)}>
+                              {playersInThisSlot.map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} isHome={isHome} isSelected={playerNumber === p.number && activeTeam === team} onSelect={selectPlayer} />)}
+                            </DroppableSlot>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
                   {/* Goalies */}
-                  {(() => {
-                    const goalies = roster.filter(p => ['G1','G2'].includes(p.line || '') || p.position === 'G');
-                    if (goalies.length === 0) return null;
-                    return (
-                      <div className="flex items-center gap-0.5">
-                        <span className={`text-[7px] font-black w-4 shrink-0 ${isHome ? 'text-blue-600' : 'text-red-600'}`}>G</span>
-                        <div className="flex gap-0.5 flex-1">
-                          {goalies.map(p => (
-                            <button key={p.number} onClick={() => selectPlayer(p.number, team)}
-                              className={`h-7 px-1.5 rounded-md text-[9px] font-black transition-all border flex items-center gap-0.5 ${playerNumber === p.number && activeTeam === team ? (isHome ? 'bg-blue-600 border-blue-400 text-white' : 'bg-red-600 border-red-400 text-white') : 'bg-black/30 border-white/5 text-slate-400 hover:bg-white/10'}`}>
-                              <span>#{p.number}</span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })()}
+                  <div>
+                    <div className="flex items-center gap-0.5 mb-0.5">
+                      <span className={`text-[6px] font-black w-3 shrink-0 ${isHome ? 'text-blue-600' : 'text-red-600'}`}>G</span>
+                      <div className="flex-1 h-px bg-white/5" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-0.5">
+                      {['G1','G2'].map(goalieNum => (
+                        <DroppableSlot key={goalieNum} id={`line-${team}-${goalieNum}-G`} label={goalieNum === 'G1' ? 'S' : 'B'}>
+                          {roster.filter(p => p.line === goalieNum).map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} isHome={isHome} isSelected={playerNumber === p.number && activeTeam === team} onSelect={selectPlayer} />)}
+                        </DroppableSlot>
+                      ))}
+                    </div>
+                  </div>
+                  {/* Unassigned */}
+                  {roster.filter(p => !['1','2','3','4','P1','P2','P3','G1','G2'].includes(p.line || '')).length > 0 && (
+                    <DroppableSlot id={`line-${team}-unassigned`} label="?" cols={2}>
+                      {roster.filter(p => !['1','2','3','4','P1','P2','P3','G1','G2'].includes(p.line || '')).map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} isHome={isHome} isSelected={playerNumber === p.number && activeTeam === team} onSelect={selectPlayer} />)}
+                    </DroppableSlot>
+                  )}
                 </div>
               </div>
             );
