@@ -30,7 +30,8 @@ export async function fetchRosterByAI({ teamName, rosterUrl, pasteText }: SyncPa
 export async function generateNarrative(
   periodFilter: number | 'total',
   homeStats: any,
-  awayStats: any
+  awayStats: any,
+  richData?: any
 ): Promise<string> {
   try {
     const response = await fetch('/api/ai-narrative', {
@@ -41,7 +42,8 @@ export async function generateNarrative(
         awayName: awayStats.name,
         homeStats,
         awayStats,
-        periodFilter
+        periodFilter,
+        richData
       })
     });
     const data = await response.json();
