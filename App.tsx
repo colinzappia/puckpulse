@@ -526,7 +526,59 @@ const App: React.FC = () => {
     try {
       const hStats = getStatsForRange(Team.HOME, breakdownFilter);
       const aStats = getStatsForRange(Team.AWAY, breakdownFilter);
-      const narrative = await generateNarrative(breakdownFilter, hStats, aStats);
+
+      // Build rich shot quality breakdown
+      const periodEvents = breakdownFilter === 'total'
+        ? events
+        : events.filter(e => e.period === breakdownFilter);
+
+      const getShotQualityBreakdown = (team: Team) => {
+        const shots = periodEvents.filter(e => e.team === team && (e.type === EventType.SHOT || e.type === EventType.GOAL));
+        return {
+          high: shots.filter(e => e.metadata?.shotQuality === 'high').length,
+          medium: shots.filter(e => e.metadata?.shotQuality === 'medium').length,
+          low: shots.filter(e => e.metadata?.shotQuality === 'low').length,
+        };
+      };
+
+      const getFaceoffZoneBreakdown = (team: Team) => {
+        const wins = periodEvents.filter(e => e.team === team && e.type === EventType.FACEOFF_WIN);
+        const losses = periodEvents.filter(e => e.team === team && e.type === EventType.FACEOFF_LOSS);
+        return {
+          offensiveWins: wins.filter(e => e.zone === Zone.OFFENSIVE).length,
+          offensiveLosses: losses.filter(e => e.zone === Zone.OFFENSIVE).length,
+          defensiveWins: wins.filter(e => e.zone === Zone.DEFENSIVE).length,
+          defensiveLosses: losses.filter(e => e.zone === Zone.DEFENSIVE).length,
+          neutralWins: wins.filter(e => e.zone === Zone.NEUTRAL).length,
+          neutralLosses: losses.filter(e => e.zone === Zone.NEUTRAL).length,
+        };
+      };
+
+      const getGoalLines = () => {
+        return periodEvents
+          .filter(e => e.type === EventType.GOAL)
+          .map(e => ({
+            team: e.team === Team.HOME ? homeName : awayName,
+            player: e.playerNumber ? `#${e.playerNumber}` : 'unknown',
+            line: e.metadata?.lineOnIce || null,
+            quality: e.metadata?.shotQuality || null,
+          }));
+      };
+
+      const richData = {
+        homeName, awayName,
+        homeStats: hStats,
+        awayStats: aStats,
+        homeShotQuality: getShotQualityBreakdown(Team.HOME),
+        awayShotQuality: getShotQualityBreakdown(Team.AWAY),
+        homeFaceoffZones: getFaceoffZoneBreakdown(Team.HOME),
+        awayFaceoffZones: getFaceoffZoneBreakdown(Team.AWAY),
+        goals: getGoalLines(),
+        periodFilter: breakdownFilter,
+        totalEvents: periodEvents.length,
+      };
+
+      const narrative = await generateNarrative(breakdownFilter, hStats, aStats, richData);
       setSummaries(prev => ({ ...prev, [breakdownFilter]: narrative }));
     } catch (err) { console.error(err); } finally { setIsGeneratingInsights(false); }
   };
