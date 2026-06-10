@@ -21,8 +21,16 @@ interface PlayerFOStats {
 }
 
 function buildFOStats(events: GameEvent[], roster: Player[], team: Team): PlayerFOStats[] {
-  // Start with ALL centres from roster
-  const centres = roster.filter(p => p.position?.toUpperCase() === 'C');
+  // Sort centres by line order (C on Line 1 first, then Line 2, etc.)
+  const lineOrder: Record<string, number> = { '1': 1, '2': 2, '3': 3, '4': 4 };
+  const centres = roster
+    .filter(p => p.position?.toUpperCase() === 'C')
+    .sort((a, b) => {
+      const aLine = lineOrder[a.line || ''] || 99;
+      const bLine = lineOrder[b.line || ''] || 99;
+      if (aLine !== bLine) return aLine - bLine;
+      return (parseInt(a.number, 10) || 0) - (parseInt(b.number, 10) || 0);
+    });
   const map = new Map<string, PlayerFOStats>();
 
   // Pre-populate all centres
@@ -81,11 +89,20 @@ function buildFOStats(events: GameEvent[], roster: Player[], team: Team): Player
   });
 
   // Calculate pct and total
+  // Preserve lineup order — centres first in line order, then any non-centre fill-ins
+  const centreNumbers = centres.map(p => p.number);
   return Array.from(map.values()).map(r => ({
     ...r,
     total: r.wins + r.losses,
     pct: r.wins + r.losses > 0 ? Math.round(r.wins / (r.wins + r.losses) * 100) : 0
-  })).sort((a, b) => b.total - a.total);
+  })).sort((a, b) => {
+    const aIdx = centreNumbers.indexOf(a.number);
+    const bIdx = centreNumbers.indexOf(b.number);
+    if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx; // both centres — keep lineup order
+    if (aIdx !== -1) return -1; // a is centre, b is not — a first
+    if (bIdx !== -1) return 1;  // b is centre, a is not — b first
+    return (parseInt(a.number, 10) || 0) - (parseInt(b.number, 10) || 0);
+  });
 }
 
 function buildMatchups(events: GameEvent[], homeRoster: Player[], awayRoster: Player[]) {
