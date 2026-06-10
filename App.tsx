@@ -873,15 +873,13 @@ const App: React.FC = () => {
               {toolbarButtons.map(btn => (
                 <button key={btn.type} onClick={() => setMapPlotType(btn.type)} className={`px-3 sm:px-6 md:px-8 py-2.5 md:py-3 rounded-xl text-[10px] sm:text-[11px] md:text-xs font-black uppercase transition-all flex items-center justify-center shadow-lg active:scale-90 ${mapPlotType === btn.type ? `${btn.color} text-white ring-2 ring-white/20` : 'bg-white/5 text-slate-500 hover:bg-white/10'}`}>{btn.label}</button>
               ))}
-              <button onClick={() => setShowFaceoffPanel(true)} className={`px-3 sm:px-6 md:px-8 py-2.5 md:py-3 rounded-xl text-[10px] sm:text-[11px] md:text-xs font-black uppercase transition-all flex items-center justify-center shadow-lg active:scale-90 bg-yellow-600/20 text-yellow-400 border border-yellow-500/30 hover:bg-yellow-600/40`}>🏒 FO</button>
+              <button onClick={() => setShowFaceoffPanel(true)} className={`px-3 sm:px-6 md:px-8 py-2.5 md:py-3 rounded-xl text-[10px] sm:text-[11px] md:text-xs font-black uppercase transition-all flex items-center justify-center shadow-lg active:scale-90 bg-yellow-600/20 text-yellow-400 border border-yellow-500/30 hover:bg-yellow-600/40`}>🏒 Faceoff Hub</button>
             </div>
             <div className="flex items-center gap-2 shrink-0">
               {playerNumber && (
                 <div className={`px-3 py-2 rounded-xl text-xs font-black border transition-all ${activeTeam === Team.HOME ? 'bg-blue-600/20 border-blue-500/40 text-blue-300' : 'bg-red-600/20 border-red-500/40 text-red-300'}`}>#{playerNumber}</div>
               )}
-              {lastEvent && (
-                <button onClick={handleRepeatLast} title="Repeat last event" className="px-3 py-2 bg-yellow-600/20 hover:bg-yellow-600/40 border border-yellow-500/30 rounded-xl text-yellow-400 text-xs font-black transition-all active:scale-95">↺ REPEAT</button>
-              )}
+
               <button onClick={handleUndo} className="p-3 md:p-4 bg-white/5 hover:bg-white/10 rounded-xl text-slate-400 active:bg-white/20 transition-all shadow-lg">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /></svg>
               </button>
