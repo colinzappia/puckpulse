@@ -59,11 +59,10 @@ const DraggablePlayer: React.FC<{ p: Player, team: Team, isHome: boolean, isSele
       onClick={() => onSelect(p.number, team)}
       className={`relative h-10 rounded-xl font-black flex flex-col items-center justify-center transition-all border group active:scale-95 touch-none ${isSelected ? (isHome ? 'bg-blue-600 border-blue-400 shadow-blue-500/40 shadow-xl' : 'bg-red-600 border-red-400 shadow-red-500/40 shadow-xl') : 'bg-black/30 border-white/5 text-slate-400 hover:bg-white/10'}`}
     >
-      <span className="text-[10px] leading-none">#{p.number}</span>
-      <span className="text-[5px] uppercase font-bold text-slate-500 truncate w-full px-0.5 text-center group-hover:text-slate-300">
-        {p.name.split(' ').pop()}
+      <span className="text-[11px] font-black leading-none truncate w-full text-center px-1">
+        #{p.number} {p.name.split(' ').pop()}
       </span>
-      <div className={`absolute top-0.5 right-0.5 px-1 rounded-md text-[5px] font-black border ${p.position === 'C' ? 'bg-yellow-500/20 border-yellow-500/30 text-yellow-500' : 'bg-black/40 border-white/5 text-slate-600'}`}>
+      <div className={`absolute top-0.5 right-0.5 px-0.5 rounded text-[5px] font-black border ${p.position === 'C' ? 'bg-yellow-500/20 border-yellow-500/30 text-yellow-500' : 'bg-black/40 border-white/5 text-slate-600'}`}>
         {p.position}
       </div>
     </button>
