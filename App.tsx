@@ -705,69 +705,67 @@ const App: React.FC = () => {
                     <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest">{roster.length} Dressed</span>
                   </div>
                 </div>
-                <div className="flex-1 overflow-y-auto scrollbar-none p-1 space-y-1">
-                  <div className="space-y-0.5">
-                    {['1', '2', '3', '4'].map(lineNum => (
-                      <div key={`line-${lineNum}`} className="">
-                        <span className="text-[6px] font-black text-slate-600 uppercase px-0.5">L{lineNum}</span>
-                        <div className="grid grid-cols-3 gap-0.5">
-                          {['LW', 'C', 'RW'].map((pos, posIdx) => {
-                            const playersOnLine = roster.filter(p => p.line === lineNum);
-                            const playersInThisSlot = playersOnLine.filter(p => {
-                              if (p.position === pos) return true;
-                              if (p.position === 'F') { const fPlayers = playersOnLine.filter(pl => pl.position === 'F'); return fPlayers.indexOf(p) === posIdx; }
-                              return false;
-                            });
-                            return (
-                              <DroppableSlot key={pos} id={`line-${team}-${lineNum}-${pos}`} label={pos} cols={Math.max(1, playersInThisSlot.length)}>
-                                {playersInThisSlot.map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} isHome={isHome} isSelected={playerNumber === p.number && activeTeam === team} onSelect={selectPlayer} />)}
-                              </DroppableSlot>
-                            );
-                          })}
+                <div className="flex-1 overflow-y-auto scrollbar-none p-1">
+                  {/* Forward lines — one flat row per line */}
+                  {['1','2','3','4'].map(lineNum => {
+                    const players = roster.filter(p => p.line === lineNum);
+                    if (players.length === 0) return null;
+                    return (
+                      <div key={lineNum} className="flex items-center gap-0.5 mb-0.5">
+                        <span className={`text-[7px] font-black w-4 shrink-0 ${isHome ? 'text-blue-600' : 'text-red-600'}`}>L{lineNum}</span>
+                        <div className="flex gap-0.5 flex-1 flex-wrap">
+                          {players.map(p => (
+                            <button key={p.number} onClick={() => selectPlayer(p.number, team)}
+                              className={`h-7 px-1.5 rounded-md text-[9px] font-black transition-all border flex items-center gap-0.5 ${playerNumber === p.number && activeTeam === team ? (isHome ? 'bg-blue-600 border-blue-400 text-white' : 'bg-red-600 border-red-400 text-white') : 'bg-black/30 border-white/5 text-slate-400 hover:bg-white/10'}`}>
+                              <span>#{p.number}</span>
+                              <span className="text-[6px] text-slate-500">{p.position}</span>
+                            </button>
+                          ))}
                         </div>
                       </div>
-                    ))}
-                  </div>
-                  <div className="mt-1 space-y-0.5">
-                    {['P1', 'P2', 'P3'].map(pairNum => (
-                      <div key={`pair-${pairNum}`} className="">
-                        <span className="text-[6px] font-black text-slate-600 uppercase px-0.5">{pairNum}</span>
-                        <div className="grid grid-cols-2 gap-0.5">
-                          {['D1', 'D2'].map((pos, posIdx) => {
-                            const playersOnPair = roster.filter(p => p.line === pairNum);
-                            const playersInThisSlot = playersOnPair.filter(p => {
-                              if (p.position === 'LD' && posIdx === 0) return true;
-                              if (p.position === 'RD' && posIdx === 1) return true;
-                              if (p.position === 'D') { const dPlayers = playersOnPair.filter(pl => pl.position === 'D' || pl.position === 'LD' || pl.position === 'RD'); return dPlayers.indexOf(p) === posIdx; }
-                              return false;
-                            });
-                            return (
-                              <DroppableSlot key={pos} id={`line-${team}-${pairNum}-${posIdx === 0 ? 'LD' : 'RD'}`} label={pos} cols={Math.max(1, playersInThisSlot.length)}>
-                                {playersInThisSlot.map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} isHome={isHome} isSelected={playerNumber === p.number && activeTeam === team} onSelect={selectPlayer} />)}
-                              </DroppableSlot>
-                            );
-                          })}
+                    );
+                  })}
+                  {/* Divider */}
+                  <div className="border-t border-white/5 my-0.5" />
+                  {/* Defense pairs */}
+                  {['P1','P2','P3'].map(pairNum => {
+                    const players = roster.filter(p => p.line === pairNum);
+                    if (players.length === 0) return null;
+                    return (
+                      <div key={pairNum} className="flex items-center gap-0.5 mb-0.5">
+                        <span className={`text-[7px] font-black w-4 shrink-0 ${isHome ? 'text-blue-600' : 'text-red-600'}`}>{pairNum}</span>
+                        <div className="flex gap-0.5 flex-1">
+                          {players.map(p => (
+                            <button key={p.number} onClick={() => selectPlayer(p.number, team)}
+                              className={`h-7 px-1.5 rounded-md text-[9px] font-black transition-all border flex items-center gap-0.5 ${playerNumber === p.number && activeTeam === team ? (isHome ? 'bg-blue-600 border-blue-400 text-white' : 'bg-red-600 border-red-400 text-white') : 'bg-black/30 border-white/5 text-slate-400 hover:bg-white/10'}`}>
+                              <span>#{p.number}</span>
+                              <span className="text-[6px] text-slate-500">{p.position}</span>
+                            </button>
+                          ))}
                         </div>
                       </div>
-                    ))}
-                  </div>
-                  <div className="mt-1 space-y-0.5">
-                    <div className="grid grid-cols-2 gap-0.5">
-                      {['G1', 'G2'].map(goalieNum => (
-                        <DroppableSlot key={goalieNum} id={`line-${team}-${goalieNum}-G`} label={goalieNum === 'G1' ? 'Starter' : 'Backup'}>
-                          {roster.filter(p => p.line === goalieNum).map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} isHome={isHome} isSelected={playerNumber === p.number && activeTeam === team} onSelect={selectPlayer} />)}
-                        </DroppableSlot>
-                      ))}
-                    </div>
-                  </div>
-                  {roster.filter(p => !['1','2','3','4','P1','P2','P3','G1','G2'].includes(p.line || '')).length > 0 && (
-                    <div className="space-y-1.5">
-                      <h5 className="text-[7px] font-black text-slate-600 uppercase tracking-[0.3em] px-1 border-b border-white/5 pb-0.5">Others</h5>
-                      <DroppableSlot id={`line-${team}-unassigned`} label="Bench" cols={2}>
-                        {roster.filter(p => !['1','2','3','4','P1','P2','P3','G1','G2'].includes(p.line || '')).map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} isHome={isHome} isSelected={playerNumber === p.number && activeTeam === team} onSelect={selectPlayer} />)}
-                      </DroppableSlot>
-                    </div>
-                  )}
+                    );
+                  })}
+                  {/* Divider */}
+                  <div className="border-t border-white/5 my-0.5" />
+                  {/* Goalies */}
+                  {(() => {
+                    const goalies = roster.filter(p => ['G1','G2'].includes(p.line || '') || p.position === 'G');
+                    if (goalies.length === 0) return null;
+                    return (
+                      <div className="flex items-center gap-0.5">
+                        <span className={`text-[7px] font-black w-4 shrink-0 ${isHome ? 'text-blue-600' : 'text-red-600'}`}>G</span>
+                        <div className="flex gap-0.5 flex-1">
+                          {goalies.map(p => (
+                            <button key={p.number} onClick={() => selectPlayer(p.number, team)}
+                              className={`h-7 px-1.5 rounded-md text-[9px] font-black transition-all border flex items-center gap-0.5 ${playerNumber === p.number && activeTeam === team ? (isHome ? 'bg-blue-600 border-blue-400 text-white' : 'bg-red-600 border-red-400 text-white') : 'bg-black/30 border-white/5 text-slate-400 hover:bg-white/10'}`}>
+                              <span>#{p.number}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             );
