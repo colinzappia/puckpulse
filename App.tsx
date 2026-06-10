@@ -873,7 +873,7 @@ const App: React.FC = () => {
               {toolbarButtons.map(btn => (
                 <button key={btn.type} onClick={() => setMapPlotType(btn.type)} className={`px-3 sm:px-6 md:px-8 py-2.5 md:py-3 rounded-xl text-[10px] sm:text-[11px] md:text-xs font-black uppercase transition-all flex items-center justify-center shadow-lg active:scale-90 ${mapPlotType === btn.type ? `${btn.color} text-white ring-2 ring-white/20` : 'bg-white/5 text-slate-500 hover:bg-white/10'}`}>{btn.label}</button>
               ))}
-              <button onClick={() => setShowFaceoffPanel(true)} className={`px-3 sm:px-6 md:px-8 py-2.5 md:py-3 rounded-xl text-[10px] sm:text-[11px] md:text-xs font-black uppercase transition-all flex items-center justify-center shadow-lg active:scale-90 bg-yellow-600/20 text-yellow-400 border border-yellow-500/30 hover:bg-yellow-600/40`}>🏒 Faceoff Hub</button>
+              <button onClick={() => setShowFaceoffPanel(true)} className={`px-3 sm:px-6 md:px-8 py-2.5 md:py-3 rounded-xl text-[10px] sm:text-[11px] md:text-xs font-black uppercase transition-all flex items-center justify-center shadow-lg active:scale-90 bg-yellow-600/20 text-yellow-400 border border-yellow-500/30 hover:bg-yellow-600/40`}>Faceoff Hub</button>
             </div>
             <div className="flex items-center gap-2 shrink-0">
               {playerNumber && (
