@@ -328,7 +328,6 @@ const App: React.FC = () => {
   }, [homeName, awayName]);
 
   const sortByNumber = (roster: Player[]) => [...roster].sort((a, b) => {
-    // Goalies always first
     const aIsG = a.position?.toUpperCase() === 'G' ? 0 : 1;
     const bIsG = b.position?.toUpperCase() === 'G' ? 0 : 1;
     if (aIsG !== bIsG) return aIsG - bIsG;
@@ -510,8 +509,8 @@ const App: React.FC = () => {
         line: p.line || (p.position === 'G' ? 'G1' : p.position === 'D' ? 'P1' : '1'),
       }));
       if (players.length === 0) throw new Error('No players found in pasted text');
-      if (isHome) { setHomeRoster(players); setPasteRosterHome(''); }
-      else { setAwayRoster(players); setPasteRosterAway(''); }
+      if (isHome) { setHomeRoster(sortByNumber(players)); setPasteRosterHome(''); }
+      else { setAwayRoster(sortByNumber(players)); setPasteRosterAway(''); }
       setSyncMessage('');
       alert(`✅ ${players.length} players imported successfully!`);
     } catch (err: any) {
@@ -692,7 +691,7 @@ const App: React.FC = () => {
         
         <main className="flex flex-col pb-20">
         {/* LIVE ROSTER LOGGING PANELS */}
-        <div className={`flex w-full gap-px bg-white/5 border-b border-white/10 shrink-0 transition-all duration-500 overflow-hidden ${showLineups ? 'h-72 sm:h-80 md:h-96 opacity-100' : 'h-0 opacity-0 border-none'}`}>
+        <div className={`flex w-full gap-px bg-white/5 border-b border-white/10 shrink-0 transition-all duration-500 overflow-hidden ${showLineups ? 'h-[420px] sm:h-[460px] md:h-[520px] opacity-100' : 'h-0 opacity-0 border-none'}`}>
           {orderedTeams.map(team => {
             const isHome = team === Team.HOME;
             const roster = isHome ? homeRoster : awayRoster;
