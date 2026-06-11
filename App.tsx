@@ -13,6 +13,7 @@ import AuthGate from './components/AuthGate';
 import PricingGate from './components/PricingGate';
 import LegalPages from './components/LegalPages';
 import ContactPage from './components/ContactPage';
+import AboutPage from './components/AboutPage';
 import AdvertisePage from './components/AdvertisePage';
 import { useAuth, UserButton, useClerk, useUser } from '@clerk/clerk-react';
 import { generateNarrative, fetchRosterByAI } from './services/geminiService';
@@ -161,7 +162,7 @@ const App: React.FC = () => {
   const [checkingSubscription, setCheckingSubscription] = useState(false);
   const [legalPage, setLegalPage] = useState<'terms' | 'privacy' | null>(() => { const v = sessionStorage.getItem('tch_legalPage'); return (v === 'terms' || v === 'privacy') ? v : null; });
   const [showContact, setShowContact] = useState(() => sessionStorage.getItem('tch_showContact') === 'true');
-  const [showAbout, setShowAbout] = useState(false);
+  const [showAbout, setShowAbout] = useState(() => sessionStorage.getItem('tch_showAbout') === 'true');
   const [showAdvertise, setShowAdvertise] = useState(() => sessionStorage.getItem('tch_showAdvertise') === 'true');
   const [showPlayerStats, setShowPlayerStats] = useState(() => sessionStorage.getItem('tch_showPlayerStats') === 'true');
   const [showManual, setShowManual] = useState(() => sessionStorage.getItem('tch_showManual') === 'true');
@@ -257,6 +258,10 @@ const App: React.FC = () => {
   useEffect(() => {
     try { sessionStorage.setItem('tch_showContact', String(showContact)); } catch {}
   }, [showContact]);
+
+  useEffect(() => {
+    try { sessionStorage.setItem('tch_showAbout', String(showAbout)); } catch {}
+  }, [showAbout]);
 
   useEffect(() => {
     try { sessionStorage.setItem('tch_showAdvertise', String(showAdvertise)); } catch {}
@@ -758,7 +763,7 @@ const App: React.FC = () => {
           leftTeam={leftTeamDisplay} rightTeam={rightTeamDisplay} period={currentPeriod}
           onOpenSetup={() => setShowSetup(true)} onOpenManual={() => setShowManual(true)}
           onSetPeriod={setCurrentPeriod} onSwapSides={() => setIsRosterSwapped(!isRosterSwapped)}
-          onNewGame={handleNewGame} onEndGame={handleEndGame}
+          onNewGame={handleNewGame} onEndGame={handleEndGame} onOpenAbout={() => setShowAbout(true)}
         />
         
         <main className="flex flex-col pb-20">
@@ -1241,6 +1246,8 @@ const App: React.FC = () => {
       <button onClick={() => { setLegalPage(null); setLegalPage('privacy'); }} className="text-xs text-slate-500 hover:text-slate-300 transition-colors">Privacy</button>
       <span className="text-slate-600">·</span>
       <button onClick={() => setShowContact(true)} className="text-xs font-bold text-white bg-cyan-600 hover:bg-cyan-500 transition-colors px-4 py-1.5 rounded-full">✉ Contact Us</button>
+      <span className="text-slate-600">·</span>
+      <button onClick={() => setShowAbout(true)} className="text-xs text-slate-500 hover:text-slate-300 transition-colors">About</button>
       <span className="text-slate-600">·</span>
       <button onClick={() => setShowAdvertise(true)} className="text-xs font-bold text-yellow-400 hover:text-yellow-300 transition-colors">📢 Advertise</button>
       <span className="text-slate-600">·</span>
