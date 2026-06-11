@@ -19,9 +19,10 @@ interface HeaderProps {
   onSwapSides: () => void;
   onNewGame: () => void;
   onEndGame: () => void;
+  onOpenAbout: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ leftTeam, rightTeam, period, onOpenSetup, onOpenManual, onSetPeriod, onSwapSides, onNewGame, onEndGame }) => {
+const Header: React.FC<HeaderProps> = ({ leftTeam, rightTeam, period, onOpenSetup, onOpenManual, onSetPeriod, onSwapSides, onNewGame, onEndGame, onOpenAbout }) => {
   const periodLabel = getPeriodLabel(period);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -140,6 +141,26 @@ const Header: React.FC<HeaderProps> = ({ leftTeam, rightTeam, period, onOpenSetu
                       >
                         <span className="text-slate-400 text-lg">📋</span>
                         <span>User Manual</span>
+                      </button>
+
+                      <div className="h-px bg-white/5 mx-2" />
+
+                      {/* About */}
+                      <button
+                        onClick={() => menuAction(onOpenAbout)}
+                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-white hover:bg-slate-600/20 transition-colors text-left w-full"
+                      >
+                        <span className="text-slate-400 text-lg">ℹ️</span>
+                        <span>About Us</span>
+                      </button>
+
+                      {/* Back to Home */}
+                      <button
+                        onClick={() => { setMenuOpen(false); sessionStorage.removeItem('tch_launched'); window.location.reload(); }}
+                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-white hover:bg-slate-600/20 transition-colors text-left w-full"
+                      >
+                        <span className="text-slate-400 text-lg">🏠</span>
+                        <span>Back to Home</span>
                       </button>
 
                     </div>
