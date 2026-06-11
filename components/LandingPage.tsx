@@ -2,9 +2,11 @@ import React from 'react';
 
 interface LandingPageProps {
   onLaunch: () => void;
+  onContact?: () => void;
+  onAdvertise?: () => void;
 }
 
-const LandingPage: React.FC<LandingPageProps> = ({ onLaunch }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onContact, onAdvertise }) => {
   const handleLaunch = () => {
     window.scrollTo({ top: 0 });
     onLaunch();
@@ -167,9 +169,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch }) => {
       <footer className="px-6 py-8 text-center text-slate-600 text-sm border-t border-white/5">
         © 2026 Top Cheese Hockey · Built for hockey people, by hockey people
         <span className="mx-2">·</span>
-        <a href="mailto:hello@topcheesehockey.com?subject=Advertising Inquiry" className="hover:text-slate-300 transition-colors">📢 Advertise With Us</a>
+        <button onClick={() => onAdvertise && onAdvertise()} className="hover:text-slate-300 transition-colors bg-transparent border-none cursor-pointer text-inherit">📢 Advertise With Us</button>
         <span className="mx-2">·</span>
-        <a href="mailto:hello@topcheesehockey.com" className="hover:text-slate-400 transition-colors">Support</a>
+        <button onClick={() => onContact && onContact()} className="hover:text-slate-400 transition-colors bg-transparent border-none cursor-pointer text-inherit">Support</button>
       </footer>
     </div>
   );
