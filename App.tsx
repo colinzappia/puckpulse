@@ -13,6 +13,7 @@ import AuthGate from './components/AuthGate';
 import PricingGate from './components/PricingGate';
 import LegalPages from './components/LegalPages';
 import ContactPage from './components/ContactPage';
+import AboutPage from './components/AboutPage';
 import AdvertisePage from './components/AdvertisePage';
 import { useAuth, UserButton, useClerk, useUser } from '@clerk/clerk-react';
 import { generateNarrative, fetchRosterByAI } from './services/geminiService';
@@ -161,6 +162,7 @@ const App: React.FC = () => {
   const [checkingSubscription, setCheckingSubscription] = useState(false);
   const [legalPage, setLegalPage] = useState<'terms' | 'privacy' | null>(() => sessionStorage.getItem('tch_legalPage') as 'terms' | 'privacy' | null);
   const [showContact, setShowContact] = useState(() => sessionStorage.getItem('tch_showContact') === 'true');
+  const [showAbout, setShowAbout] = useState(() => sessionStorage.getItem('tch_showAbout') === 'true');
   const [showAdvertise, setShowAdvertise] = useState(() => sessionStorage.getItem('tch_showAdvertise') === 'true');
   const [showPlayerStats, setShowPlayerStats] = useState(() => sessionStorage.getItem('tch_showPlayerStats') === 'true');
   const [showFaceoffPanel, setShowFaceoffPanel] = useState(false);
@@ -255,6 +257,10 @@ const App: React.FC = () => {
   useEffect(() => {
     try { sessionStorage.setItem('tch_showContact', String(showContact)); } catch {}
   }, [showContact]);
+
+  useEffect(() => {
+    try { sessionStorage.setItem('tch_showAbout', String(showAbout)); } catch {}
+  }, [showAbout]);
 
   useEffect(() => {
     try { sessionStorage.setItem('tch_showAdvertise', String(showAdvertise)); } catch {}
@@ -711,11 +717,14 @@ const App: React.FC = () => {
   React.useEffect(() => {
     const showTerms = () => setLegalPage('terms');
     const showPrivacy = () => setLegalPage('privacy');
+    const showAboutHandler = () => { handleLaunch(); setTimeout(() => setShowAbout(true), 100); };
     window.addEventListener('tch_show_terms', showTerms);
     window.addEventListener('tch_show_privacy', showPrivacy);
+    window.addEventListener('tch_show_about', showAboutHandler);
     return () => {
       window.removeEventListener('tch_show_terms', showTerms);
       window.removeEventListener('tch_show_privacy', showPrivacy);
+      window.removeEventListener('tch_show_about', showAboutHandler);
     };
   }, []);
 
