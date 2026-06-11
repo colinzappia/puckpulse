@@ -47,9 +47,12 @@ const ContactPage: React.FC<ContactPageProps> = ({ onClose }) => {
     <div className="fixed inset-0 z-[300] bg-black/95 backdrop-blur-xl flex flex-col">
       {/* Header */}
       <div className="px-6 py-5 flex items-center justify-between border-b border-white/10 bg-black/40 shrink-0">
-        <div>
-          <h2 className="text-2xl font-black text-white tracking-tight">Contact Us</h2>
-          <p className="text-xs text-slate-500 mt-0.5">We typically respond within 24 hours</p>
+        <div className="flex items-center gap-4">
+          <img src="/Top_Cheese_Hockey_logo.png" alt="Top Cheese Hockey" className="h-10 w-auto" />
+          <div>
+            <h2 className="text-2xl font-black text-white tracking-tight">Contact Us</h2>
+            <p className="text-xs text-slate-500 mt-0.5">We typically respond within 24 hours</p>
+          </div>
         </div>
         <button
           onClick={onClose}
