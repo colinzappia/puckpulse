@@ -37,7 +37,7 @@ const ContactPage: React.FC<ContactPageProps> = ({ onClose }) => {
         setError(data.error || 'Something went wrong. Please try again.');
       }
     } catch (err) {
-      setError('Could not send message. Please email us directly at colinzappia@gmail.com');
+      setError('Could not send message. Please email us directly at hello@topcheesehockey.com');
     } finally {
       setSending(false);
     }
@@ -130,8 +130,8 @@ const ContactPage: React.FC<ContactPageProps> = ({ onClose }) => {
 
             <p className="text-slate-600 text-xs text-center">
               Or email us directly at{' '}
-              <a href="mailto:colinzappia@gmail.com" className="text-cyan-400 hover:text-cyan-300">
-                colinzappia@gmail.com
+              <a href="mailto:hello@topcheesehockey.com" className="text-cyan-400 hover:text-cyan-300">
+                hello@topcheesehockey.com
               </a>
             </p>
           </div>
