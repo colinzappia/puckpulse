@@ -159,7 +159,7 @@ const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [checkingSubscription, setCheckingSubscription] = useState(false);
-  const [legalPage, setLegalPage] = useState<'terms' | 'privacy' | null>(() => sessionStorage.getItem('tch_legalPage') as 'terms' | 'privacy' | null);
+  const [legalPage, setLegalPage] = useState<'terms' | 'privacy' | null>(() => { const v = sessionStorage.getItem('tch_legalPage'); return (v === 'terms' || v === 'privacy') ? v : null; });
   const [showContact, setShowContact] = useState(() => sessionStorage.getItem('tch_showContact') === 'true');
   const [showAbout, setShowAbout] = useState(false);
   const [showAdvertise, setShowAdvertise] = useState(() => sessionStorage.getItem('tch_showAdvertise') === 'true');
@@ -1235,12 +1235,14 @@ const App: React.FC = () => {
     <AdBanner position="bottom" onContactClick={() => setShowContact(true)} />
     
     {/* Footer */}
-    <div className="flex items-center justify-center gap-4 py-3 bg-black/30 border-t border-white/10">
-      <button onClick={() => setLegalPage('terms')} className="text-xs text-slate-500 hover:text-slate-300 transition-colors">Terms</button>
+    <div className="flex flex-wrap items-center justify-center gap-3 py-3 bg-black/30 border-t border-white/10 px-4">
+      <button onClick={() => { setLegalPage(null); setLegalPage('terms'); }} className="text-xs text-slate-500 hover:text-slate-300 transition-colors">Terms</button>
       <span className="text-slate-600">·</span>
-      <button onClick={() => setLegalPage('privacy')} className="text-xs text-slate-500 hover:text-slate-300 transition-colors">Privacy</button>
+      <button onClick={() => { setLegalPage(null); setLegalPage('privacy'); }} className="text-xs text-slate-500 hover:text-slate-300 transition-colors">Privacy</button>
       <span className="text-slate-600">·</span>
       <button onClick={() => setShowContact(true)} className="text-xs font-bold text-white bg-cyan-600 hover:bg-cyan-500 transition-colors px-4 py-1.5 rounded-full">✉ Contact Us</button>
+      <span className="text-slate-600">·</span>
+      <button onClick={() => setShowAdvertise(true)} className="text-xs font-bold text-yellow-400 hover:text-yellow-300 transition-colors">📢 Advertise</button>
       <span className="text-slate-600">·</span>
       {!isAdmin && (
         <button onClick={handleManageSubscription} className="text-xs font-bold text-slate-400 hover:text-white transition-colors px-4 py-1.5 rounded-full border border-white/10 hover:border-white/20">⚙ Manage Subscription</button>
