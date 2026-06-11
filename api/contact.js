@@ -18,7 +18,7 @@ export default async function handler(req, res) {
     },
     body: JSON.stringify({
       from: 'Top Cheese Hockey <noreply@topcheesehockey.com>',
-      to: 'colinzappia@gmail.com',
+      to: 'hello@topcheesehockey.com',
       subject: `Contact Form: ${name}`,
       html: `
         <h2>New Contact Form Submission</h2>
