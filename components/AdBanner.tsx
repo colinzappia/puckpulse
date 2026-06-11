@@ -23,7 +23,7 @@ const SPONSORS: Sponsor[] = [
     backgroundColor: "#0f1620",
     textColor: "#94a3b8",
     accentColor: "#e8a020",
-    link: "mailto:admin@topcheesehockey.com",
+    link: "mailto:hello@topcheesehockey.com",
   },
 ];
 
@@ -50,7 +50,9 @@ const AdBanner: React.FC<AdBannerProps> = ({ position, onContactClick }) => {
 
   const sponsor = SPONSORS[currentIndex];
 
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (sponsor.link.startsWith('mailto') && onContactClick) {
       onContactClick();
     } else if (sponsor.link.startsWith('http')) {
@@ -65,7 +67,7 @@ const AdBanner: React.FC<AdBannerProps> = ({ position, onContactClick }) => {
       style={{ opacity: visible ? 1 : 0, cursor: sponsor.link ? 'pointer' : 'default' }}
     >
       <div
-        className="w-full flex items-center justify-between px-6 py-3 border-white/5"
+        className="w-full flex items-center justify-between px-6 py-4 border-white/5"
         style={{
           backgroundColor: sponsor.backgroundColor,
           borderTopWidth: position === 'bottom' ? '1px' : '0',
@@ -93,14 +95,14 @@ const AdBanner: React.FC<AdBannerProps> = ({ position, onContactClick }) => {
           )}
           <div className="flex items-center gap-2 overflow-hidden">
             <span
-              className="text-sm font-black uppercase tracking-wider shrink-0"
+              className="text-base font-black uppercase tracking-wider shrink-0"
               style={{ color: sponsor.textColor }}
             >
               {sponsor.name}
             </span>
             <span className="text-white/10 shrink-0">·</span>
             <span
-              className="text-xs truncate"
+              className="text-sm truncate"
               style={{ color: sponsor.textColor, opacity: 0.6 }}
             >
               {sponsor.tagline}
