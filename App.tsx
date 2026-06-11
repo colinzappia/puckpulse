@@ -160,7 +160,7 @@ const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [checkingSubscription, setCheckingSubscription] = useState(false);
-  const [legalPage, setLegalPage] = useState<'terms' | 'privacy' | null>(() => { const v = sessionStorage.getItem('tch_legalPage'); return (v === 'terms' || v === 'privacy') ? v : null; });
+  const [legalPage, setLegalPage] = useState<'terms' | 'privacy' | null>(null);
   const [showContact, setShowContact] = useState(() => sessionStorage.getItem('tch_showContact') === 'true');
   const [showAbout, setShowAbout] = useState(() => sessionStorage.getItem('tch_showAbout') === 'true');
   const [showAdvertise, setShowAdvertise] = useState(() => sessionStorage.getItem('tch_showAdvertise') === 'true');
@@ -275,9 +275,7 @@ const App: React.FC = () => {
     try { sessionStorage.setItem('tch_showManual', String(showManual)); } catch {}
   }, [showManual]);
 
-  useEffect(() => {
-    try { sessionStorage.setItem('tch_legalPage', legalPage || ''); } catch {}
-  }, [legalPage]);
+  // Don't persist legalPage - reset on reload is fine
 
   const [showFeed, setShowFeed] = useState(true);
   const [showLineups, setShowLineups] = useState(true);
@@ -1241,9 +1239,9 @@ const App: React.FC = () => {
     
     {/* Footer */}
     <div className="flex flex-wrap items-center justify-center gap-3 py-3 bg-black/30 border-t border-white/10 px-4">
-      <button onClick={() => { setLegalPage(null); setLegalPage('terms'); }} className="text-xs text-slate-500 hover:text-slate-300 transition-colors">Terms</button>
+      <button onClick={() => setLegalPage('terms')} className="text-xs text-slate-500 hover:text-slate-300 transition-colors">Terms</button>
       <span className="text-slate-600">·</span>
-      <button onClick={() => { setLegalPage(null); setLegalPage('privacy'); }} className="text-xs text-slate-500 hover:text-slate-300 transition-colors">Privacy</button>
+      <button onClick={() => setLegalPage('privacy')} className="text-xs text-slate-500 hover:text-slate-300 transition-colors">Privacy</button>
       <span className="text-slate-600">·</span>
       <button onClick={() => setShowContact(true)} className="text-xs font-bold text-white bg-cyan-600 hover:bg-cyan-500 transition-colors px-4 py-1.5 rounded-full">✉ Contact Us</button>
       <span className="text-slate-600">·</span>
@@ -1280,6 +1278,8 @@ const App: React.FC = () => {
     {legalPage && <LegalPages page={legalPage} onClose={() => setLegalPage(null)} />}
     <PlayerStats isOpen={showPlayerStats} onClose={() => setShowPlayerStats(false)} events={events} homeRoster={homeRoster} awayRoster={awayRoster} homeName={homeName} awayName={awayName} />
     {showContact && <ContactPage onClose={() => setShowContact(false)} />}
+    {showAdvertise && <AdvertisePage isOpen={showAdvertise} onClose={() => setShowAdvertise(false)} />}
+    {showAbout && <AboutPage onClose={() => setShowAbout(false)} onContact={() => { setShowAbout(false); setShowContact(true); }} />}
 
     {/* End Game modal */}
     {showEndGame && (
