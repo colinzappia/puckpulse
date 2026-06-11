@@ -159,10 +159,10 @@ const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [checkingSubscription, setCheckingSubscription] = useState(false);
-  const [legalPage, setLegalPage] = useState<'terms' | 'privacy' | null>(null);
-  const [showContact, setShowContact] = useState(false);
-  const [showAdvertise, setShowAdvertise] = useState(false);
-  const [showPlayerStats, setShowPlayerStats] = useState(false);
+  const [legalPage, setLegalPage] = useState<'terms' | 'privacy' | null>(() => sessionStorage.getItem('tch_legalPage') as 'terms' | 'privacy' | null);
+  const [showContact, setShowContact] = useState(() => sessionStorage.getItem('tch_showContact') === 'true');
+  const [showAdvertise, setShowAdvertise] = useState(() => sessionStorage.getItem('tch_showAdvertise') === 'true');
+  const [showPlayerStats, setShowPlayerStats] = useState(() => sessionStorage.getItem('tch_showPlayerStats') === 'true');
   const [showFaceoffPanel, setShowFaceoffPanel] = useState(false);
 
   const { isSignedIn, userId } = useAuth();
@@ -252,7 +252,27 @@ const App: React.FC = () => {
     try { sessionStorage.setItem('tch_showSetup', String(showSetup)); } catch {}
   }, [showSetup]);
 
-  const [showManual, setShowManual] = useState(false);
+  useEffect(() => {
+    try { sessionStorage.setItem('tch_showContact', String(showContact)); } catch {}
+  }, [showContact]);
+
+  useEffect(() => {
+    try { sessionStorage.setItem('tch_showAdvertise', String(showAdvertise)); } catch {}
+  }, [showAdvertise]);
+
+  useEffect(() => {
+    try { sessionStorage.setItem('tch_showPlayerStats', String(showPlayerStats)); } catch {}
+  }, [showPlayerStats]);
+
+  useEffect(() => {
+    try { sessionStorage.setItem('tch_showManual', String(showManual)); } catch {}
+  }, [showManual]);
+
+  useEffect(() => {
+    try { sessionStorage.setItem('tch_legalPage', legalPage || ''); } catch {}
+  }, [legalPage]);
+
+  const [showManual, setShowManual] = useState(() => sessionStorage.getItem('tch_showManual') === 'true');
   const [showFeed, setShowFeed] = useState(true);
   const [showLineups, setShowLineups] = useState(true);
   const [fowHomeCenter, setFowHomeCenter] = useState<string>('');
