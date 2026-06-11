@@ -31,7 +31,7 @@ import {
 } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 
-export const getPeriodLabel = (p: number) => {
+const getPeriodLabel = (p: number) => {
   if (p === 1) return '1st';
   if (p === 2) return '2nd';
   if (p === 3) return '3rd';
