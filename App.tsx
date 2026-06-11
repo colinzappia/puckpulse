@@ -164,6 +164,7 @@ const App: React.FC = () => {
   const [showAbout, setShowAbout] = useState(false);
   const [showAdvertise, setShowAdvertise] = useState(() => sessionStorage.getItem('tch_showAdvertise') === 'true');
   const [showPlayerStats, setShowPlayerStats] = useState(() => sessionStorage.getItem('tch_showPlayerStats') === 'true');
+  const [showManual, setShowManual] = useState(() => sessionStorage.getItem('tch_showManual') === 'true');
   const [showFaceoffPanel, setShowFaceoffPanel] = useState(false);
 
   const { isSignedIn, userId } = useAuth();
@@ -273,7 +274,6 @@ const App: React.FC = () => {
     try { sessionStorage.setItem('tch_legalPage', legalPage || ''); } catch {}
   }, [legalPage]);
 
-  const [showManual, setShowManual] = useState(() => sessionStorage.getItem('tch_showManual') === 'true');
   const [showFeed, setShowFeed] = useState(true);
   const [showLineups, setShowLineups] = useState(true);
   const [fowHomeCenter, setFowHomeCenter] = useState<string>('');
