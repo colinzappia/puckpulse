@@ -704,7 +704,7 @@ const App: React.FC = () => {
     setShowLanding(false);
   };
 
-  if (showLanding) return <LandingPage onLaunch={handleLaunch} />;
+  if (showLanding) return <LandingPage onLaunch={handleLaunch} onContact={() => { handleLaunch(); setTimeout(() => setShowContact(true), 100); }} onAdvertise={() => { handleLaunch(); setTimeout(() => setShowAdvertise(true), 100); }} />;
   if (!isSignedIn) return <AuthGate onAuthenticated={() => setIsAuthenticated(true)} />;
 
   const ADMIN_EMAILS = ['colinzappia@gmail.com'];
