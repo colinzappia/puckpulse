@@ -83,7 +83,7 @@ const AdvertisePage: React.FC<AdvertisePageProps> = ({ isOpen, onClose }) => {
       if (data.success) setSent(true);
       else setError(data.error || 'Something went wrong. Please try again.');
     } catch {
-      setError('Could not send. Please email us at colinzappia@gmail.com');
+      setError('Could not send. Please email us at hello@topcheesehockey.com');
     } finally {
       setSending(false);
     }
