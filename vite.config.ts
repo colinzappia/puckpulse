@@ -13,5 +13,12 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, '.'),
     }
+  },
+  optimizeDeps: {
+    include: [
+      '@dnd-kit/core',
+      '@dnd-kit/utilities',
+      '@dnd-kit/sortable',
+    ]
   }
 });
