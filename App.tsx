@@ -161,11 +161,11 @@ const App: React.FC = () => {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [checkingSubscription, setCheckingSubscription] = useState(false);
   const [legalPage, setLegalPage] = useState<'terms' | 'privacy' | null>(null);
-  const [showContact, setShowContact] = useState(() => sessionStorage.getItem('tch_showContact') === 'true');
-  const [showAbout, setShowAbout] = useState(() => sessionStorage.getItem('tch_showAbout') === 'true');
-  const [showAdvertise, setShowAdvertise] = useState(() => sessionStorage.getItem('tch_showAdvertise') === 'true');
-  const [showPlayerStats, setShowPlayerStats] = useState(() => sessionStorage.getItem('tch_showPlayerStats') === 'true');
-  const [showManual, setShowManual] = useState(() => sessionStorage.getItem('tch_showManual') === 'true');
+  const [showContact, setShowContact] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
+  const [showAdvertise, setShowAdvertise] = useState(false);
+  const [showPlayerStats, setShowPlayerStats] = useState(false);
+  const [showManual, setShowManual] = useState(false);
   const [showFaceoffPanel, setShowFaceoffPanel] = useState(false);
 
   const { isSignedIn, userId } = useAuth();
@@ -255,25 +255,15 @@ const App: React.FC = () => {
     try { sessionStorage.setItem('tch_showSetup', String(showSetup)); } catch {}
   }, [showSetup]);
 
-  useEffect(() => {
-    try { sessionStorage.setItem('tch_showContact', String(showContact)); } catch {}
-  }, [showContact]);
 
-  useEffect(() => {
-    try { sessionStorage.setItem('tch_showAbout', String(showAbout)); } catch {}
-  }, [showAbout]);
 
-  useEffect(() => {
-    try { sessionStorage.setItem('tch_showAdvertise', String(showAdvertise)); } catch {}
-  }, [showAdvertise]);
 
-  useEffect(() => {
-    try { sessionStorage.setItem('tch_showPlayerStats', String(showPlayerStats)); } catch {}
-  }, [showPlayerStats]);
 
-  useEffect(() => {
-    try { sessionStorage.setItem('tch_showManual', String(showManual)); } catch {}
-  }, [showManual]);
+
+
+
+
+
 
   // Don't persist legalPage - reset on reload is fine
 
@@ -728,7 +718,12 @@ const App: React.FC = () => {
     setShowLanding(false);
   };
 
-  if (showLanding) return <LandingPage onLaunch={handleLaunch} onContact={() => { handleLaunch(); setTimeout(() => setShowContact(true), 100); }} onAdvertise={() => { handleLaunch(); setTimeout(() => setShowAdvertise(true), 100); }} />;
+  const handleBackToLanding = () => {
+    sessionStorage.removeItem('tch_launched');
+    setShowLanding(true);
+  };
+
+  if (showLanding) return <LandingPage onLaunch={handleLaunch} onContact={() => { handleLaunch(); setTimeout(() => setShowContact(true), 100); }} onAdvertise={() => { handleLaunch(); setTimeout(() => setShowAdvertise(true), 100); }} onAbout={() => { handleLaunch(); setTimeout(() => setShowAbout(true), 100); }} />;
   if (!isSignedIn) return <AuthGate onAuthenticated={() => setIsAuthenticated(true)} />;
 
   const ADMIN_EMAILS = ['colinzappia@gmail.com'];
@@ -753,7 +748,7 @@ const App: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-[#05070a] text-slate-200 overflow-x-hidden">
-      <AdBanner position="top" onContactClick={() => setShowContact(true)} />
+      <AdBanner position="top" onContactClick={() => setShowAdvertise(true)} />
       <Toaster position="top-center" richColors theme="dark" />
       
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
@@ -761,7 +756,7 @@ const App: React.FC = () => {
           leftTeam={leftTeamDisplay} rightTeam={rightTeamDisplay} period={currentPeriod}
           onOpenSetup={() => setShowSetup(true)} onOpenManual={() => setShowManual(true)}
           onSetPeriod={setCurrentPeriod} onSwapSides={() => setIsRosterSwapped(!isRosterSwapped)}
-          onNewGame={handleNewGame} onEndGame={handleEndGame} onOpenAbout={() => setShowAbout(true)}
+          onNewGame={handleNewGame} onEndGame={handleEndGame} onOpenAbout={() => setShowAbout(true)} onBackToLanding={handleBackToLanding}
         />
         
         <main className="flex flex-col pb-20">
@@ -1235,7 +1230,7 @@ const App: React.FC = () => {
     )}
 
     <UserManual isOpen={showManual} onClose={() => setShowManual(false)} />
-    <AdBanner position="bottom" onContactClick={() => setShowContact(true)} />
+    <AdBanner position="bottom" onContactClick={() => setShowAdvertise(true)} />
     
     {/* Footer */}
     <div className="flex flex-wrap items-center justify-center gap-3 py-3 bg-black/30 border-t border-white/10 px-4">
