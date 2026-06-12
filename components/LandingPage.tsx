@@ -4,9 +4,10 @@ interface LandingPageProps {
   onLaunch: () => void;
   onContact?: () => void;
   onAdvertise?: () => void;
+  onAbout?: () => void;
 }
 
-const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onContact, onAdvertise }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onContact, onAdvertise, onAbout }) => {
   const handleLaunch = () => {
     window.scrollTo({ top: 0 });
     onLaunch();
@@ -173,7 +174,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onContact, onAdvert
         <span className="mx-2">·</span>
         <button onClick={() => onContact && onContact()} className="hover:text-slate-400 transition-colors bg-transparent border-none cursor-pointer text-inherit">Support</button>
         <span className="mx-2">·</span>
-        <a href="#about" onClick={e => { e.preventDefault(); window.dispatchEvent(new CustomEvent('tch_show_about')); }} className="hover:text-slate-300 transition-colors">About</a>
+        <button onClick={() => onAbout && onAbout()} className="hover:text-slate-300 transition-colors bg-transparent border-none cursor-pointer text-inherit">About</button>
       </footer>
     </div>
   );
