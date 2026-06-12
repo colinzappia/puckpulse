@@ -20,9 +20,10 @@ interface HeaderProps {
   onNewGame: () => void;
   onEndGame: () => void;
   onOpenAbout: () => void;
+  onBackToLanding: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ leftTeam, rightTeam, period, onOpenSetup, onOpenManual, onSetPeriod, onSwapSides, onNewGame, onEndGame, onOpenAbout }) => {
+const Header: React.FC<HeaderProps> = ({ leftTeam, rightTeam, period, onOpenSetup, onOpenManual, onSetPeriod, onSwapSides, onNewGame, onEndGame, onOpenAbout, onBackToLanding }) => {
   const periodLabel = getPeriodLabel(period);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -156,7 +157,7 @@ const Header: React.FC<HeaderProps> = ({ leftTeam, rightTeam, period, onOpenSetu
 
                       {/* Back to Home */}
                       <button
-                        onClick={() => { setMenuOpen(false); sessionStorage.removeItem('tch_launched'); window.location.reload(); }}
+                        onClick={() => { setMenuOpen(false); onBackToLanding(); }}
                         className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-white hover:bg-slate-600/20 transition-colors text-left w-full"
                       >
                         <span className="text-slate-400 text-lg">🏠</span>
