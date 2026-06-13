@@ -1234,9 +1234,9 @@ const App: React.FC = () => {
     
     {/* Footer */}
     <div className="flex flex-wrap items-center justify-center gap-3 py-3 bg-black/30 border-t border-white/10 px-4">
-      <button onClick={() => setLegalPage('terms')} className="text-xs text-slate-500 hover:text-slate-300 transition-colors">Terms</button>
+      <a href="/terms.html" target="_blank" rel="noopener noreferrer" className="text-xs text-slate-500 hover:text-slate-300 transition-colors">Terms</a>
       <span className="text-slate-600">·</span>
-      <button onClick={() => setLegalPage('privacy')} className="text-xs text-slate-500 hover:text-slate-300 transition-colors">Privacy</button>
+      <a href="/privacy.html" target="_blank" rel="noopener noreferrer" className="text-xs text-slate-500 hover:text-slate-300 transition-colors">Privacy</a>
       <span className="text-slate-600">·</span>
       <button onClick={() => setShowContact(true)} className="text-xs font-bold text-white bg-cyan-600 hover:bg-cyan-500 transition-colors px-4 py-1.5 rounded-full">✉ Contact Us</button>
       <span className="text-slate-600">·</span>
@@ -1271,7 +1271,6 @@ const App: React.FC = () => {
     )}
 
     <PlayerStats isOpen={showPlayerStats} onClose={() => setShowPlayerStats(false)} events={events} homeRoster={homeRoster} awayRoster={awayRoster} homeName={homeName} awayName={awayName} />
-    {legalPage && createPortal(<div style={{position:'fixed',inset:0,zIndex:9999}}><LegalPages page={legalPage} onClose={() => setLegalPage(null)} /></div>, document.body)}
     {showContact && createPortal(<ContactPage onClose={() => setShowContact(false)} />, document.body)}
     {showAdvertise && createPortal(<AdvertisePage isOpen={showAdvertise} onClose={() => setShowAdvertise(false)} />, document.body)}
     {showAbout && createPortal(<AboutPage onClose={() => setShowAbout(false)} onContact={() => { setShowAbout(false); setShowContact(true); }} />, document.body)}
