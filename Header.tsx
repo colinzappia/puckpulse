@@ -1,5 +1,6 @@
 import { UserButton } from '@clerk/clerk-react';
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { getPeriodLabel } from '../utils';
 
 interface TeamDisplay {
@@ -27,6 +28,16 @@ const Header: React.FC<HeaderProps> = ({ leftTeam, rightTeam, period, onOpenSetu
   const periodLabel = getPeriodLabel(period);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const menuBtnRef = useRef<HTMLButtonElement>(null);
+  const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
+
+  const openMenu = () => {
+    if (menuBtnRef.current) {
+      const rect = menuBtnRef.current.getBoundingClientRect();
+      setMenuPos({ top: rect.bottom + window.scrollY + 8, right: window.innerWidth - rect.right });
+    }
+    setMenuOpen(v => !v);
+  };
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -90,7 +101,8 @@ const Header: React.FC<HeaderProps> = ({ leftTeam, rightTeam, period, onOpenSetu
               {/* Menu trigger */}
               <div className="relative">
                 <button
-                  onClick={() => setMenuOpen(v => !v)}
+                  ref={menuBtnRef}
+                  onClick={openMenu}
                   className={`flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg border font-black text-[9px] sm:text-[11px] uppercase tracking-widest transition-all active:scale-95 shadow-lg ${menuOpen ? 'bg-white/20 border-white/30 text-white' : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/20'}`}
                 >
                   <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${menuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -99,73 +111,38 @@ const Header: React.FC<HeaderProps> = ({ leftTeam, rightTeam, period, onOpenSetu
                   <span className="hidden sm:inline">Menu</span>
                 </button>
 
-                {/* Dropdown */}
-                {menuOpen && (
-                  <div className="absolute top-full right-0 mt-2 w-52 bg-[#0f1620] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-[9999]">
+                {/* Dropdown via portal */}
+                {menuOpen && createPortal(
+                  <div
+                    style={{ position: 'fixed', top: menuPos.top, right: menuPos.right, zIndex: 99999 }}
+                    className="w-52 bg-[#0f1620] border border-white/10 rounded-2xl shadow-2xl overflow-hidden"
+                    ref={menuRef}
+                  >
                     <div className="p-1.5 flex flex-col gap-0.5">
-
-                      {/* Roster Setup */}
-                      <button
-                        onClick={() => menuAction(onOpenSetup)}
-                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-white hover:bg-blue-600/20 transition-colors text-left w-full"
-                      >
-                        <span className="text-blue-400 text-lg">➕</span>
-                        <span>Roster Setup</span>
+                      <button onClick={() => menuAction(onOpenSetup)} className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-white hover:bg-blue-600/20 transition-colors text-left w-full">
+                        <span className="text-blue-400 text-lg">➕</span><span>Roster Setup</span>
                       </button>
-
                       <div className="h-px bg-white/5 mx-2" />
-
-                      {/* New Game */}
-                      <button
-                        onClick={() => menuAction(onNewGame)}
-                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-white hover:bg-green-600/20 transition-colors text-left w-full"
-                      >
-                        <span className="text-green-400 text-lg">🔄</span>
-                        <span>New Game</span>
+                      <button onClick={() => menuAction(onNewGame)} className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-white hover:bg-green-600/20 transition-colors text-left w-full">
+                        <span className="text-green-400 text-lg">🔄</span><span>New Game</span>
                       </button>
-
-                      {/* End Game */}
-                      <button
-                        onClick={() => menuAction(onEndGame)}
-                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-white hover:bg-red-600/20 transition-colors text-left w-full"
-                      >
-                        <span className="text-red-400 text-lg">🏆</span>
-                        <span>End Game</span>
+                      <button onClick={() => menuAction(onEndGame)} className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-white hover:bg-red-600/20 transition-colors text-left w-full">
+                        <span className="text-red-400 text-lg">🏆</span><span>End Game</span>
                       </button>
-
                       <div className="h-px bg-white/5 mx-2" />
-
-                      {/* Manual */}
-                      <button
-                        onClick={() => menuAction(onOpenManual)}
-                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-white hover:bg-slate-600/20 transition-colors text-left w-full"
-                      >
-                        <span className="text-slate-400 text-lg">📋</span>
-                        <span>User Manual</span>
+                      <button onClick={() => menuAction(onOpenManual)} className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-white hover:bg-slate-600/20 transition-colors text-left w-full">
+                        <span className="text-slate-400 text-lg">📋</span><span>User Manual</span>
                       </button>
-
                       <div className="h-px bg-white/5 mx-2" />
-
-                      {/* About */}
-                      <button
-                        onClick={() => menuAction(onOpenAbout)}
-                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-white hover:bg-slate-600/20 transition-colors text-left w-full"
-                      >
-                        <span className="text-slate-400 text-lg">ℹ️</span>
-                        <span>About Us</span>
+                      <button onClick={() => menuAction(onOpenAbout)} className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-white hover:bg-slate-600/20 transition-colors text-left w-full">
+                        <span className="text-slate-400 text-lg">ℹ️</span><span>About Us</span>
                       </button>
-
-                      {/* Back to Home */}
-                      <button
-                        onClick={() => { setMenuOpen(false); onBackToLanding(); }}
-                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-white hover:bg-slate-600/20 transition-colors text-left w-full"
-                      >
-                        <span className="text-slate-400 text-lg">🏠</span>
-                        <span>Back to Home</span>
+                      <button onClick={() => { setMenuOpen(false); onBackToLanding(); }} className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-white hover:bg-slate-600/20 transition-colors text-left w-full">
+                        <span className="text-slate-400 text-lg">🏠</span><span>Back to Home</span>
                       </button>
-
                     </div>
-                  </div>
+                  </div>,
+                  document.body
                 )}
               </div>
 
