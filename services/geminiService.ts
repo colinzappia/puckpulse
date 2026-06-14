@@ -14,6 +14,7 @@ interface SyncParams {
 }
 
 export async function fetchRosterByAI({ teamName, rosterUrl, pasteText }: SyncParams): Promise<AIRosterResponse> {
+  if (!navigator.onLine) return { status: 'ERROR', players: [], reason: 'Roster sync requires an internet connection. Please add players manually while offline.' };
   try {
     const response = await fetch('/api/ai-roster', {
       method: 'POST',
@@ -33,6 +34,7 @@ export async function generateNarrative(
   awayStats: any,
   richData?: any
 ): Promise<string> {
+  if (!navigator.onLine) return 'AI Tactical Intel requires an internet connection. Your game tracking data is saved — generate insights when you reconnect.';
   try {
     const response = await fetch('/api/ai-narrative', {
       method: 'POST',
