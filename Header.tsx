@@ -72,9 +72,9 @@ const Header: React.FC<HeaderProps> = ({ leftTeam, rightTeam, period, onOpenSetu
   };
 
   return (
-    <header className="bg-black/95 border-b border-white/10 sticky top-0 z-[110] backdrop-blur-3xl px-0 py-0 pt-safe flex items-center shadow-[0_15px_50px_rgba(0,0,0,0.9)] overflow-hidden w-full">
+    <header className="bg-black/95 border-b border-white/10 sticky top-0 z-[110] backdrop-blur-3xl px-0 py-0 pt-safe flex items-center shadow-[0_15px_50px_rgba(0,0,0,0.9)] w-full">
       <div className="w-full flex flex-col">
-        <div className="flex flex-col bg-white/5 border-b border-white/10 shadow-inner w-full relative overflow-hidden group">
+        <div className="flex flex-col bg-white/5 border-b border-white/10 shadow-inner w-full relative group">
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.05] to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
 
           {/* Top Names Bar */}
