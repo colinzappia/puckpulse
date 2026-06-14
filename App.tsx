@@ -167,6 +167,18 @@ const App: React.FC = () => {
   const [showPlayerStats, setShowPlayerStats] = useState(false);
   const [showManual, setShowManual] = useState(false);
   const [showFaceoffPanel, setShowFaceoffPanel] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   const { isSignedIn, userId } = useAuth();
   const { user } = useClerk();
