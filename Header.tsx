@@ -34,7 +34,7 @@ const Header: React.FC<HeaderProps> = ({ leftTeam, rightTeam, period, onOpenSetu
   const openMenu = () => {
     if (menuBtnRef.current) {
       const rect = menuBtnRef.current.getBoundingClientRect();
-      setMenuPos({ top: rect.bottom + window.scrollY + 8, right: window.innerWidth - rect.right });
+      setMenuPos({ top: rect.bottom + 8, right: window.innerWidth - rect.right });
     }
     setMenuOpen(v => !v);
   };
@@ -42,13 +42,14 @@ const Header: React.FC<HeaderProps> = ({ leftTeam, rightTeam, period, onOpenSetu
   // Close menu when clicking outside
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false);
-      }
+      const target = e.target as Node;
+      const inMenu = menuRef.current && menuRef.current.contains(target);
+      const inBtn = menuBtnRef.current && menuBtnRef.current.contains(target);
+      if (!inMenu && !inBtn) setMenuOpen(false);
     };
-    document.addEventListener('mousedown', handler);
+    if (menuOpen) document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, []);
+  }, [menuOpen]);
 
   const menuAction = (fn: () => void) => {
     setMenuOpen(false);
