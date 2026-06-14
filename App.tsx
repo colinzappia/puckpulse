@@ -759,7 +759,7 @@ const App: React.FC = () => {
   if (!isSubscribed && !isAdmin) return <PricingGate onSubscribed={() => setIsSubscribed(true)} />;
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#05070a] text-slate-200 overflow-x-hidden">
+    <div className="flex flex-col min-h-screen bg-[#05070a] text-slate-200">
       <AdBanner position="top" onContactClick={() => setShowAdvertise(true)} />
       <Toaster position="top-center" richColors theme="dark" />
       
