@@ -137,7 +137,7 @@ const Header: React.FC<HeaderProps> = ({ leftTeam, rightTeam, period, onOpenSetu
             onClick={() => setMenuOpen(false)}
           />
           {/* Menu panel */}
-          <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: '260px', background: '#0f1620', borderLeft: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ position: 'fixed', top: 0, right: 0, bottom: 0, width: '260px', background: '#0f1620', borderLeft: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', zIndex: 999999 }}>
             <div style={{ padding: '20px 16px 12px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ color: 'white', fontWeight: 900, fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.2em' }}>Menu</span>
               <button onClick={() => setMenuOpen(false)} style={{ color: '#64748b', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', width: '32px', height: '32px', cursor: 'pointer', fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
