@@ -101,7 +101,7 @@ const Header: React.FC<HeaderProps> = ({ leftTeam, rightTeam, period, onOpenSetu
 
                 {/* Dropdown */}
                 {menuOpen && (
-                  <div className="absolute top-full right-0 mt-2 w-52 bg-[#0f1620] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-[200]">
+                  <div className="absolute top-full right-0 mt-2 w-52 bg-[#0f1620] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-[9999]">
                     <div className="p-1.5 flex flex-col gap-0.5">
 
                       {/* Roster Setup */}
