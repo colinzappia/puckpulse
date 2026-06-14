@@ -60,7 +60,7 @@ const Header: React.FC<HeaderProps> = ({ leftTeam, rightTeam, period, onOpenSetu
 
   return (
     <>
-      <header className="bg-black/95 border-b border-white/10 sticky top-0 z-[110] backdrop-blur-3xl px-0 py-0 pt-safe flex items-center shadow-[0_15px_50px_rgba(0,0,0,0.9)] w-full">
+      <header className="bg-black/95 border-b border-white/10 backdrop-blur-3xl px-0 py-0 pt-safe flex items-center shadow-[0_15px_50px_rgba(0,0,0,0.9)] w-full">
         <div className="w-full flex flex-col">
           <div className="flex flex-col bg-white/5 border-b border-white/10 shadow-inner w-full relative group">
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.05] to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 pointer-events-none"></div>
@@ -137,7 +137,7 @@ const Header: React.FC<HeaderProps> = ({ leftTeam, rightTeam, period, onOpenSetu
             onClick={() => setMenuOpen(false)}
           />
           {/* Menu panel */}
-          <div style={{ position: 'fixed', top: 0, right: 0, bottom: 0, width: '260px', background: '#0f1620', borderLeft: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', zIndex: 999999 }}>
+          <div style={{ position: 'fixed', top: 0, right: 0, height: '100vh', width: '260px', background: '#0f1620', borderLeft: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column' }}>
             <div style={{ padding: '20px 16px 12px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ color: 'white', fontWeight: 900, fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.2em' }}>Menu</span>
               <button onClick={() => setMenuOpen(false)} style={{ color: '#64748b', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', width: '32px', height: '32px', cursor: 'pointer', fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
