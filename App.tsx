@@ -773,7 +773,7 @@ const App: React.FC = () => {
         
         <main className="flex flex-col pb-20">
         {/* LIVE ROSTER LOGGING PANELS */}
-        <div className={`flex w-full gap-px bg-white/5 border-b border-white/10 shrink-0 transition-all duration-500 overflow-hidden ${showLineups ? 'h-[420px] sm:h-[460px] md:h-[520px] opacity-100' : 'h-0 opacity-0 border-none'}`}>
+        <div className={`flex w-full gap-px bg-white/5 border-b border-white/10 shrink-0 transition-all duration-500 ${showLineups ? 'h-[420px] sm:h-[460px] md:h-[520px] opacity-100' : 'h-0 opacity-0 border-none overflow-hidden'}`}>
           {orderedTeams.map(team => {
             const isHome = team === Team.HOME;
             const roster = isHome ? homeRoster : awayRoster;
@@ -866,7 +866,7 @@ const App: React.FC = () => {
         </div>
 
         {/* RINK */}
-        <div className="bg-black relative flex flex-col min-h-[420px] sm:min-h-[500px] md:min-h-[600px] shadow-inner overflow-hidden">
+        <div className="bg-black relative flex flex-col min-h-[420px] sm:min-h-[500px] md:min-h-[600px] shadow-inner">
           <div className="w-full px-2 py-2 bg-white/5 border-b border-white/10 flex flex-wrap items-center justify-between gap-2 shadow-inner shrink-0">
             {/* Shot counters */}
             <div className="flex items-center gap-2">
