@@ -24,14 +24,15 @@ interface HeaderProps {
   onBackToLanding: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ leftTeam, rightTeam, period, onOpenSetup, onOpenManual, onSetPeriod, onSwapSides, onNewGame, onEndGame, onOpenAbout, onBackToLanding }) => {
+const Header: React.FC<HeaderProps> = ({
+  leftTeam, rightTeam, period,
+  onOpenSetup, onOpenManual, onSetPeriod, onSwapSides,
+  onNewGame, onEndGame, onOpenAbout, onBackToLanding
+}) => {
   const periodLabel = getPeriodLabel(period);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const menuAction = (fn: () => void) => {
-    setMenuOpen(false);
-    fn();
-  };
+  const menuAction = (fn: () => void) => { setMenuOpen(false); fn(); };
 
   const TeamScore = ({ team, align }: { team: TeamDisplay, align: 'left' | 'right' }) => {
     const isBlue = team.colorClass === 'blue';
@@ -67,9 +68,11 @@ const Header: React.FC<HeaderProps> = ({ leftTeam, rightTeam, period, onOpenSetu
 
             {/* Top Names Bar */}
             <div className="flex justify-between items-center px-4 sm:px-12 md:px-24 py-1.5 sm:py-3 md:py-4 border-b border-white/5 bg-black/20">
-              <span className="text-[9px] sm:text-xs md:text-xl font-black text-blue-400 uppercase tracking-widest truncate max-w-[100px] sm:max-w-none">
-                {leftTeam.name || 'HOME'}
-              </span>
+              <div className="flex items-center gap-2 sm:gap-4 flex-1">
+                <span className="text-[9px] sm:text-xs md:text-xl font-black text-blue-400 uppercase tracking-widest sm:tracking-[0.3em] truncate max-w-[100px] sm:max-w-none">
+                  {leftTeam.name || 'HOME'}
+                </span>
+              </div>
 
               <div className="flex items-center gap-2 shrink-0 px-2 sm:px-4">
                 <button
@@ -84,9 +87,11 @@ const Header: React.FC<HeaderProps> = ({ leftTeam, rightTeam, period, onOpenSetu
                 <UserButton afterSignOutUrl="/" appearance={{ elements: { avatarBox: 'w-7 h-7 sm:w-8 sm:h-8' } }} />
               </div>
 
-              <span className="text-[9px] sm:text-xs md:text-xl font-black text-red-400 uppercase tracking-widest truncate max-w-[100px] sm:max-w-none text-right">
-                {rightTeam.name || 'VISITOR'}
-              </span>
+              <div className="flex items-center justify-end gap-2 sm:gap-4 flex-1">
+                <span className="text-[9px] sm:text-xs md:text-xl font-black text-red-400 uppercase tracking-widest sm:tracking-[0.3em] truncate max-w-[100px] sm:max-w-none text-right">
+                  {rightTeam.name || 'VISITOR'}
+                </span>
+              </div>
             </div>
 
             {/* Main Scoreboard Row */}
@@ -128,49 +133,56 @@ const Header: React.FC<HeaderProps> = ({ leftTeam, rightTeam, period, onOpenSetu
         </div>
       </header>
 
-      {/* Full-screen menu overlay via portal */}
+      {/* Full screen menu via portal - renders outside ALL parent elements */}
       {menuOpen && createPortal(
-        <div style={{ position: 'fixed', inset: 0, zIndex: 999999 }}>
+        <>
           {/* Backdrop */}
           <div
-            style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}
             onClick={() => setMenuOpen(false)}
+            style={{ position: 'fixed', inset: 0, zIndex: 999998, background: 'rgba(0,0,0,0.6)' }}
           />
-          {/* Menu panel */}
-          <div style={{ position: 'fixed', top: 0, right: 0, height: '100vh', width: '260px', background: '#0f1620', borderLeft: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column' }}>
+          {/* Panel */}
+          <div style={{
+            position: 'fixed', top: 0, right: 0, bottom: 0, width: '280px',
+            zIndex: 999999, background: '#0f1620',
+            borderLeft: '1px solid rgba(255,255,255,0.1)',
+            display: 'flex', flexDirection: 'column',
+            boxShadow: '-20px 0 60px rgba(0,0,0,0.8)'
+          }}>
             <div style={{ padding: '20px 16px 12px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: 'white', fontWeight: 900, fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.2em' }}>Menu</span>
-              <button onClick={() => setMenuOpen(false)} style={{ color: '#64748b', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', width: '32px', height: '32px', cursor: 'pointer', fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+              <span style={{ color: 'white', fontWeight: 900, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.2em' }}>Menu</span>
+              <button onClick={() => setMenuOpen(false)} style={{ color: '#94a3b8', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', width: '32px', height: '32px', cursor: 'pointer', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
             </div>
-            <div style={{ padding: '8px', display: 'flex', flexDirection: 'column', gap: '2px', flex: 1, overflowY: 'auto' }}>
-              {[
-                { label: 'Roster Setup', icon: '➕', color: '#60a5fa', action: onOpenSetup },
-                { label: 'New Game', icon: '🔄', color: '#4ade80', action: onNewGame },
-                { label: 'End Game', icon: '🏆', color: '#f87171', action: onEndGame },
+            <div style={{ padding: '8px', display: 'flex', flexDirection: 'column', gap: '2px', overflowY: 'auto', flex: 1 }}>
+              {([
+                { label: 'Roster Setup', icon: '➕', action: onOpenSetup },
                 null,
-                { label: 'User Manual', icon: '📋', color: '#94a3b8', action: onOpenManual },
-                { label: 'About Us', icon: 'ℹ️', color: '#94a3b8', action: onOpenAbout },
+                { label: 'New Game', icon: '🔄', action: onNewGame },
+                { label: 'End Game', icon: '🏆', action: onEndGame },
                 null,
-                { label: 'Home', icon: '🏠', color: '#94a3b8', action: onBackToLanding },
-              ].map((item, i) =>
+                { label: 'User Manual', icon: '📋', action: onOpenManual },
+                { label: 'About Us', icon: 'ℹ️', action: onOpenAbout },
+                null,
+                { label: 'Home', icon: '🏠', action: onBackToLanding },
+              ] as any[]).map((item: any, i: number) =>
                 item === null ? (
-                  <div key={i} style={{ height: '1px', background: 'rgba(255,255,255,0.05)', margin: '4px 8px' }} />
+                  <div key={i} style={{ height: '1px', background: 'rgba(255,255,255,0.06)', margin: '4px 8px' }} />
                 ) : (
                   <button
                     key={item.label}
                     onClick={() => menuAction(item.action)}
-                    style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '12px', background: 'transparent', border: 'none', color: 'white', fontWeight: 700, fontSize: '14px', cursor: 'pointer', textAlign: 'left', width: '100%', transition: 'background 0.15s' }}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
+                    style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '13px 16px', borderRadius: '12px', background: 'transparent', border: 'none', color: 'white', fontWeight: 700, fontSize: '14px', cursor: 'pointer', width: '100%', textAlign: 'left' }}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.07)')}
                     onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                   >
-                    <span style={{ fontSize: '18px' }}>{item.icon}</span>
+                    <span style={{ fontSize: '18px', width: '24px' }}>{item.icon}</span>
                     <span>{item.label}</span>
                   </button>
                 )
               )}
             </div>
           </div>
-        </div>,
+        </>,
         document.body
       )}
     </>
