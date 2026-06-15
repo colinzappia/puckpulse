@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { GameEvent, EventType, Team, TeamStats, Zone, Player, PenaltyType } from './types';
-import Header from './components/Header';
+import Header from './components/Header'; // v2
 import RinkChart from './components/RinkChart';
 import PlayByPlay from './components/PlayByPlay';
 import CenterAnalytics from './components/CenterAnalytics';
