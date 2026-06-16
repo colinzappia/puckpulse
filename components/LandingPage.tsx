@@ -147,7 +147,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onContact, onAdvert
                 onClick={handleLaunch}
                 className={`w-full py-3 rounded-xl font-bold text-sm transition-all ${p.featured ? 'bg-yellow-400 text-[#05070a] hover:bg-yellow-300' : 'border border-white/10 hover:border-white/20 hover:bg-white/5'}`}
               >
-                Start 7-day free trial →
+                Start 30-day free trial →
               </button>
             </div>
           ))}
