@@ -85,7 +85,7 @@ const PricingGate: React.FC<PricingGateProps> = ({ onSubscribed }) => {
       <img src="/Top_Cheese_Hockey_logo.png" alt="Top Cheese Hockey" className="h-24 w-auto mb-6" />
       
       <h2 className="text-3xl font-black text-white tracking-tight mb-2">Choose your plan</h2>
-      <p className="text-slate-400 mb-2">7-day free trial on all plans. No credit card surprises.</p>
+      <p className="text-slate-400 mb-2">30-day free trial on all plans. No credit card surprises.</p>
       <p className="text-xs text-slate-600 mb-8">Cancel any time.</p>
 
       {/* Coupon code */}
@@ -148,7 +148,7 @@ const PricingGate: React.FC<PricingGateProps> = ({ onSubscribed }) => {
                   <span className="w-1.5 h-1.5 bg-current rounded-full animate-bounce" style={{animationDelay:'150ms'}}/>
                   <span className="w-1.5 h-1.5 bg-current rounded-full animate-bounce" style={{animationDelay:'300ms'}}/>
                 </span>
-              ) : 'Start 7-day free trial →'}
+              ) : 'Start 30-day free trial →'}
             </button>
           </div>
         ))}
