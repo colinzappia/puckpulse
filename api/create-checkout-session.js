@@ -1,24 +1,24 @@
 import Stripe from 'stripe';
-
+ 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
+ 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
-
+ 
   const { priceId, userId, planName, couponCode, email } = req.body;
-
+ 
   if (!priceId || !userId) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
-
+ 
   try {
     // Build session params — no trial when using a coupon
     const subscriptionData = couponCode
       ? { metadata: { userId, planName } }
-      : { trial_period_days: 7, metadata: { userId, planName } };
-
+      : { trial_period_days: 30, metadata: { userId, planName } };
+ 
     const sessionParams = {
       mode: 'subscription',
       payment_method_types: ['card'],
@@ -30,7 +30,7 @@ export default async function handler(req, res) {
       success_url: `${process.env.VITE_APP_URL || 'https://topcheesehockey.com'}?subscribed=true`,
       cancel_url: `${process.env.VITE_APP_URL || 'https://topcheesehockey.com'}?cancelled=true`,
     };
-
+ 
     // Apply coupon if provided, otherwise allow promotion codes
     if (couponCode) {
       try {
@@ -58,12 +58,13 @@ export default async function handler(req, res) {
       sessionParams.allow_promotion_codes = true;
       delete sessionParams.discounts;
     }
-
+ 
     const session = await stripe.checkout.sessions.create(sessionParams);
-
+ 
     res.status(200).json({ url: session.url });
   } catch (err) {
     console.error('Stripe error:', err);
     res.status(500).json({ error: err.message });
   }
 }
+ 
