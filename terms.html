@@ -1,1 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Terms of Service — Top Cheese Hockey</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { background: #070a0f; }
+  body { color: #cbd5e1; font-family: system-ui, sans-serif; line-height: 1.7; position: relative; min-height: 100vh; overflow-x: hidden; }
 
+  /* Themed background — matches main site (ice texture + X/O whiteboard + glow blobs) */
+  .tch-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .tch-ice, .tch-xo { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .tch-blob { position: absolute; border-radius: 50%; filter: blur(90px); }
+  .tch-blob1 { width: 820px; height: 820px; background: #1d4ed8; opacity: 0.32; top: -300px; left: -240px; animation: tchFloat1 11s ease-in-out infinite; }
+  .tch-blob2 { width: 680px; height: 680px; background: #b91c1c; opacity: 0.28; top: 20px; right: -220px; animation: tchFloat2 13s ease-in-out infinite; }
+  .tch-blob3 { width: 560px; height: 560px; background: #ca8a04; opacity: 0.22; bottom: -260px; left: 32%; animation: tchFloat3 12s ease-in-out infinite; }
+  @keyframes tchFloat1 { 0%,100%{transform:translate(0,0) scale(1);} 50%{transform:translate(90px,60px) scale(1.08);} }
+  @keyframes tchFloat2 { 0%,100%{transform:translate(0,0) scale(1);} 50%{transform:translate(-80px,90px) scale(1.1);} }
+  @keyframes tchFloat3 { 0%,100%{transform:translate(0,0) scale(1);} 50%{transform:translate(70px,-80px) scale(1.05);} }
+
+  .page { position: relative; z-index: 1; padding: 40px 20px; }
+  .container { max-width: 800px; margin: 0 auto; background: rgba(0,0,0,0.3); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 40px; }
+  .logo { display: flex; align-items: center; gap: 16px; margin-bottom: 40px; }
+  .logo img { height: 48px; }
+  .logo h1 { color: white; font-size: 20px; font-weight: 900; }
+  h2 { color: white; font-size: 28px; font-weight: 900; margin-bottom: 8px; }
+  .meta { color: #64748b; font-size: 13px; margin-bottom: 40px; }
+  h3 { color: white; font-size: 14px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; margin: 32px 0 12px; }
+  p { margin-bottom: 12px; font-size: 14px; }
+  a { color: #22d3ee; }
+  .back { display: inline-block; margin-bottom: 32px; color: #22d3ee; text-decoration: none; font-size: 13px; font-weight: 700; }
+  .back:hover { color: #67e8f9; }
+</style>
+</head>
+<body>
+
+<!-- TCH Themed Background -->
+<div class="tch-bg" aria-hidden="true">
+  <svg viewBox="0 0 1500 2400" preserveAspectRatio="none" class="tch-ice" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <filter id="tch-ice-scratch">
+        <feTurbulence type="fractalNoise" baseFrequency="0.012 0.04" numOctaves="3" seed="7" result="noise"/>
+        <feColorMatrix in="noise" type="matrix" values="0 0 0 0 0.45  0 0 0 0 0.55  0 0 0 0 0.65  0 0 0 0.5 0"/>
+        <feComposite operator="in" in2="SourceGraphic"/>
+      </filter>
+      <radialGradient id="tch-ice-vignette" cx="50%" cy="20%" r="90%">
+        <stop offset="0%" stop-color="#1e293b" stop-opacity="0.35"/>
+        <stop offset="60%" stop-color="#0f172a" stop-opacity="0.15"/>
+        <stop offset="100%" stop-color="#020308" stop-opacity="0"/>
