@@ -22,12 +22,13 @@ interface HeaderProps {
   onEndGame: () => void;
   onOpenAbout: () => void;
   onBackToLanding: () => void;
+  onOpenContact: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({
   leftTeam, rightTeam, period,
   onOpenSetup, onOpenManual, onSetPeriod, onSwapSides,
-  onNewGame, onEndGame, onOpenAbout, onBackToLanding
+  onNewGame, onEndGame, onOpenAbout, onBackToLanding, onOpenContact
 }) => {
   const periodLabel = getPeriodLabel(period);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -129,6 +130,31 @@ const Header: React.FC<HeaderProps> = ({
                 <TeamScore team={rightTeam} align="right" />
               </div>
             </div>
+
+            {/* Game Controls Bar — always-visible dedicated buttons */}
+            <div className="flex items-center justify-center gap-2 sm:gap-3 px-3 sm:px-6 py-2 sm:py-3 border-t border-white/5 bg-black/30">
+              <button
+                onClick={onOpenSetup}
+                className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl border font-black text-[9px] sm:text-[11px] uppercase tracking-wide transition-all active:scale-95 shadow-md bg-blue-600/15 border-blue-500/30 text-blue-300 hover:bg-blue-600/25 hover:border-blue-400/40"
+              >
+                <span className="text-sm sm:text-base">➕</span>
+                <span>Roster Setup</span>
+              </button>
+              <button
+                onClick={onNewGame}
+                className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl border font-black text-[9px] sm:text-[11px] uppercase tracking-wide transition-all active:scale-95 shadow-md bg-emerald-600/15 border-emerald-500/30 text-emerald-300 hover:bg-emerald-600/25 hover:border-emerald-400/40"
+              >
+                <span className="text-sm sm:text-base">🔄</span>
+                <span>New Game</span>
+              </button>
+              <button
+                onClick={onEndGame}
+                className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl border font-black text-[9px] sm:text-[11px] uppercase tracking-wide transition-all active:scale-95 shadow-md bg-amber-600/15 border-amber-500/30 text-amber-300 hover:bg-amber-600/25 hover:border-amber-400/40"
+              >
+                <span className="text-sm sm:text-base">🏆</span>
+                <span>End Game</span>
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -155,13 +181,9 @@ const Header: React.FC<HeaderProps> = ({
             </div>
             <div style={{ padding: '8px', display: 'flex', flexDirection: 'column', gap: '2px', overflowY: 'auto', flex: 1 }}>
               {([
-                { label: 'Roster Setup', icon: '➕', action: onOpenSetup },
-                null,
-                { label: 'New Game', icon: '🔄', action: onNewGame },
-                { label: 'End Game', icon: '🏆', action: onEndGame },
-                null,
                 { label: 'User Manual', icon: '📋', action: onOpenManual },
                 { label: 'About Us', icon: 'ℹ️', action: onOpenAbout },
+                { label: 'Contact Us', icon: '✉️', action: onOpenContact },
                 null,
                 { label: 'Home', icon: '🏠', action: onBackToLanding },
               ] as any[]).map((item: any, i: number) =>
