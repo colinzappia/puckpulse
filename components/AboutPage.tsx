@@ -72,18 +72,17 @@ const AboutPage: React.FC<AboutPageProps> = ({ onClose, onContact }) => {
         {/* Coaching background */}
         <section className="bg-black/30 backdrop-blur-sm border border-white/5 rounded-3xl p-8 sm:p-12">
           <p className="text-xs font-black text-cyan-400 uppercase tracking-[0.3em] mb-3">The Credentials</p>
-          <h2 className="text-3xl font-black text-white mb-8">12 years on the bench.</h2>
+          <h2 className="text-3xl font-black text-white mb-8">12 years on the bench, 10 years between the benches.</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { num: '12', label: 'Years Coaching', sub: 'From minor hockey to junior' },
-              { num: '6', label: 'Minor Hockey', sub: 'Novice through Midget levels' },
-              { num: '6', label: 'Junior Hockey', sub: 'Competitive junior programs' },
-              { num: '10', label: 'Seasons on TV', sub: 'Ottawa 67\'s colour analyst' },
+              { num: '12', label: 'Years Coaching' },
+              { num: '6', label: 'Minor Hockey' },
+              { num: '6', label: 'Junior Hockey' },
+              { num: '10', label: 'Seasons on TV' },
             ].map(s => (
               <div key={s.label} className="text-center p-6 bg-white/3 rounded-2xl border border-white/5">
                 <p className="text-5xl font-black text-cyan-400 italic mb-1">{s.num}</p>
-                <p className="text-white font-black text-sm uppercase tracking-wider mb-1">{s.label}</p>
-                <p className="text-slate-500 text-xs">{s.sub}</p>
+                <p className="text-white font-black text-sm uppercase tracking-wider">{s.label}</p>
               </div>
             ))}
           </div>
