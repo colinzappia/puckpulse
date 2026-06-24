@@ -267,16 +267,6 @@ const App: React.FC = () => {
     try { sessionStorage.setItem('tch_showSetup', String(showSetup)); } catch {}
   }, [showSetup]);
 
-
-
-
-
-
-
-
-
-
-
   // Don't persist legalPage - reset on reload is fine
 
   const [showFeed, setShowFeed] = useState(true);
@@ -769,6 +759,7 @@ const App: React.FC = () => {
           onOpenSetup={() => setShowSetup(true)} onOpenManual={() => setShowManual(true)}
           onSetPeriod={setCurrentPeriod} onSwapSides={() => setIsRosterSwapped(!isRosterSwapped)}
           onNewGame={handleNewGame} onEndGame={handleEndGame} onOpenAbout={() => setShowAbout(true)} onBackToLanding={handleBackToLanding}
+          onOpenContact={() => setShowContact(true)}
         />
         
         <main className="flex flex-col pb-20">
@@ -1341,5 +1332,3 @@ const App: React.FC = () => {
   </div>
   );
 };
-
-export default App;
