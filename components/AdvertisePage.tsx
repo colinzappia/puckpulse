@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ThemedBackground from './ThemedBackground';
 
 interface AdvertisePageProps {
   isOpen: boolean;
@@ -90,9 +91,10 @@ const AdvertisePage: React.FC<AdvertisePageProps> = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[300] bg-black/95 backdrop-blur-xl flex flex-col">
+    <div className="fixed inset-0 z-[300] overflow-y-auto">
+    <ThemedBackground className="min-h-screen flex flex-col">
       {/* Header */}
-      <div className="px-6 py-5 flex items-center justify-between border-b border-white/10 bg-black/40 shrink-0">
+      <div className="px-6 py-5 flex items-center justify-between border-b border-white/10 bg-black/30 backdrop-blur-sm shrink-0">
         <div>
           <h2 className="text-2xl font-black text-white tracking-tight">Advertise With Us</h2>
           <p className="text-xs text-slate-500 mt-0.5">Reach hockey coaches across Canada</p>
@@ -135,7 +137,7 @@ const AdvertisePage: React.FC<AdvertisePageProps> = ({ isOpen, onClose }) => {
                 <div
                   key={t.name}
                   onClick={() => setTier(t.name)}
-                  className={`relative rounded-2xl p-6 border cursor-pointer transition-all ${tier === t.name ? 'bg-white/10 border-cyan-400 ring-2 ring-cyan-400/30' : `bg-[#0f1620] ${t.color} hover:border-white/30`}`}
+                  className={`relative rounded-2xl p-6 border cursor-pointer transition-all backdrop-blur-sm ${tier === t.name ? 'bg-white/10 border-cyan-400 ring-2 ring-cyan-400/30' : `bg-black/30 ${t.color} hover:border-white/30`}`}
                 >
                   {t.badge && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-yellow-400 text-[#05070a] text-xs font-black px-3 py-1 rounded-full whitespace-nowrap">{t.badge}</div>
@@ -158,7 +160,7 @@ const AdvertisePage: React.FC<AdvertisePageProps> = ({ isOpen, onClose }) => {
             </div>
 
             {/* Contact form */}
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-6 max-w-xl mx-auto">
+            <div className="bg-black/30 backdrop-blur-sm border border-white/10 rounded-2xl p-6 max-w-xl mx-auto">
               <h3 className="text-white font-black text-lg mb-5">Get in touch</h3>
 
               {error && <div className="bg-red-900/30 border border-red-500/30 text-red-400 text-sm px-4 py-3 rounded-xl mb-4">{error}</div>}
@@ -212,6 +214,7 @@ const AdvertisePage: React.FC<AdvertisePageProps> = ({ isOpen, onClose }) => {
           </>
         )}
       </div>
+    </ThemedBackground>
     </div>
   );
 };
