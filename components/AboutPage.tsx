@@ -105,14 +105,13 @@ const AboutPage: React.FC<AboutPageProps> = ({ onClose, onContact }) => {
           <h2 className="text-3xl font-black text-white mb-8 text-center">Every level of the game.</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[
-              { level: 'Minor Hockey', desc: 'Novice through Midget' },
-              { level: 'Junior A/B', desc: 'OHL, WHL, QMJHL & more' },
-              { level: 'Senior & Rec', desc: 'Competitive adult leagues' },
-              { level: 'Semi-Pro', desc: 'ECHL, AHL & European' },
+              { level: 'Minor Hockey' },
+              { level: 'Junior A/B' },
+              { level: 'Senior & Rec' },
+              { level: 'Semi-Pro' },
             ].map(l => (
-              <div key={l.level} className="bg-black/30 backdrop-blur-sm border border-white/5 rounded-2xl p-5 text-center">
-                <p className="text-white font-black text-sm mb-1">{l.level}</p>
-                <p className="text-slate-500 text-xs">{l.desc}</p>
+              <div key={l.level} className="bg-black/30 backdrop-blur-sm border border-white/5 rounded-2xl p-5 text-center flex items-center justify-center min-h-[64px]">
+                <p className="text-white font-black text-sm">{l.level}</p>
               </div>
             ))}
           </div>
