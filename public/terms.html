@@ -7,20 +7,20 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { background: #070a0f; }
-  body {
-    color: #cbd5e1;
-    font-family: system-ui, sans-serif;
-    line-height: 1.7;
-    min-height: 100vh;
-    background-image:
-      radial-gradient(circle at 15% 10%, rgba(29,78,216,0.35), transparent 40%),
-      radial-gradient(circle at 90% 15%, rgba(185,28,28,0.30), transparent 40%),
-      radial-gradient(circle at 50% 95%, rgba(202,138,4,0.25), transparent 40%),
-      repeating-linear-gradient(115deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 3px);
-    background-attachment: fixed;
-    background-size: cover;
-  }
-  .page { padding: 40px 20px; }
+  body { color: #cbd5e1; font-family: system-ui, sans-serif; line-height: 1.7; min-height: 100vh; position: relative; overflow-x: hidden; }
+
+  .tch-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .tch-blob { position: absolute; border-radius: 50%; filter: blur(90px); }
+  .tch-blob1 { width: 820px; height: 820px; background: #1d4ed8; opacity: 0.32; top: -300px; left: -240px; animation: tchFloat1 11s ease-in-out infinite; }
+  .tch-blob2 { width: 680px; height: 680px; background: #b91c1c; opacity: 0.28; top: 20px; right: -220px; animation: tchFloat2 13s ease-in-out infinite; }
+  .tch-blob3 { width: 560px; height: 560px; background: #ca8a04; opacity: 0.22; bottom: -260px; left: 32%; animation: tchFloat3 12s ease-in-out infinite; }
+  @keyframes tchFloat1 { 0%,100%{transform:translate(0,0) scale(1);} 50%{transform:translate(90px,60px) scale(1.08);} }
+  @keyframes tchFloat2 { 0%,100%{transform:translate(0,0) scale(1);} 50%{transform:translate(-80px,90px) scale(1.1);} }
+  @keyframes tchFloat3 { 0%,100%{transform:translate(0,0) scale(1);} 50%{transform:translate(70px,-80px) scale(1.05);} }
+
+  #tchXO { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+
+  .page { position: relative; z-index: 1; padding: 40px 20px; }
   .container { max-width: 800px; margin: 0 auto; background: rgba(0,0,0,0.35); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 40px; }
   .logo { display: flex; align-items: center; gap: 16px; margin-bottom: 40px; }
   .logo img { height: 48px; }
@@ -35,6 +35,14 @@
 </style>
 </head>
 <body>
+
+<div class="tch-bg">
+  <div class="tch-blob tch-blob1"></div>
+  <div class="tch-blob tch-blob2"></div>
+  <div class="tch-blob tch-blob3"></div>
+</div>
+<svg id="tchXO" viewBox="0 0 1400 2400" preserveAspectRatio="none"></svg>
+
 <div class="page">
 <div class="container">
   <div class="logo">
@@ -74,5 +82,34 @@
   <p>For any questions about these Terms, please contact me at <a href="mailto:hello@topcheesehockey.com">hello@topcheesehockey.com</a>.</p>
 </div>
 </div>
+
+<script>
+(function(){
+  function seeded(seed){var s=seed;return function(){s=(s*9301+49297)%233280;return s/233280;};}
+  var rand=seeded(99);
+  var W=1400,H=2400,nCirc=20,nX=24,bands=nCirc+nX,bandH=H/bands,ys=[];
+  for(var i=0;i<bands;i++){ys.push(Math.round(i*bandH+rand()*bandH*0.8));}
+  for(var i=ys.length-1;i>0;i--){var j=Math.floor(rand()*(i+1));var t=ys[i];ys[i]=ys[j];ys[j]=t;}
+  var idx=0,circles=[],xs=[];
+  for(var i=0;i<nCirc;i++){var side=rand()>0.5?'l':'r';var x=side==='l'?Math.round(20+rand()*460):Math.round(1020+rand()*450);var y=ys[idx++];var r=Math.round(14+rand()*16);circles.push([x,y,r]);}
+  for(var i=0;i<nX;i++){var side=rand()>0.5?'l':'r';var x=side==='l'?Math.round(100+rand()*420):Math.round(980+rand()*400);var y=ys[idx++];var s=Math.round(14+rand()*10);xs.push([x,y,s]);}
+  var pts=circles.map(function(c){return [c[0],c[1]];}).concat(xs.map(function(p){return [p[0],p[1]];}));
+  var lines=[];
+  for(var i=0;i<pts.length-1;i+=2){var p1=pts[i],p2=pts[i+1];if(Math.abs(p1[1]-p2[1])<500){lines.push([p1[0],p1[1],p2[0],p2[1]]);}}
+  var svg=document.getElementById('tchXO');
+  var ns='http://www.w3.org/2000/svg';
+  function el(tag,attrs){var e=document.createElementNS(ns,tag);for(var k in attrs){e.setAttribute(k,attrs[k]);}return e;}
+  var gC=el('g',{stroke:'#60a5fa','stroke-width':'3.5',fill:'none'});
+  circles.forEach(function(c){gC.appendChild(el('circle',{cx:c[0],cy:c[1],r:c[2]}));});
+  svg.appendChild(gC);
+  var gX=el('g',{stroke:'#f87171','stroke-width':'4'});
+  xs.forEach(function(p){var x=p[0],y=p[1],s=p[2];gX.appendChild(el('path',{d:'M'+(x-s)+' '+(y-s)+' L'+(x+s)+' '+(y+s)+' M'+(x+s)+' '+(y-s)+' L'+(x-s)+' '+(y+s)}));});
+  svg.appendChild(gX);
+  var gL=el('g',{stroke:'#cbd5e1','stroke-width':'2','stroke-dasharray':'8,8',opacity:'0.5'});
+  lines.forEach(function(l){gL.appendChild(el('path',{d:'M'+l[0]+' '+l[1]+' L'+l[2]+' '+l[3]}));});
+  svg.appendChild(gL);
+})();
+</script>
+
 </body>
 </html>
