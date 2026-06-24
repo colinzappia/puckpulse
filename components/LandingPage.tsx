@@ -276,6 +276,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onContact, onAdvert
         <button onClick={() => onContact && onContact()} className="hover:text-slate-400 transition-colors bg-transparent border-none cursor-pointer text-inherit">Support</button>
         <span className="mx-2">·</span>
         <button onClick={() => onAbout && onAbout()} className="hover:text-slate-300 transition-colors bg-transparent border-none cursor-pointer text-inherit">About</button>
+        <span className="mx-2">·</span>
+        <a href="/terms.html" target="_blank" rel="noopener noreferrer" className="hover:text-slate-300 transition-colors">Terms</a>
+        <span className="mx-2">·</span>
+        <a href="/privacy.html" target="_blank" rel="noopener noreferrer" className="hover:text-slate-300 transition-colors">Privacy</a>
       </footer>
     </ThemedBackground>
   );
