@@ -1,4 +1,5 @@
 import React from 'react';
+import ThemedBackground from './ThemedBackground';
 
 interface AboutPageProps {
   onClose: () => void;
@@ -7,16 +8,17 @@ interface AboutPageProps {
 
 const AboutPage: React.FC<AboutPageProps> = ({ onClose, onContact }) => {
   return (
-    <div className="fixed inset-0 z-[300] bg-[#05070a] flex flex-col overflow-y-auto">
+    <div className="fixed inset-0 z-[300] overflow-y-auto">
+    <ThemedBackground className="min-h-screen flex flex-col">
 
       {/* Close button */}
       <button
         onClick={onClose}
-        className="fixed top-5 right-5 z-10 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors text-lg font-bold"
+        className="fixed top-5 right-5 z-20 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors text-lg font-bold backdrop-blur-sm"
       >×</button>
 
       {/* Hero */}
-      <div className="relative bg-[#0a0e14] border-b border-white/5 px-6 sm:px-16 py-16 flex flex-col lg:flex-row items-center gap-12 max-w-6xl mx-auto w-full">
+      <div className="relative bg-black/30 backdrop-blur-sm border-b border-white/5 px-6 sm:px-16 py-16 flex flex-col lg:flex-row items-center gap-12 max-w-6xl mx-auto w-full">
         <div className="flex-1">
           <p className="text-xs font-black text-cyan-400 uppercase tracking-[0.3em] mb-3">About Top Cheese Hockey</p>
           <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight leading-tight mb-5">
@@ -59,7 +61,7 @@ const AboutPage: React.FC<AboutPageProps> = ({ onClose, onContact }) => {
           {/* Photo placeholder */}
           <div className="relative">
             <div className="aspect-[4/3] rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
-              <img src="/colin-67s.jpg" alt="Colin Zappia between the benches at Ottawa 67's" className="w-full h-full object-cover" />
+              <img src="/colin-67s.jpg" onError={(e) => { (e.target as HTMLImageElement).style.display="none"; }} alt="Colin Zappia between the benches at Ottawa 67's" className="w-full h-full object-cover" />
             </div>
             <div className="absolute -bottom-4 -right-4 bg-cyan-600 text-white text-xs font-black px-4 py-2 rounded-xl shadow-lg">
               10 Seasons · Ottawa 67's
@@ -68,7 +70,7 @@ const AboutPage: React.FC<AboutPageProps> = ({ onClose, onContact }) => {
         </section>
 
         {/* Coaching background */}
-        <section className="bg-[#0a0e14] border border-white/5 rounded-3xl p-8 sm:p-12">
+        <section className="bg-black/30 backdrop-blur-sm border border-white/5 rounded-3xl p-8 sm:p-12">
           <p className="text-xs font-black text-cyan-400 uppercase tracking-[0.3em] mb-3">The Credentials</p>
           <h2 className="text-3xl font-black text-white mb-8">12 years on the bench.</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -109,7 +111,7 @@ const AboutPage: React.FC<AboutPageProps> = ({ onClose, onContact }) => {
               { level: 'Senior & Rec', desc: 'Competitive adult leagues' },
               { level: 'Semi-Pro', desc: 'ECHL, AHL & European' },
             ].map(l => (
-              <div key={l.level} className="bg-[#0a0e14] border border-white/5 rounded-2xl p-5 text-center">
+              <div key={l.level} className="bg-black/30 backdrop-blur-sm border border-white/5 rounded-2xl p-5 text-center">
                 <p className="text-white font-black text-sm mb-1">{l.level}</p>
                 <p className="text-slate-500 text-xs">{l.desc}</p>
               </div>
@@ -137,6 +139,7 @@ const AboutPage: React.FC<AboutPageProps> = ({ onClose, onContact }) => {
         <p className="text-slate-600 text-xs">© 2026 Top Cheese Hockey · topcheesehockey.com</p>
       </div>
 
+    </ThemedBackground>
     </div>
   );
 };
