@@ -15,6 +15,7 @@ import LegalPages from './components/LegalPages';
 import ContactPage from './components/ContactPage';
 import AboutPage from './components/AboutPage';
 import AdvertisePage from './components/AdvertisePage';
+import ThemedBackground from './components/ThemedBackground';
 import { useAuth, UserButton, useClerk, useUser } from '@clerk/clerk-react';
 import { generateNarrative, fetchRosterByAI } from './services/geminiService';
 import { downloadPDFReport, downloadExcelReport, downloadHTMLExport } from './services/exportService';
@@ -749,7 +750,7 @@ const App: React.FC = () => {
   if (!isSubscribed && !isAdmin) return <PricingGate onSubscribed={() => setIsSubscribed(true)} />;
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#05070a] text-slate-200">
+    <ThemedBackground intensity="subtle" className="flex flex-col text-slate-200">
       <AdBanner position="top" onContactClick={() => setShowAdvertise(true)} />
       <Toaster position="top-center" richColors theme="dark" />
       
@@ -1329,7 +1330,7 @@ const App: React.FC = () => {
         </div>
       </div>
     )}
-  </div>
+  </ThemedBackground>
   );
 };
 
