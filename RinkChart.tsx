@@ -153,13 +153,28 @@ const RinkChart: React.FC<RinkChartProps> = ({
   const goalLineOffset = 55;
   const faceoffCircleRadius = 75;
   const creaseRadius = 30;
-  const watermarkLogoSize = 140;
+  // Watermark logo — fixed bounding-box size so every team logo renders at
+  // identical visual scale regardless of the source image's aspect ratio
+  // (preserveAspectRatio="xMidYMid meet" below fits each logo uniformly
+  // within this box without distortion).
+  const watermarkLogoSize = 90;
 
   const isFaceoffToolActive = activeEventType === EventType.FACEOFF_WIN || activeEventType === EventType.FACEOFF_LOSS;
 
-  const leftLogoX = 265 - watermarkLogoSize / 2;
-  const rightLogoX = 735 - watermarkLogoSize / 2;
-  const logoY = (rinkHeight / 2) - (watermarkLogoSize / 2);
+  // Center the logo horizontally in the open ice between the end-zone
+  // faceoff circle's outer edge and the blue line, with margin on both
+  // sides so it never touches either. Vertically it stays at net height
+  // (mid-rink), matching where the logo has always sat.
+  const endCircleX = 155;
+  const endCircleRadius = 75;
+  const leftGapStart = endCircleX + endCircleRadius; // circle's right edge = 230
+  const leftGapEnd = blueLineOffset; // 375
+  const leftLogoCenterX = (leftGapStart + leftGapEnd) / 2; // 302.5
+  const rightLogoCenterX = rinkWidth - leftLogoCenterX; // mirror = 697.5
+
+  const leftLogoX = leftLogoCenterX - watermarkLogoSize / 2;
+  const rightLogoX = rightLogoCenterX - watermarkLogoSize / 2;
+  const logoY = (rinkHeight / 2) - (watermarkLogoSize / 2); // net height, same as original
 
   return (
     <div className="relative aspect-[200/85] bg-transparent overflow-hidden touch-none group">
