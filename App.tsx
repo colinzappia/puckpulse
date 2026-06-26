@@ -288,8 +288,14 @@ const App: React.FC = () => {
   });
   // Which side the coach using this app is actually with — tailors AI tactical
   // intel to give advice from this team's perspective rather than a neutral summary.
-  const [myTeam, setMyTeam] = useState<Team>(() => {
-    try { return (sessionStorage.getItem('tch_myTeam') as Team) || Team.HOME; } catch { return Team.HOME; }
+  // 'NEUTRAL' covers broadcasters, scouts, or fans tracking without taking a side —
+  // the AI then gives a balanced two-team breakdown instead of one-sided advice.
+  const [myTeam, setMyTeam] = useState<Team | 'NEUTRAL'>(() => {
+    try {
+      const stored = sessionStorage.getItem('tch_myTeam');
+      if (stored === Team.HOME || stored === Team.AWAY || stored === 'NEUTRAL') return stored as Team | 'NEUTRAL';
+      return 'NEUTRAL';
+    } catch { return 'NEUTRAL'; }
   });
   const [homeLogo, setHomeLogo] = useState("");
   const [awayLogo, setAwayLogo] = useState("");
@@ -601,9 +607,9 @@ const App: React.FC = () => {
         goals: getGoalLines(),
         periodFilter: breakdownFilter,
         totalEvents: periodEvents.length,
-        myTeam,
-        myTeamName: myTeam === Team.HOME ? homeName : awayName,
-        opponentTeamName: myTeam === Team.HOME ? awayName : homeName,
+        myTeam: myTeam === 'NEUTRAL' ? null : myTeam,
+        myTeamName: myTeam === 'NEUTRAL' ? null : (myTeam === Team.HOME ? homeName : awayName),
+        opponentTeamName: myTeam === 'NEUTRAL' ? null : (myTeam === Team.HOME ? awayName : homeName),
       };
 
       const narrative = await generateNarrative(breakdownFilter, hStats, aStats, richData);
@@ -1050,10 +1056,10 @@ const App: React.FC = () => {
                   <h3 className="text-xs sm:text-sm font-black uppercase tracking-[0.3em] text-white italic">AI Coaching Intel</h3>
                   <button
                     onClick={() => setShowSetup(true)}
-                    title="Change which team you're coaching"
-                    className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wide border transition-all ${myTeam === Team.HOME ? 'bg-blue-600/20 border-blue-500/30 text-blue-300' : 'bg-red-600/20 border-red-500/30 text-red-300'}`}
+                    title="Change who you're tracking for"
+                    className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wide border transition-all ${myTeam === Team.HOME ? 'bg-blue-600/20 border-blue-500/30 text-blue-300' : myTeam === Team.AWAY ? 'bg-red-600/20 border-red-500/30 text-red-300' : 'bg-slate-600/20 border-slate-500/30 text-slate-300'}`}
                   >
-                    For {myTeam === Team.HOME ? homeName : awayName}
+                    {myTeam === 'NEUTRAL' ? 'Neutral View' : `For ${myTeam === Team.HOME ? homeName : awayName}`}
                   </button>
                 </div>
                 <div className="flex bg-black/40 p-1 rounded-xl border border-white/5 self-stretch sm:self-auto">
@@ -1139,21 +1145,27 @@ const App: React.FC = () => {
         {/* MY TEAM SELECTOR — tells the AI tactical intel whose side to advise */}
         <div className="px-6 sm:px-10 py-4 border-b border-white/10 bg-black/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shrink-0">
           <div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">I'm Coaching</p>
-            <p className="text-[9px] text-slate-600 mt-0.5">Tactical intel will be tailored to this team's perspective</p>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Who Are You Tracking For?</p>
+            <p className="text-[9px] text-slate-600 mt-0.5">Pick your team and the AI tactical intel will give advice for that bench. Tracking as a broadcaster, scout, or fan? Choose Neutral for a balanced two-team breakdown instead.</p>
           </div>
           <div className="flex bg-black/40 p-1 rounded-xl border border-white/10">
             <button
               onClick={() => setMyTeam(Team.HOME)}
-              className={`px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-wide transition-all ${myTeam === Team.HOME ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+              className={`px-5 py-2.5 rounded-lg text-xs font-black uppercase tracking-wide transition-all ${myTeam === Team.HOME ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
             >
-              {homeName} (Home)
+              {homeName}
             </button>
             <button
               onClick={() => setMyTeam(Team.AWAY)}
-              className={`px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-wide transition-all ${myTeam === Team.AWAY ? 'bg-red-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+              className={`px-5 py-2.5 rounded-lg text-xs font-black uppercase tracking-wide transition-all ${myTeam === Team.AWAY ? 'bg-red-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
             >
-              {awayName} (Away)
+              {awayName}
+            </button>
+            <button
+              onClick={() => setMyTeam('NEUTRAL')}
+              className={`px-5 py-2.5 rounded-lg text-xs font-black uppercase tracking-wide transition-all ${myTeam === 'NEUTRAL' ? 'bg-slate-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+            >
+              Neutral
             </button>
           </div>
         </div>
