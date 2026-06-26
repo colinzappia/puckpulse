@@ -76,9 +76,16 @@ for (let i = 0; i < allPts.length - 1; i += 2) {
 interface ThemedBackgroundProps {
   children: React.ReactNode;
   className?: string;
+  /** 'full' = marketing/info pages (default). 'subtle' = dialed back for screens with dense functional UI, like the main app. */
+  intensity?: 'full' | 'subtle';
 }
 
-const ThemedBackground: React.FC<ThemedBackgroundProps> = ({ children, className = '' }) => {
+const ThemedBackground: React.FC<ThemedBackgroundProps> = ({ children, className = '', intensity = 'full' }) => {
+  const isSubtle = intensity === 'subtle';
+  const blobOpacityMult = isSubtle ? 0.45 : 1;
+  const xoOpacity = isSubtle ? 0.35 : 1;
+  const scratchOpacity = isSubtle ? 0.28 : 0.5;
+
   return (
     <div className={`relative min-h-screen bg-[#070a0f] overflow-hidden ${className}`}>
       {/* Scratched ice texture layer */}
@@ -106,7 +113,7 @@ const ThemedBackground: React.FC<ThemedBackgroundProps> = ({ children, className
             </radialGradient>
           </defs>
           <rect width="1500" height={PAGE_H} fill="#070a0f" />
-          <rect width="1500" height={PAGE_H} filter="url(#tch-ice-scratch)" opacity="0.5" />
+          <rect width="1500" height={PAGE_H} filter="url(#tch-ice-scratch)" opacity={scratchOpacity} />
           <rect width="1500" height={PAGE_H} fill="url(#tch-ice-vignette)" />
         </svg>
       </div>
@@ -116,21 +123,21 @@ const ThemedBackground: React.FC<ThemedBackgroundProps> = ({ children, className
         <div
           className="absolute rounded-full"
           style={{
-            width: 820, height: 820, background: '#1d4ed8', opacity: 0.32, top: -300, left: -240,
+            width: 820, height: 820, background: '#1d4ed8', opacity: 0.32 * blobOpacityMult, top: -300, left: -240,
             filter: 'blur(90px)', animation: 'tchFloat1 11s ease-in-out infinite',
           }}
         />
         <div
           className="absolute rounded-full"
           style={{
-            width: 680, height: 680, background: '#b91c1c', opacity: 0.28, top: 20, right: -220,
+            width: 680, height: 680, background: '#b91c1c', opacity: 0.28 * blobOpacityMult, top: 20, right: -220,
             filter: 'blur(90px)', animation: 'tchFloat2 13s ease-in-out infinite',
           }}
         />
         <div
           className="absolute rounded-full"
           style={{
-            width: 560, height: 560, background: '#ca8a04', opacity: 0.22, bottom: -260, left: '32%',
+            width: 560, height: 560, background: '#ca8a04', opacity: 0.22 * blobOpacityMult, bottom: -260, left: '32%',
             filter: 'blur(90px)', animation: 'tchFloat3 12s ease-in-out infinite',
           }}
         />
@@ -142,6 +149,7 @@ const ThemedBackground: React.FC<ThemedBackgroundProps> = ({ children, className
         viewBox={`0 0 1400 ${PAGE_H}`}
         preserveAspectRatio="none"
         xmlns="http://www.w3.org/2000/svg"
+        style={{ opacity: xoOpacity }}
       >
         <g stroke="#60a5fa" strokeWidth="3.5" fill="none">
           {circles.map((c, i) => (
