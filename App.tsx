@@ -286,6 +286,11 @@ const App: React.FC = () => {
   const [awayName, setAwayName] = useState(() => {
     try { return sessionStorage.getItem('tch_awayName') || 'AWAY'; } catch { return 'AWAY'; }
   });
+  // Which side the coach using this app is actually with — tailors AI tactical
+  // intel to give advice from this team's perspective rather than a neutral summary.
+  const [myTeam, setMyTeam] = useState<Team>(() => {
+    try { return (sessionStorage.getItem('tch_myTeam') as Team) || Team.HOME; } catch { return Team.HOME; }
+  });
   const [homeLogo, setHomeLogo] = useState("");
   const [awayLogo, setAwayLogo] = useState("");
   const [homeRosterUrl, setHomeRosterUrl] = useState("");
@@ -342,6 +347,10 @@ const App: React.FC = () => {
       sessionStorage.setItem('tch_awayName', awayName);
     } catch {}
   }, [homeName, awayName]);
+
+  useEffect(() => {
+    try { sessionStorage.setItem('tch_myTeam', myTeam); } catch {}
+  }, [myTeam]);
 
   const sortByNumber = (roster: Player[]) => [...roster].sort((a, b) => {
     const aIsG = a.position?.toUpperCase() === 'G' ? 0 : 1;
@@ -592,6 +601,9 @@ const App: React.FC = () => {
         goals: getGoalLines(),
         periodFilter: breakdownFilter,
         totalEvents: periodEvents.length,
+        myTeam,
+        myTeamName: myTeam === Team.HOME ? homeName : awayName,
+        opponentTeamName: myTeam === Team.HOME ? awayName : homeName,
       };
 
       const narrative = await generateNarrative(breakdownFilter, hStats, aStats, richData);
@@ -1036,6 +1048,13 @@ const App: React.FC = () => {
                 <div className="flex items-center gap-3">
                   <div className="w-3 h-3 rounded-full bg-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.5)] animate-pulse"></div>
                   <h3 className="text-xs sm:text-sm font-black uppercase tracking-[0.3em] text-white italic">AI Coaching Intel</h3>
+                  <button
+                    onClick={() => setShowSetup(true)}
+                    title="Change which team you're coaching"
+                    className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wide border transition-all ${myTeam === Team.HOME ? 'bg-blue-600/20 border-blue-500/30 text-blue-300' : 'bg-red-600/20 border-red-500/30 text-red-300'}`}
+                  >
+                    For {myTeam === Team.HOME ? homeName : awayName}
+                  </button>
                 </div>
                 <div className="flex bg-black/40 p-1 rounded-xl border border-white/5 self-stretch sm:self-auto">
                   <button onClick={() => setBreakdownFilter(currentPeriod)} className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${breakdownFilter === currentPeriod ? 'bg-cyan-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}>LIVE PER.</button>
@@ -1115,6 +1134,28 @@ const App: React.FC = () => {
           <button onClick={() => setShowSetup(false)} className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/5 hover:bg-white/10 text-white/50 hover:text-white transition-all border border-white/5 active:scale-90">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
+        </div>
+
+        {/* MY TEAM SELECTOR — tells the AI tactical intel whose side to advise */}
+        <div className="px-6 sm:px-10 py-4 border-b border-white/10 bg-black/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shrink-0">
+          <div>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">I'm Coaching</p>
+            <p className="text-[9px] text-slate-600 mt-0.5">Tactical intel will be tailored to this team's perspective</p>
+          </div>
+          <div className="flex bg-black/40 p-1 rounded-xl border border-white/10">
+            <button
+              onClick={() => setMyTeam(Team.HOME)}
+              className={`px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-wide transition-all ${myTeam === Team.HOME ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+            >
+              {homeName} (Home)
+            </button>
+            <button
+              onClick={() => setMyTeam(Team.AWAY)}
+              className={`px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-wide transition-all ${myTeam === Team.AWAY ? 'bg-red-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+            >
+              {awayName} (Away)
+            </button>
+          </div>
         </div>
         <div className="flex-1 flex overflow-x-auto scrollbar-none">
           {[Team.HOME, Team.AWAY].map(team => {
