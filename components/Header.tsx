@@ -35,13 +35,20 @@ const Header: React.FC<HeaderProps> = ({
   const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null);
   const menuBtnRef = useRef<HTMLButtonElement>(null);
 
+  const MENU_WIDTH = 240;
+  const EDGE_MARGIN = 8;
+
   const updateMenuPos = () => {
     const el = menuBtnRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
+    let right = window.innerWidth - rect.right;
+    // Clamp so the panel's left edge never goes past the screen edge
+    const maxRight = window.innerWidth - MENU_WIDTH - EDGE_MARGIN;
+    right = Math.min(Math.max(EDGE_MARGIN, right), Math.max(EDGE_MARGIN, maxRight));
     setMenuPos({
       top: rect.bottom + 8,
-      right: Math.max(8, window.innerWidth - rect.right),
+      right,
     });
   };
 
