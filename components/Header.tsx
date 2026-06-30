@@ -1,5 +1,5 @@
 import { UserButton } from '@clerk/clerk-react';
-import React, { useState } from 'react';
+import React, { useState, useRef, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { getPeriodLabel } from '../utils';
 
@@ -32,6 +32,37 @@ const Header: React.FC<HeaderProps> = ({
 }) => {
   const periodLabel = getPeriodLabel(period);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null);
+  const menuBtnRef = useRef<HTMLButtonElement>(null);
+
+  const updateMenuPos = () => {
+    const el = menuBtnRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    setMenuPos({
+      top: rect.bottom + 8,
+      right: Math.max(8, window.innerWidth - rect.right),
+    });
+  };
+
+  const openMenu = () => {
+    updateMenuPos();
+    setMenuOpen(true);
+  };
+
+  useLayoutEffect(() => {
+    if (!menuOpen) return;
+    updateMenuPos();
+    const handle = () => updateMenuPos();
+    window.addEventListener('resize', handle);
+    window.addEventListener('orientationchange', handle);
+    window.addEventListener('scroll', handle, true);
+    return () => {
+      window.removeEventListener('resize', handle);
+      window.removeEventListener('orientationchange', handle);
+      window.removeEventListener('scroll', handle, true);
+    };
+  }, [menuOpen]);
 
   const menuAction = (fn: () => void) => { setMenuOpen(false); fn(); };
 
@@ -77,7 +108,8 @@ const Header: React.FC<HeaderProps> = ({
 
               <div className="flex items-center gap-2 shrink-0 px-2 sm:px-4">
                 <button
-                  onClick={() => setMenuOpen(true)}
+                  ref={menuBtnRef}
+                  onClick={openMenu}
                   className="flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg border font-black text-[9px] sm:text-[11px] uppercase tracking-widest transition-all active:scale-95 shadow-lg bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/20"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -159,27 +191,26 @@ const Header: React.FC<HeaderProps> = ({
         </div>
       </header>
 
-      {/* Full screen menu via portal - renders outside ALL parent elements */}
-      {menuOpen && createPortal(
+      {/* Anchored dropdown via portal - renders outside ALL parent elements */}
+      {menuOpen && menuPos && createPortal(
         <>
-          {/* Backdrop */}
+          {/* Invisible click-catcher to close on outside tap */}
           <div
             onClick={() => setMenuOpen(false)}
-            style={{ position: 'fixed', inset: 0, zIndex: 999998, background: 'rgba(0,0,0,0.6)' }}
+            style={{ position: 'fixed', inset: 0, zIndex: 999998, background: 'transparent' }}
           />
-          {/* Panel */}
+          {/* Dropdown panel, anchored under the menu button */}
           <div style={{
-            position: 'fixed', top: 0, right: 0, bottom: 0, width: '280px',
+            position: 'fixed', top: menuPos.top, right: menuPos.right, width: '240px',
+            maxHeight: 'calc(100vh - ' + menuPos.top + 'px - 16px)',
             zIndex: 999999, background: '#0f1620',
-            borderLeft: '1px solid rgba(255,255,255,0.1)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: '14px',
             display: 'flex', flexDirection: 'column',
-            boxShadow: '-20px 0 60px rgba(0,0,0,0.8)'
+            boxShadow: '0 20px 60px rgba(0,0,0,0.7)',
+            overflow: 'hidden'
           }}>
-            <div style={{ padding: '20px 16px 12px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: 'white', fontWeight: 900, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.2em' }}>Menu</span>
-              <button onClick={() => setMenuOpen(false)} style={{ color: '#94a3b8', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', width: '32px', height: '32px', cursor: 'pointer', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
-            </div>
-            <div style={{ padding: '8px', display: 'flex', flexDirection: 'column', gap: '2px', overflowY: 'auto', flex: 1 }}>
+            <div style={{ padding: '8px', display: 'flex', flexDirection: 'column', gap: '2px', overflowY: 'auto' }}>
               {([
                 { label: 'User Manual', icon: '📋', action: onOpenManual },
                 { label: 'About Us', icon: 'ℹ️', action: onOpenAbout },
@@ -193,7 +224,7 @@ const Header: React.FC<HeaderProps> = ({
                   <button
                     key={item.label}
                     onClick={() => menuAction(item.action)}
-                    style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '13px 16px', borderRadius: '12px', background: 'transparent', border: 'none', color: 'white', fontWeight: 700, fontSize: '14px', cursor: 'pointer', width: '100%', textAlign: 'left' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '13px 16px', borderRadius: '10px', background: 'transparent', border: 'none', color: 'white', fontWeight: 700, fontSize: '14px', cursor: 'pointer', width: '100%', textAlign: 'left' }}
                     onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.07)')}
                     onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                   >
