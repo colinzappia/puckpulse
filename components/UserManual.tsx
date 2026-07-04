@@ -117,7 +117,7 @@ const sections = [
     subsections: [
       {
         title: 'End Game button',
-        content: 'When the final buzzer sounds, tap the red End Game button in the header. A summary screen appears showing the final score, shots, total events, and faceoffs tracked.\n\nTap "Download Report" to automatically generate and download your PDF scouting report. You can also download Excel and HTML versions from the same screen.'
+        content: 'When the final buzzer sounds, tap the red End Game button in the header. A summary screen appears showing the final score, shots, total events, and faceoffs tracked.\n\nTap "Download Report" to automatically generate and download your PDF game summary report. You can also download Excel and HTML versions from the same screen.'
       },
       {
         title: 'Player Stats',
@@ -135,8 +135,8 @@ const sections = [
     title: 'Exporting Reports',
     subsections: [
       {
-        title: 'PDF Scouting Report',
-        content: 'Tap "Export PDF" to generate a print-ready scouting report. It includes a game summary, shot charts, player stats, faceoff results, and the AI coaching notes. Great for sharing with your staff or filing for the season.'
+        title: 'PDF Game Summary Report',
+        content: 'Tap "Export PDF" to generate a print-ready game summary report. It includes a game summary, shot charts, player stats, faceoff results, and the AI coaching notes. Great for sharing with your staff or filing for the season.'
       },
       {
         title: 'Excel / Data Export',
