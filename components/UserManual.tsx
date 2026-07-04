@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ThemedBackground from './ThemedBackground';
 
 interface UserManualProps {
   isOpen: boolean;
@@ -176,7 +177,7 @@ const UserManual: React.FC<UserManualProps> = ({ isOpen, onClose }) => {
   const current = sections.find(s => s.id === activeSection) || sections[0];
 
   return (
-    <div className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl flex flex-col animate-in fade-in duration-300">
+    <ThemedBackground className="fixed inset-0 z-[200] flex flex-col animate-in fade-in duration-300">
       
       {/* Header */}
       <div className="px-6 py-5 flex items-center justify-between border-b border-white/10 bg-black/40 shrink-0">
@@ -255,7 +256,7 @@ const UserManual: React.FC<UserManualProps> = ({ isOpen, onClose }) => {
           </div>
         </div>
       </div>
-    </div>
+    </ThemedBackground>
   );
 };
 
