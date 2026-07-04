@@ -73,7 +73,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onContact, onAdvert
                 <span>🎯 FACEOFF ANALYTICS</span><span className="text-yellow-400/60">//</span>
                 <span>🤖 AI TACTICAL INTEL</span><span className="text-yellow-400/60">//</span>
                 <span>📋 LINE MANAGEMENT</span><span className="text-yellow-400/60">//</span>
-                <span>📊 SCOUTING REPORTS</span><span className="text-yellow-400/60">//</span>
+                <span>📊 GAME SUMMARY REPORTS</span><span className="text-yellow-400/60">//</span>
               </React.Fragment>
             ))}
           </div>
@@ -117,7 +117,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onContact, onAdvert
             { icon: '🏒', title: 'Interactive Rink Map', desc: 'Tap anywhere on a live rink diagram to log shots, goals, penalties, and faceoffs in real time.' },
             { icon: '🤖', title: 'AI Roster Sync', desc: 'Paste any team URL and your full roster populates in seconds — jersey numbers, positions, line assignments included.' },
             { icon: '⚡', title: 'Live Tactical Intel', desc: 'Get AI-generated coaching insights mid-game based on shot patterns, zone pressure, and game flow.' },
-            { icon: '📊', title: 'Scouting Reports', desc: 'Export professional-grade reports as PDF, Excel, or HTML after any game.' },
+            { icon: '📊', title: 'Game Summary Reports', desc: 'Export professional-grade reports as PDF, Excel, or HTML after any game.' },
             { icon: '🎯', title: 'Faceoff Hub', desc: 'Track faceoff wins and losses by zone and centre. Know your percentage before the third period.' },
             { icon: '📋', title: 'Line Management', desc: 'Drag and drop players between lines and pairings. Build your groups exactly the way you draw them up.' },
           ].map((f) => (
@@ -188,7 +188,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onContact, onAdvert
               { num: '1', title: 'Sync your roster', desc: 'Paste your team URL and AI pulls the full roster automatically.' },
               { num: '2', title: 'Track the game live', desc: 'Tap the rink map to log every event as it happens.' },
               { num: '3', title: 'Get AI insights', desc: 'Receive real coaching adjustments based on your live game data.' },
-              { num: '4', title: 'Export your report', desc: 'Download a pro scouting report in PDF, Excel, or HTML.' },
+              { num: '4', title: 'Export your report', desc: 'Download a pro game summary report in PDF, Excel, or HTML.' },
             ].map((s) => (
               <div key={s.num} className="text-center">
                 <div className="w-12 h-12 rounded-full bg-red-600 text-white font-black text-xl flex items-center justify-center mx-auto mb-4">{s.num}</div>
