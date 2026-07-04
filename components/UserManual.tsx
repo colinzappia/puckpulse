@@ -177,10 +177,14 @@ const UserManual: React.FC<UserManualProps> = ({ isOpen, onClose }) => {
   const current = sections.find(s => s.id === activeSection) || sections[0];
 
   return (
-    <ThemedBackground className="fixed inset-0 z-[200] flex flex-col animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-[200] flex flex-col animate-in fade-in duration-300">
+      {/* Themed background sits behind everything */}
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        <ThemedBackground className="absolute inset-0" />
+      </div>
       
       {/* Header */}
-      <div className="px-6 py-5 flex items-center justify-between border-b border-white/10 bg-black/40 shrink-0">
+      <div className="relative z-10 px-6 py-5 flex items-center justify-between border-b border-white/10 bg-black/40 shrink-0">
         <div>
           <h2 className="text-2xl sm:text-3xl font-black italic uppercase text-white tracking-tighter">User Manual</h2>
           <p className="text-[10px] font-bold text-blue-400 uppercase tracking-[0.3em] mt-0.5">Top Cheese Hockey Elite Suite</p>
@@ -193,7 +197,7 @@ const UserManual: React.FC<UserManualProps> = ({ isOpen, onClose }) => {
       </div>
 
       {/* Body */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="relative z-10 flex flex-1 overflow-hidden">
 
         {/* Sidebar */}
         <div className="w-48 sm:w-56 shrink-0 border-r border-white/10 bg-black/20 overflow-y-auto py-4">
@@ -256,7 +260,7 @@ const UserManual: React.FC<UserManualProps> = ({ isOpen, onClose }) => {
           </div>
         </div>
       </div>
-    </ThemedBackground>
+    </div>
   );
 };
 
