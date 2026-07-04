@@ -107,7 +107,7 @@ const PrivacyContent = () => (
       <ul className="list-disc pl-5 space-y-1">
         <li><strong className="text-white">Clerk</strong> — User authentication and account management</li>
         <li><strong className="text-white">Stripe</strong> — Payment processing and subscription management</li>
-        <li><strong className="text-white">Google Gemini</strong> — AI-powered features (roster parsing, tactical insights)</li>
+        <li><strong className="text-white">Anthropic Claude</strong> — AI-powered features (roster parsing, tactical insights)</li>
         <li><strong className="text-white">Vercel</strong> — Hosting and infrastructure</li>
       </ul>
       <p className="mt-2">Each of these services has their own privacy policy governing how they handle your data.</p>
