@@ -95,7 +95,7 @@ const AboutPage: React.FC<AboutPageProps> = ({ onClose, onContact }) => {
             Every coach deserves the same information the pros have.
           </h2>
           <p className="text-slate-300 text-lg leading-relaxed">
-            NHL teams spend millions on analytics. Minor hockey coaches track games on paper. Top Cheese Hockey bridges that gap — bringing live shot tracking, AI tactical intel, faceoff analytics, and professional scouting reports to any coach, at any level, on any device.
+            NHL teams spend millions on analytics. Minor hockey coaches track games on paper. Top Cheese Hockey bridges that gap — bringing live shot tracking, AI tactical intel, faceoff analytics, and professional game summary reports to any coach, at any level, on any device.
           </p>
         </section>
 
