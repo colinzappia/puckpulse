@@ -18,7 +18,7 @@ const TermsContent = () => (
 
     <section>
       <h3 className="text-white font-black text-base uppercase tracking-wider mb-3">1. Description of Service</h3>
-      <p>{APP} is a web-based hockey analytics platform that provides live game tracking, roster management, AI-powered tactical insights, and scouting report generation for hockey coaches and team staff.</p>
+      <p>{APP} is a web-based hockey analytics platform that provides live game tracking, roster management, AI-powered tactical insights, and game summary report generation for hockey coaches and team staff.</p>
     </section>
 
     <section>
