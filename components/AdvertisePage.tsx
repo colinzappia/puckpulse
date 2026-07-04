@@ -40,7 +40,7 @@ const AdvertisePage: React.FC<AdvertisePageProps> = ({ isOpen, onClose }) => {
       badge: 'Most Popular',
       features: [
         'Everything in Basic',
-        'Logo on exported scouting reports',
+        'Logo on exported game summary reports',
         '"Official Sponsor" designation',
         'Featured placement on landing page',
         'Priority support',
