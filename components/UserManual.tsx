@@ -149,9 +149,36 @@ const sections = [
     ]
   },
   {
-    id: 'tips',
-    icon: '💡',
-    title: 'Tips & Best Practices',
+    id: 'sessions',
+    icon: '📡',
+    title: 'Live Sessions',
+    subsections: [
+      {
+        title: 'What is a Live Session?',
+        content: 'A Live Session lets up to 5 users share the same game in real time. One person creates the session and gets a unique code — everyone else joins using that code. All events, scores, and roster changes sync instantly across every device in the session.'
+      },
+      {
+        title: 'Creating a session',
+        content: 'Tap "Share this game live" below the header. Review the game details (home and away teams must be set up first), then tap "Create session & get code." You\'ll receive a unique 7-character code like TCH-4829. Share this code — or the link — with your team before the game starts.'
+      },
+      {
+        title: 'Joining a session',
+        content: 'Tap "Join session" below the header and enter the code provided by the session admin. Your role (Logger or Viewer) will be assigned automatically. You\'ll land directly in the live game view — no additional setup needed.'
+      },
+      {
+        title: 'Roles explained',
+        content: 'There are three roles in a Live Session:\n\n• Admin — the person who created the session. Full control: can log events, manage roles, and end the session for everyone.\n\n• Logger — can log game events. Everything they log syncs in real time to all other users.\n\n• Viewer — read-only. Sees the live event feed and rink map update in real time but cannot log events.'
+      },
+      {
+        title: 'Changing roles during the game',
+        content: 'The admin can change any user\'s role at any time during the game. Tap the ⋯ button in the Live Session banner at the top of the screen. You\'ll see a list of everyone in the session — tap Logger or Viewer next to any user to change their role instantly. The change takes effect on their device immediately, no refresh needed.'
+      },
+      {
+        title: 'Ending or leaving a session',
+        content: 'Tap the ⋯ button in the session banner:\n\n• "Leave session" — removes you from the session but keeps it running for everyone else.\n\n• "End session for everyone" (admin only) — closes the session for all users. All events that were logged are preserved and can still be exported.'
+      }
+    ]
+  },
     subsections: [
       {
         title: 'Before the game',
@@ -163,7 +190,7 @@ const sections = [
       },
       {
         title: 'After the game',
-        content: 'Generate the AI game summary while the game is fresh. Export your reports before closing the app — session data is not automatically saved between visits. Review shot location patterns with your staff before the next practice.'
+        content: 'Generate the AI game summary while the game is fresh. Export your reports before closing the app. If you were in a Live Session, all events were saved to the server automatically — but export your report to keep a permanent copy for your records. Review shot location patterns with your staff before the next practice.'
       }
     ]
   }
