@@ -179,6 +179,10 @@ const sections = [
       }
     ]
   },
+  {
+    id: 'tips',
+    icon: '💡',
+    title: 'Tips & Best Practices',
     subsections: [
       {
         title: 'Before the game',
