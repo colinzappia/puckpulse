@@ -12,6 +12,7 @@ export type SessionRole = 'admin' | 'logger' | 'viewer';
 export interface SessionMember {
   userId: string;
   role: SessionRole;
+  displayName: string;
 }
  
 export interface GameSession {
@@ -45,7 +46,8 @@ export async function createSession(
   awayName: string,
   homeRoster: Player[],
   awayRoster: Player[],
-  memberRoles: Record<string, SessionRole>, // userId -> role for invited users
+  memberRoles: Record<string, SessionRole>,
+  displayName: string = 'Admin',
 ): Promise<GameSession> {
   // Try up to 3 times in case of code collision
   for (let attempt = 0; attempt < 3; attempt++) {
@@ -75,8 +77,8 @@ export async function createSession(
     }
  
     // Add admin as first member
-    const members: { session_id: string; user_id: string; role: SessionRole }[] = [
-      { session_id: session.id, user_id: userId, role: 'admin' },
+    const members: { session_id: string; user_id: string; role: SessionRole; display_name: string }[] = [
+      { session_id: session.id, user_id: userId, role: 'admin', display_name: displayName },
     ];
  
     // Add other invited members
@@ -99,6 +101,7 @@ export async function createSession(
 export async function joinSession(
   userId: string,
   code: string,
+  displayName: string = 'User',
 ): Promise<{ session: GameSession; role: SessionRole }> {
   const { data: session, error: sessionError } = await supabase
     .from('game_sessions')
@@ -120,13 +123,16 @@ export async function joinSession(
     .single();
  
   if (existing) {
+    // Update display name in case it changed
+    await supabase.from('session_members').update({ display_name: displayName })
+      .eq('session_id', session.id).eq('user_id', userId);
     return { session: mapSession(session), role: existing.role as SessionRole };
   }
  
   // New user joining — default to viewer
   const { error: memberError } = await supabase
     .from('session_members')
-    .insert({ session_id: session.id, user_id: userId, role: 'viewer' });
+    .insert({ session_id: session.id, user_id: userId, role: 'viewer', display_name: displayName });
  
   if (memberError) throw new Error(`Failed to join session: ${memberError.message}`);
  
@@ -210,6 +216,21 @@ export async function endSession(sessionId: string): Promise<void> {
     .eq('id', sessionId);
  
   if (error) throw new Error(`Failed to end session: ${error.message}`);
+}
+ 
+// ── Fetch all members of a session ─────────────────────────
+export async function fetchSessionMembers(sessionId: string): Promise<SessionMember[]> {
+  const { data, error } = await supabase
+    .from('session_members')
+    .select('user_id, role, display_name')
+    .eq('session_id', sessionId);
+ 
+  if (error || !data) return [];
+  return data.map(m => ({
+    userId: m.user_id,
+    role: m.role as SessionRole,
+    displayName: m.display_name || 'User',
+  }));
 }
  
 // ── Map DB row to GameSession type ─────────────────────────
