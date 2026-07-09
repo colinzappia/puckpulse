@@ -50,7 +50,8 @@ export default function SessionSetup({
         awayName || 'Away',
         homeRoster,
         awayRoster,
-        {}, // member roles — expanded in Phase 2 with Clerk org users
+        {},
+        user.fullName || user.primaryEmailAddress?.emailAddress || 'Admin',
       );
       setSession(created);
       setStep('created');
