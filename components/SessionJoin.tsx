@@ -25,7 +25,11 @@ export default function SessionJoin({ onJoined, onCancel }: Props) {
     setLoading(true);
     setError('');
     try {
-      const { session, role } = await joinSession(user.id, code);
+      const { session, role } = await joinSession(
+        user.id,
+        code,
+        user.fullName || user.primaryEmailAddress?.emailAddress || 'User',
+      );
       onJoined(session, role);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Something went wrong');
