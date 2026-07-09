@@ -881,6 +881,7 @@ const App: React.FC = () => {
         <SessionBanner
           session={activeSession}
           myRole={mySessionRole}
+          myUserId={user?.id || ''}
           onEndSession={handleEndSession}
           onLeaveSession={handleLeaveSession}
         />
