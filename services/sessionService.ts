@@ -228,3 +228,4 @@ function mapSession(row: Record<string, unknown>): GameSession {
     createdAt: row.created_at as string,
   };
 }
+ 
