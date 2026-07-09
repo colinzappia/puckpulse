@@ -1,3 +1,33 @@
+import { supabase } from '../lib/supabaseClient';
+import { GameEvent, EventType, Team, Zone } from '../types';
+import { GameSession } from './sessionService';
+ 
+export async function broadcastEvent(sessionId: string, event: GameEvent, userId: string): Promise<void> {
+  const { error } = await supabase.from('game_events').insert({
+    id: event.id,
+    session_id: sessionId,
+    type: event.type,
+    team: event.team,
+    zone: event.zone,
+    period: event.period,
+    game_time: event.gameTime,
+    player_number: event.playerNumber || null,
+    coordinates: event.coordinates || null,
+    metadata: event.metadata || null,
+    logged_by: userId,
+  });
+  if (error) throw new Error(`Failed to sync event: ${error.message}`);
+}
+ 
+export async function deleteEvent(eventId: string): Promise<void> {
+  await supabase.from('game_events').delete().eq('id', eventId);
+}
+ 
+export async function loadSessionEvents(sessionId: string): Promise<GameEvent[]> {
+  const { data, error } = await supabase
+    .from('game_events')
+    .select('*')
+    .eq('session_id', sessionId)
     .order('created_at', { ascending: true });
   if (error) return [];
   return (data || []).map(mapEvent);
