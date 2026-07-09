@@ -64,6 +64,7 @@ export async function createSession(
         away_score: 0,
         status: 'active',
         created_by: userId,
+        user_id: userId,
       })
       .select()
       .single();
