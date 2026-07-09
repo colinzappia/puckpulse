@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { GameEvent, EventType, Team, TeamStats, Zone, Player, PenaltyType } from './types';
 import Header from './components/Header'; // v2
@@ -16,9 +16,14 @@ import ContactPage from './components/ContactPage';
 import AboutPage from './components/AboutPage';
 import AdvertisePage from './components/AdvertisePage';
 import ThemedBackground from './components/ThemedBackground';
+import SessionSetup from './components/SessionSetup';
+import SessionJoin from './components/SessionJoin';
+import SessionBanner from './components/SessionBanner';
 import { useAuth, UserButton, useClerk, useUser } from '@clerk/clerk-react';
 import { generateNarrative, fetchRosterByAI } from './services/geminiService';
 import { downloadPDFReport, downloadExcelReport, downloadHTMLExport } from './services/exportService';
+import { GameSession, SessionRole, endSession as endSessionDB } from './services/sessionService';
+import { broadcastEvent, deleteEvent, loadSessionEvents, subscribeToSession } from './services/syncService';
 import { Toaster, toast } from 'sonner';
 import { 
   DndContext, 
@@ -214,6 +219,94 @@ const App: React.FC = () => {
   }, [isSignedIn, user]);
 
   const [events, setEvents] = useState<GameEvent[]>([]);
+
+  // ── Session state ──────────────────────────────────────────
+  const [activeSession, setActiveSession] = useState<GameSession | null>(null);
+  const [mySessionRole, setMySessionRole] = useState<SessionRole | null>(null);
+  const [showSessionSetup, setShowSessionSetup] = useState(false);
+  const [showSessionJoin, setShowSessionJoin] = useState(false);
+  const unsubscribeRef = useRef<(() => void) | null>(null);
+
+  const isSessionActive = !!activeSession;
+  const canLogEvents = !isSessionActive || mySessionRole === 'admin' || mySessionRole === 'logger';
+
+  // Subscribe to real-time updates when session is active
+  useEffect(() => {
+    if (!activeSession) return;
+
+    // Load existing events first
+    loadSessionEvents(activeSession.id).then(loaded => {
+      setEvents(loaded);
+    });
+
+    // Subscribe to live updates
+    const unsub = subscribeToSession(activeSession.id, {
+      onEventAdded: (event) => {
+        setEvents(prev => {
+          // Avoid duplicates (our own broadcast comes back too)
+          if (prev.find(e => e.id === event.id)) return prev;
+          return [...prev, event];
+        });
+      },
+      onEventDeleted: (eventId) => {
+        setEvents(prev => prev.filter(e => e.id !== eventId));
+      },
+      onSessionUpdated: (updates) => {
+        if (updates.status === 'ended' && mySessionRole !== 'admin') {
+          toast.info('The admin has ended this session.');
+          handleLeaveSession();
+          return;
+        }
+        setActiveSession(prev => prev ? { ...prev, ...updates } : null);
+        if (updates.period !== undefined) setCurrentPeriod(updates.period);
+        if (updates.homeName) setHomeName(updates.homeName);
+        if (updates.awayName) setAwayName(updates.awayName);
+        if (updates.homeRoster) setHomeRoster(updates.homeRoster);
+        if (updates.awayRoster) setAwayRoster(updates.awayRoster);
+      },
+    });
+
+    unsubscribeRef.current = unsub;
+    return () => unsub();
+  }, [activeSession?.id]);
+
+  const handleSessionCreated = (session: GameSession) => {
+    setActiveSession(session);
+    setMySessionRole('admin');
+    setShowSessionSetup(false);
+    toast.success(`Session ${session.code} created! Share the code with your team.`);
+  };
+
+  const handleSessionJoined = (session: GameSession, role: SessionRole) => {
+    setActiveSession(session);
+    setMySessionRole(role);
+    setShowSessionJoin(false);
+    // Load session's rosters and state
+    setHomeName(session.homeName);
+    setAwayName(session.awayName);
+    setHomeRoster(session.homeRoster);
+    setAwayRoster(session.awayRoster);
+    setCurrentPeriod(session.period);
+    toast.success(`Joined session ${session.code} as ${role}`);
+  };
+
+  const handleLeaveSession = () => {
+    if (unsubscribeRef.current) unsubscribeRef.current();
+    setActiveSession(null);
+    setMySessionRole(null);
+    setEvents([]);
+  };
+
+  const handleEndSession = async () => {
+    if (!activeSession) return;
+    try {
+      await endSessionDB(activeSession.id);
+      toast.success('Session ended.');
+    } catch (e) {
+      console.error(e);
+    }
+    handleLeaveSession();
+  };
   const [activeTeam, setActiveTeam] = useState<Team>(Team.HOME);
   const [playerNumber, setPlayerNumber] = useState('');
   const [currentPeriod, setCurrentPeriod] = useState(1);
@@ -487,6 +580,10 @@ const App: React.FC = () => {
     };
     setEvents(prev => [...prev, newEvent]);
     setLastEvent({ type: mapPlotType, playerNumber: playerNumber, team: activeTeam });
+    // Broadcast to session if active
+    if (activeSession && user) {
+      broadcastEvent(activeSession.id, newEvent, user.id).catch(console.error);
+    }
   }, [mapPlotType, fowHomeCenter, fowAwayCenter, activeTeam, playerNumber, currentPeriod, getTeamZone]);
 
   const handleManageSubscription = async () => {
@@ -662,8 +759,15 @@ const App: React.FC = () => {
     return total > 0 ? Math.round((wins / total) * 100) : 0;
   };
 
-  const handleUndo = () => setEvents(prev => prev.slice(0, -1));
-  const handleRemoveEvent = (id: string) => setEvents(prev => prev.filter(e => e.id !== id));
+  const handleUndo = () => {
+    const last = events[events.length - 1];
+    if (last && activeSession) deleteEvent(last.id).catch(console.error);
+    setEvents(prev => prev.slice(0, -1));
+  };
+  const handleRemoveEvent = (id: string) => {
+    if (activeSession) deleteEvent(id).catch(console.error);
+    setEvents(prev => prev.filter(e => e.id !== id));
+  };
   const handleUpdateEvent = (id: string, updates: Partial<GameEvent>) => setEvents(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
   const selectPlayer = (num: string, team: Team) => { setActiveTeam(team); setPlayerNumber(num === playerNumber && activeTeam === team ? '' : num); };
   const toggleVisibleType = (type: EventType) => setVisibleTypes(prev => prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]);
@@ -771,6 +875,34 @@ const App: React.FC = () => {
     <ThemedBackground intensity="subtle" className="flex flex-col text-slate-200">
       <AdBanner position="top" onContactClick={() => setShowAdvertise(true)} />
       <Toaster position="top-center" richColors theme="dark" />
+
+      {/* Session banner — shown when a live session is active */}
+      {activeSession && mySessionRole && (
+        <SessionBanner
+          session={activeSession}
+          myRole={mySessionRole}
+          onEndSession={handleEndSession}
+          onLeaveSession={handleLeaveSession}
+        />
+      )}
+
+      {/* Session setup / join modals */}
+      {showSessionSetup && (
+        <SessionSetup
+          homeName={homeName}
+          awayName={awayName}
+          homeRoster={homeRoster}
+          awayRoster={awayRoster}
+          onSessionCreated={handleSessionCreated}
+          onCancel={() => setShowSessionSetup(false)}
+        />
+      )}
+      {showSessionJoin && (
+        <SessionJoin
+          onJoined={handleSessionJoined}
+          onCancel={() => setShowSessionJoin(false)}
+        />
+      )}
       
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <Header 
@@ -780,6 +912,24 @@ const App: React.FC = () => {
           onNewGame={handleNewGame} onEndGame={handleEndGame} onOpenAbout={() => setShowAbout(true)} onBackToLanding={handleBackToLanding}
           onOpenContact={() => setShowContact(true)}
         />
+
+        {/* Session controls — shown when no session is active */}
+        {!activeSession && (
+          <div style={{ display: 'flex', gap: 8, padding: '8px 16px', background: 'rgba(0,0,0,0.2)', borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}>
+            <button
+              onClick={() => setShowSessionSetup(true)}
+              style={{ flex: 1, padding: '7px 12px', borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: 'pointer', background: 'rgba(96,165,250,0.12)', border: '0.5px solid rgba(96,165,250,0.3)', color: '#60a5fa' }}
+            >
+              ＋ Share this game live
+            </button>
+            <button
+              onClick={() => setShowSessionJoin(true)}
+              style={{ flex: 1, padding: '7px 12px', borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: 'pointer', background: 'rgba(255,255,255,0.04)', border: '0.5px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)' }}
+            >
+              Join session
+            </button>
+          </div>
+        )}
         
         <main className="flex flex-col pb-20">
         {/* LIVE ROSTER LOGGING PANELS */}
@@ -910,21 +1060,28 @@ const App: React.FC = () => {
           </div>
 
           <div className="w-full px-2 py-3 bg-white/5 border-b border-white/10 flex flex-wrap items-center justify-center gap-3 shadow-2xl shrink-0">
-            <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-3">
-              {toolbarButtons.map(btn => (
-                <button key={btn.type} onClick={() => setMapPlotType(btn.type)} className={`px-3 sm:px-6 md:px-8 py-2.5 md:py-3 rounded-xl text-[10px] sm:text-[11px] md:text-xs font-black uppercase transition-all flex items-center justify-center shadow-lg active:scale-90 ${mapPlotType === btn.type ? `${btn.color} text-white ring-2 ring-white/20` : 'bg-white/5 text-slate-500 hover:bg-white/10'}`}>{btn.label}</button>
-              ))}
-              <button onClick={() => setShowFaceoffPanel(true)} className={`px-3 sm:px-6 md:px-8 py-2.5 md:py-3 rounded-xl text-[10px] sm:text-[11px] md:text-xs font-black uppercase transition-all flex items-center justify-center shadow-lg active:scale-90 bg-yellow-600/20 text-yellow-400 border border-yellow-500/30 hover:bg-yellow-600/40`}>Faceoff Hub</button>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              {playerNumber && (
-                <div className={`px-3 py-2 rounded-xl text-xs font-black border transition-all ${activeTeam === Team.HOME ? 'bg-blue-600/20 border-blue-500/40 text-blue-300' : 'bg-red-600/20 border-red-500/40 text-red-300'}`}>#{playerNumber}</div>
-              )}
-
-              <button onClick={handleUndo} className="p-3 md:p-4 bg-white/5 hover:bg-white/10 rounded-xl text-slate-400 active:bg-white/20 transition-all shadow-lg">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /></svg>
-              </button>
-            </div>
+            {!canLogEvents ? (
+              <div style={{ padding: '10px 16px', background: 'rgba(251,191,36,0.08)', border: '0.5px solid rgba(251,191,36,0.2)', borderRadius: 10, fontSize: 12, color: '#fbbf24', textAlign: 'center' }}>
+                👁 Viewer — watching live. Ask the admin to change your role to Logger to log events.
+              </div>
+            ) : (
+              <>
+                <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-3">
+                  {toolbarButtons.map(btn => (
+                    <button key={btn.type} onClick={() => setMapPlotType(btn.type)} className={`px-3 sm:px-6 md:px-8 py-2.5 md:py-3 rounded-xl text-[10px] sm:text-[11px] md:text-xs font-black uppercase transition-all flex items-center justify-center shadow-lg active:scale-90 ${mapPlotType === btn.type ? `${btn.color} text-white ring-2 ring-white/20` : 'bg-white/5 text-slate-500 hover:bg-white/10'}`}>{btn.label}</button>
+                  ))}
+                  <button onClick={() => setShowFaceoffPanel(true)} className={`px-3 sm:px-6 md:px-8 py-2.5 md:py-3 rounded-xl text-[10px] sm:text-[11px] md:text-xs font-black uppercase transition-all flex items-center justify-center shadow-lg active:scale-90 bg-yellow-600/20 text-yellow-400 border border-yellow-500/30 hover:bg-yellow-600/40`}>Faceoff Hub</button>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  {playerNumber && (
+                    <div className={`px-3 py-2 rounded-xl text-xs font-black border transition-all ${activeTeam === Team.HOME ? 'bg-blue-600/20 border-blue-500/40 text-blue-300' : 'bg-red-600/20 border-red-500/40 text-red-300'}`}>#{playerNumber}</div>
+                  )}
+                  <button onClick={handleUndo} className="p-3 md:p-4 bg-white/5 hover:bg-white/10 rounded-xl text-slate-400 active:bg-white/20 transition-all shadow-lg">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /></svg>
+                  </button>
+                </div>
+              </>
+            )}
           </div>
 
           <div className="relative flex items-center justify-center p-3 sm:p-10 h-full">
