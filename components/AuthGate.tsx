@@ -86,9 +86,9 @@ const AuthGate: React.FC<AuthGateProps> = ({ onAuthenticated }) => {
       {/* PIPEDA consent */}
       <p className="text-slate-500 text-xs mt-4 text-center max-w-sm">
         By creating an account you agree to our{' '}
-        <a href="https://topcheesehockey.com" href="/terms.html" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:text-cyan-300 underline">Terms of Service</a>
+        <a href="/terms.html" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:text-cyan-300 underline">Terms of Service</a>
         {' '}and{' '}
-        <a href="https://topcheesehockey.com" href="/privacy.html" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:text-cyan-300 underline">Privacy Policy</a>.
+        <a href="/privacy.html" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:text-cyan-300 underline">Privacy Policy</a>.
         We collect your email address and usage data to provide the service.
       </p>
 
