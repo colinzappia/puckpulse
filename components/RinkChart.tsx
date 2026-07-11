@@ -201,8 +201,7 @@ const RinkChart: React.FC<RinkChartProps> = ({
             href={leftLogo} 
             x={leftLogoX} y={logoY} 
             width={watermarkLogoSize} height={watermarkLogoSize} 
-            opacity="0.08" 
-            style={{ filter: 'grayscale(100%)' }} 
+            opacity="0.22" 
             preserveAspectRatio="xMidYMid meet"
           />
         )}
@@ -211,8 +210,7 @@ const RinkChart: React.FC<RinkChartProps> = ({
             href={rightLogo} 
             x={rightLogoX} y={logoY} 
             width={watermarkLogoSize} height={watermarkLogoSize} 
-            opacity="0.08" 
-            style={{ filter: 'grayscale(100%)' }} 
+            opacity="0.22" 
             preserveAspectRatio="xMidYMid meet"
           />
         )}
