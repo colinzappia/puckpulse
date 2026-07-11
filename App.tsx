@@ -22,6 +22,8 @@ import SessionBanner from './components/SessionBanner';
 import SaveTeamPrompt from './components/SaveTeamPrompt';
 import TeamLibrary from './components/TeamLibrary';
 import EventAttachmentPanel from './components/EventAttachmentPanel';
+import GameHistory from './components/GameHistory';
+import { saveGameReport, SavedGameReport } from './services/gameReportService';
 import { useAuth, UserButton, useClerk, useUser } from '@clerk/clerk-react';
 import { generateNarrative, fetchRosterByAI } from './services/geminiService';
 import { downloadPDFReport, downloadExcelReport, downloadHTMLExport } from './services/exportService';
@@ -400,7 +402,34 @@ const App: React.FC = () => {
 
   const [events, setEvents] = useState<GameEvent[]>([]);
 
-  // ── Attachment panel state ─────────────────────────────────
+  // ── Game history state ─────────────────────────────────────
+  const [showGameHistory, setShowGameHistory] = useState(false);
+  const [savingReport, setSavingReport] = useState(false);
+
+  const handleSaveReport = async (isShared = false) => {
+    if (!user) return;
+    setSavingReport(true);
+    try {
+      await saveGameReport(user.id, {
+        homeName, awayName, homeScore, awayScore,
+        homeLogo, awayLogo,
+        periods: currentPeriod,
+        events, homeRoster, awayRoster, isShared,
+      });
+      toast.success('Game saved to history!');
+    } catch (e) {
+      toast.error('Failed to save game');
+    } finally {
+      setSavingReport(false);
+    }
+  };
+
+  const handleDownloadFromHistory = (report: SavedGameReport, format: 'pdf' | 'excel' | 'html') => {
+    // Restore report data temporarily and trigger download
+    if (format === 'pdf') downloadPDFReport(report.events, report.homeRoster, report.awayRoster, report.homeName, report.awayName, report.homeScore, report.awayScore, null);
+    else if (format === 'excel') downloadExcelReport(report.events, report.homeRoster, report.awayRoster, report.homeName, report.awayName);
+    else if (format === 'html') downloadHTMLExport(report.events, report.homeRoster, report.awayRoster, report.homeName, report.awayName, report.homeScore, report.awayScore);
+  };
   const [attachmentEvent, setAttachmentEvent] = useState<GameEvent | null>(null);
   const [showTeamLibrary, setShowTeamLibrary] = useState(false);
   const [teamLibrarySide, setTeamLibrarySide] = useState<'home' | 'away'>('home');
@@ -1102,6 +1131,14 @@ const App: React.FC = () => {
         />
       )}
 
+      {/* Game history */}
+      <GameHistory
+        isOpen={showGameHistory}
+        onClose={() => setShowGameHistory(false)}
+        onLoadGame={() => {}}
+        onDownloadReport={handleDownloadFromHistory}
+      />
+
       {/* Event attachment panel */}
       {attachmentEvent && (
         <EventAttachmentPanel
@@ -1133,6 +1170,7 @@ const App: React.FC = () => {
         <Header 
           leftTeam={leftTeamDisplay} rightTeam={rightTeamDisplay} period={currentPeriod}
           onOpenSetup={() => setShowSetup(true)} onOpenManual={() => setShowManual(true)}
+          onOpenGameHistory={() => setShowGameHistory(true)}
           onSetPeriod={setCurrentPeriod} onSwapSides={() => setIsRosterSwapped(!isRosterSwapped)}
           onNewGame={handleNewGame} onEndGame={handleEndGame} onOpenAbout={() => setShowAbout(true)} onBackToLanding={handleBackToLanding}
           onOpenContact={() => setShowContact(true)}
@@ -1753,16 +1791,25 @@ const App: React.FC = () => {
             <div className="bg-white/5 rounded-xl p-2"><p className="text-lg font-black text-white">{currentPeriod}</p><p className="text-xs text-slate-500">Periods</p></div>
           </div>
           {/* Export buttons */}
-          <p className="text-xs text-slate-400 font-bold text-center mb-3">Download your reports before ending:</p>
+          <p className="text-xs text-slate-400 font-bold text-center mb-3">Download your reports:</p>
           <div className="flex gap-2 mb-4">
             <button onClick={handleExportPDF} className="flex-1 py-3 bg-green-700 hover:bg-green-600 text-white font-black rounded-xl text-xs transition-colors">📥 PDF</button>
             <button onClick={handleExportExcel} className="flex-1 py-3 bg-green-700 hover:bg-green-600 text-white font-black rounded-xl text-xs transition-colors">📊 Excel</button>
             <button onClick={handleExportHTML} className="flex-1 py-3 bg-green-700 hover:bg-green-600 text-white font-black rounded-xl text-xs transition-colors">🌐 HTML</button>
           </div>
 
+          {/* Save to history */}
+          <button
+            onClick={() => handleSaveReport(false)}
+            disabled={savingReport}
+            className="w-full py-3 bg-blue-700/40 hover:bg-blue-600/50 border border-blue-500/30 text-blue-300 font-black rounded-xl text-sm transition-colors mb-4"
+          >
+            {savingReport ? 'Saving…' : '💾 Save game to history'}
+          </button>
+
           {/* Warning */}
           <div className="bg-red-900/20 border border-red-500/20 rounded-xl px-4 py-3 mb-4">
-            <p className="text-xs text-red-400 text-center font-bold">⚠️ Once you end the game, all tracking data will be cleared and cannot be recovered. Download your reports first!</p>
+            <p className="text-xs text-red-400 text-center font-bold">⚠️ Once you end the game, all tracking data will be cleared. Save or download your reports first!</p>
           </div>
 
           {/* Action buttons */}
