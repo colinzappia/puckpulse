@@ -1,4 +1,3 @@
-
 // ============================================================
 // SaveTeamPrompt.tsx
 // Shown after a roster is successfully imported.
@@ -14,13 +13,14 @@ import { Player } from '../types';
 interface Props {
   teamName: string;
   roster: Player[];
+  logo: string;
   onSaved: () => void;
   onSkip: () => void;
 }
 
 const LEAGUES = ['NHL', 'AHL', 'OHL', 'WHL', 'QMJHL', 'Junior A', 'Junior B', 'Other'];
 
-export default function SaveTeamPrompt({ teamName, roster, onSaved, onSkip }: Props) {
+export default function SaveTeamPrompt({ teamName, roster, logo, onSaved, onSkip }: Props) {
   const { user } = useUser();
   const [name, setName] = useState(teamName);
   const [league, setLeague] = useState('');
@@ -33,7 +33,7 @@ export default function SaveTeamPrompt({ teamName, roster, onSaved, onSkip }: Pr
     setSaving(true);
     setError('');
     try {
-      await saveTeam(user.id, name.trim(), league, roster, isShared);
+      await saveTeam(user.id, name.trim(), league, roster, isShared, logo);
       onSaved();
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to save');
@@ -54,9 +54,12 @@ export default function SaveTeamPrompt({ teamName, roster, onSaved, onSkip }: Pr
     <div style={S.overlay}>
       <div style={S.sheet}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>Save to team library?</div>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginTop: 2 }}>{roster.length} players loaded</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {logo && <img src={logo} alt="" style={{ width: 36, height: 36, objectFit: 'contain', borderRadius: 6, background: 'rgba(255,255,255,0.05)', padding: 4 }} />}
+            <div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>Save to team library?</div>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginTop: 2 }}>{roster.length} players loaded</div>
+            </div>
           </div>
           <span onClick={onSkip} style={{ fontSize: 22, color: 'rgba(255,255,255,0.3)', cursor: 'pointer', lineHeight: 1 }}>×</span>
         </div>
