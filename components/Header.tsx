@@ -16,6 +16,7 @@ interface HeaderProps {
   period: number;
   onOpenSetup: () => void;
   onOpenManual: () => void;
+  onOpenGameHistory: () => void;
   onSetPeriod: (p: number) => void;
   onSwapSides: () => void;
   onNewGame: () => void;
@@ -27,7 +28,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({
   leftTeam, rightTeam, period,
-  onOpenSetup, onOpenManual, onSetPeriod, onSwapSides,
+  onOpenSetup, onOpenManual, onOpenGameHistory, onSetPeriod, onSwapSides,
   onNewGame, onEndGame, onOpenAbout, onBackToLanding, onOpenContact
 }) => {
   const periodLabel = getPeriodLabel(period);
@@ -220,6 +221,7 @@ const Header: React.FC<HeaderProps> = ({
             <div style={{ padding: '8px', display: 'flex', flexDirection: 'column', gap: '2px', overflowY: 'auto' }}>
               {([
                 { label: 'User Manual', icon: '📋', action: onOpenManual },
+                { label: 'Game History', icon: '📁', action: onOpenGameHistory },
                 { label: 'About Us', icon: 'ℹ️', action: onOpenAbout },
                 { label: 'Contact Us', icon: '✉️', action: onOpenContact },
                 null,
