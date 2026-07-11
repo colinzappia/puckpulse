@@ -1306,7 +1306,7 @@ const App: React.FC = () => {
           </div>
 
           <div className="relative flex items-center justify-center p-3 sm:p-10 h-full">
-            <div className={`w-full max-w-6xl aspect-[200/85] transition-all duration-700 rounded-[5rem] sm:rounded-[8.5rem] p-2 border-4 shadow-2xl ${activeTeam === Team.HOME ? 'border-blue-500/20' : 'border-red-500/20'}`}>
+            <div className={`w-full max-w-6xl aspect-[200/85] transition-all duration-700 rounded-[5rem] sm:rounded-[8.5rem] p-2 shadow-2xl`}>
               <RinkChart events={events.filter(e => e.period === currentPeriod && visibleTypes.includes(e.type))} leftLogo={leftTeamDisplay.logo} rightLogo={rightTeamDisplay.logo} onPlot={handlePlot} onMoveEvent={handleMoveEvent} activeEventType={mapPlotType} />
             </div>
           </div>
