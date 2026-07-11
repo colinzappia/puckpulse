@@ -404,16 +404,16 @@ const App: React.FC = () => {
   const [attachmentEvent, setAttachmentEvent] = useState<GameEvent | null>(null);
   const [showTeamLibrary, setShowTeamLibrary] = useState(false);
   const [teamLibrarySide, setTeamLibrarySide] = useState<'home' | 'away'>('home');
-  const [savePrompt, setSavePrompt] = useState<{ teamName: string; roster: Player[]; side: 'home' | 'away' } | null>(null);
+  const [savePrompt, setSavePrompt] = useState<{ teamName: string; roster: Player[]; logo: string; side: 'home' | 'away' } | null>(null);
 
   const handleLoadFromLibrary = (side: 'home' | 'away') => {
     setTeamLibrarySide(side);
     setShowTeamLibrary(true);
   };
 
-  const handleLibraryTeamLoaded = (name: string, roster: Player[]) => {
-    if (teamLibrarySide === 'home') { setHomeName(name); setHomeRoster(roster); }
-    else { setAwayName(name); setAwayRoster(roster); }
+  const handleLibraryTeamLoaded = (name: string, roster: Player[], logo: string) => {
+    if (teamLibrarySide === 'home') { setHomeName(name); setHomeRoster(roster); setHomeLogo(logo); }
+    else { setAwayName(name); setAwayRoster(roster); setAwayLogo(logo); }
     setShowTeamLibrary(false);
   };
   const [activeSession, setActiveSession] = useState<GameSession | null>(null);
@@ -837,7 +837,7 @@ const App: React.FC = () => {
       if (isHome) { setHomeRoster(sortedPlayers); setPasteRosterHome(''); }
       else { setAwayRoster(sortedPlayers); setPasteRosterAway(''); }
       setSyncMessage('');
-      setSavePrompt({ teamName: teamName.trim(), roster: sortedPlayers, side: isHome ? 'home' : 'away' });
+      setSavePrompt({ teamName: teamName.trim(), roster: sortedPlayers, logo: isHome ? homeLogo : awayLogo, side: isHome ? 'home' : 'away' });
     } catch (err: any) {
       alert(`Paste Sync Error: ${err.message}`);
     } finally {
@@ -1123,6 +1123,7 @@ const App: React.FC = () => {
         <SaveTeamPrompt
           teamName={savePrompt.teamName}
           roster={savePrompt.roster}
+          logo={savePrompt.logo}
           onSaved={() => { setSavePrompt(null); toast.success('Team saved to library!'); }}
           onSkip={() => setSavePrompt(null)}
         />
