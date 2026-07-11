@@ -1281,32 +1281,34 @@ const App: React.FC = () => {
             </div>
           </div>
 
-          <div className="w-full px-2 py-2 bg-white/5 border-b border-white/10 flex items-center gap-2 shadow-2xl shrink-0 overflow-x-auto scrollbar-none">
-            {!canLogEvents ? (
-              <div style={{ padding: '8px 12px', background: 'rgba(251,191,36,0.08)', border: '0.5px solid rgba(251,191,36,0.2)', borderRadius: 10, fontSize: 11, color: '#fbbf24', whiteSpace: 'nowrap' }}>
-                👁 Viewer — watching live
-              </div>
-            ) : (
-              <>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  {toolbarButtons.map(btn => (
-                    <button key={btn.type} onClick={() => setMapPlotType(btn.type)} className={`px-3 py-2 rounded-xl text-[10px] font-black uppercase transition-all flex items-center justify-center shadow-lg active:scale-90 shrink-0 ${mapPlotType === btn.type ? `${btn.color} text-white ring-2 ring-white/20` : 'bg-white/5 text-slate-500 hover:bg-white/10'}`}>{btn.label}</button>
-                  ))}
-                  <button onClick={() => setShowFaceoffPanel(true)} className="px-3 py-2 rounded-xl text-[10px] font-black uppercase transition-all flex items-center justify-center shadow-lg active:scale-90 bg-yellow-600/20 text-yellow-400 border border-yellow-500/30 hover:bg-yellow-600/40 shrink-0">Faceoffs</button>
-                </div>
-                <div className="flex items-center gap-2 shrink-0 ml-auto">
-                  {playerNumber && (
-                    <div className={`px-2 py-1.5 rounded-xl text-[10px] font-black border transition-all shrink-0 ${activeTeam === Team.HOME ? 'bg-blue-600/20 border-blue-500/40 text-blue-300' : 'bg-red-600/20 border-red-500/40 text-red-300'}`}>#{playerNumber}</div>
-                  )}
-                  <button onClick={handleUndo} className="p-2.5 bg-white/5 hover:bg-white/10 rounded-xl text-slate-400 active:bg-white/20 transition-all shadow-lg shrink-0">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /></svg>
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
+          <div className="relative flex flex-col items-center justify-center p-3 sm:p-10 h-full gap-3">
 
-          <div className="relative flex items-center justify-center p-3 sm:p-10 h-full">
+            {/* Event toolbar — centred above the rink */}
+            <div className="w-full max-w-6xl flex items-center justify-center gap-2 overflow-x-auto scrollbar-none">
+              {!canLogEvents ? (
+                <div style={{ padding: '7px 12px', background: 'rgba(251,191,36,0.08)', border: '0.5px solid rgba(251,191,36,0.2)', borderRadius: 10, fontSize: 11, color: '#fbbf24', whiteSpace: 'nowrap' }}>
+                  👁 Viewer — watching live
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                    {toolbarButtons.map(btn => (
+                      <button key={btn.type} onClick={() => setMapPlotType(btn.type)} className={`px-3 py-2 rounded-xl text-[10px] font-black uppercase transition-all flex items-center justify-center shadow-lg active:scale-90 shrink-0 ${mapPlotType === btn.type ? `${btn.color} text-white ring-2 ring-white/20` : 'bg-white/5 text-slate-500 hover:bg-white/10'}`}>{btn.label}</button>
+                    ))}
+                    <button onClick={() => setShowFaceoffPanel(true)} className="px-3 py-2 rounded-xl text-[10px] font-black uppercase transition-all flex items-center justify-center shadow-lg active:scale-90 bg-yellow-600/20 text-yellow-400 border border-yellow-500/30 hover:bg-yellow-600/40 shrink-0">Faceoffs</button>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {playerNumber && (
+                      <div className={`px-2 py-1.5 rounded-xl text-[10px] font-black border transition-all shrink-0 ${activeTeam === Team.HOME ? 'bg-blue-600/20 border-blue-500/40 text-blue-300' : 'bg-red-600/20 border-red-500/40 text-red-300'}`}>#{playerNumber}</div>
+                    )}
+                    <button onClick={handleUndo} className="p-2.5 bg-white/5 hover:bg-white/10 rounded-xl text-slate-400 active:bg-white/20 transition-all shadow-lg shrink-0">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /></svg>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+
             <div className={`w-full max-w-6xl aspect-[200/85] transition-all duration-700 rounded-[5rem] sm:rounded-[8.5rem] p-2 shadow-2xl`}>
               <RinkChart events={events.filter(e => e.period === currentPeriod && visibleTypes.includes(e.type))} leftLogo={leftTeamDisplay.logo} rightLogo={rightTeamDisplay.logo} onPlot={handlePlot} onMoveEvent={handleMoveEvent} activeEventType={mapPlotType} />
             </div>
