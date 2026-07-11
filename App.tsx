@@ -1077,7 +1077,7 @@ const App: React.FC = () => {
   if (showLanding) return <LandingPage onLaunch={handleLaunch} onContact={() => { handleLaunch(); setTimeout(() => setShowContact(true), 100); }} onAdvertise={() => { handleLaunch(); setTimeout(() => setShowAdvertise(true), 100); }} onAbout={() => { handleLaunch(); setTimeout(() => setShowAbout(true), 100); }} />;
   if (!isSignedIn) return <AuthGate onAuthenticated={() => setIsAuthenticated(true)} />;
 
-  const ADMIN_EMAILS = ['colinzappia@gmail.com'];
+  const ADMIN_EMAILS = ['colinzappia@gmail.com', 'derekfroats19@gmail.com'];
   const userEmail = currentUser?.primaryEmailAddress?.emailAddress?.toLowerCase() || user?.primaryEmailAddress?.emailAddress?.toLowerCase() || '';
   const isAdmin = ADMIN_EMAILS.includes(userEmail);
 
