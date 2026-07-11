@@ -7,6 +7,7 @@ interface PlayByPlayProps {
   awayName: string;
   onRemoveEvent: (id: string) => void;
   onUpdateEvent: (id: string, updates: Partial<GameEvent>) => void;
+  onAttachClip: (event: GameEvent) => void;
 }
 
 const PlayByPlay: React.FC<PlayByPlayProps> = ({ 
@@ -14,7 +15,8 @@ const PlayByPlay: React.FC<PlayByPlayProps> = ({
   homeName, 
   awayName, 
   onRemoveEvent,
-  onUpdateEvent 
+  onUpdateEvent,
+  onAttachClip,
 }) => {
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -105,6 +107,13 @@ const PlayByPlay: React.FC<PlayByPlayProps> = ({
                   </div>
                   
                   <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      onClick={() => onAttachClip(event)}
+                      className="opacity-0 group-hover:opacity-100 p-1.5 hover:text-blue-400 transition-all text-slate-600"
+                      title="Attach clip"
+                    >
+                      🎬
+                    </button>
                     <button 
                       onClick={() => setEditingId(isEditing ? null : event.id)}
                       className={`p-1.5 rounded-lg transition-all ${isEditing ? 'bg-blue-600 text-white' : 'text-slate-600 hover:text-white bg-black/20 opacity-0 group-hover:opacity-100'}`}
