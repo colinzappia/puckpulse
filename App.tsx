@@ -21,6 +21,7 @@ import SessionJoin from './components/SessionJoin';
 import SessionBanner from './components/SessionBanner';
 import SaveTeamPrompt from './components/SaveTeamPrompt';
 import TeamLibrary from './components/TeamLibrary';
+import EventAttachmentPanel from './components/EventAttachmentPanel';
 import { useAuth, UserButton, useClerk, useUser } from '@clerk/clerk-react';
 import { generateNarrative, fetchRosterByAI } from './services/geminiService';
 import { downloadPDFReport, downloadExcelReport, downloadHTMLExport } from './services/exportService';
@@ -399,7 +400,8 @@ const App: React.FC = () => {
 
   const [events, setEvents] = useState<GameEvent[]>([]);
 
-  // ── Team library state ─────────────────────────────────────
+  // ── Attachment panel state ─────────────────────────────────
+  const [attachmentEvent, setAttachmentEvent] = useState<GameEvent | null>(null);
   const [showTeamLibrary, setShowTeamLibrary] = useState(false);
   const [teamLibrarySide, setTeamLibrarySide] = useState<'home' | 'away'>('home');
   const [savePrompt, setSavePrompt] = useState<{ teamName: string; roster: Player[]; side: 'home' | 'away' } | null>(null);
@@ -1100,8 +1102,14 @@ const App: React.FC = () => {
         />
       )}
 
-      {/* Team library */}
-      <TeamLibrary
+      {/* Event attachment panel */}
+      {attachmentEvent && (
+        <EventAttachmentPanel
+          event={attachmentEvent}
+          sessionId={activeSession?.id || null}
+          onClose={() => setAttachmentEvent(null)}
+        />
+      )}
         isOpen={showTeamLibrary}
         onClose={() => setShowTeamLibrary(false)}
         onLoadTeam={handleLibraryTeamLoaded}
@@ -1482,7 +1490,7 @@ const App: React.FC = () => {
             </div>
             {showFeed && (
               <div className="rounded-[2rem] overflow-hidden border border-white/10 bg-slate-900/40 shadow-2xl">
-                <PlayByPlay events={events} homeName={homeName} awayName={awayName} onRemoveEvent={handleRemoveEvent} onUpdateEvent={handleUpdateEvent} />
+                <PlayByPlay events={events} homeName={homeName} awayName={awayName} onRemoveEvent={handleRemoveEvent} onUpdateEvent={handleUpdateEvent} onAttachClip={setAttachmentEvent} />
               </div>
             )}
           </div>
