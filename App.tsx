@@ -19,6 +19,8 @@ import ThemedBackground from './components/ThemedBackground';
 import SessionSetup from './components/SessionSetup';
 import SessionJoin from './components/SessionJoin';
 import SessionBanner from './components/SessionBanner';
+import SaveTeamPrompt from './components/SaveTeamPrompt';
+import TeamLibrary from './components/TeamLibrary';
 import { useAuth, UserButton, useClerk, useUser } from '@clerk/clerk-react';
 import { generateNarrative, fetchRosterByAI } from './services/geminiService';
 import { downloadPDFReport, downloadExcelReport, downloadHTMLExport } from './services/exportService';
@@ -220,7 +222,21 @@ const App: React.FC = () => {
 
   const [events, setEvents] = useState<GameEvent[]>([]);
 
-  // ── Session state ──────────────────────────────────────────
+  // ── Team library state ─────────────────────────────────────
+  const [showTeamLibrary, setShowTeamLibrary] = useState(false);
+  const [teamLibrarySide, setTeamLibrarySide] = useState<'home' | 'away'>('home');
+  const [savePrompt, setSavePrompt] = useState<{ teamName: string; roster: Player[]; side: 'home' | 'away' } | null>(null);
+
+  const handleLoadFromLibrary = (side: 'home' | 'away') => {
+    setTeamLibrarySide(side);
+    setShowTeamLibrary(true);
+  };
+
+  const handleLibraryTeamLoaded = (name: string, roster: Player[]) => {
+    if (teamLibrarySide === 'home') { setHomeName(name); setHomeRoster(roster); }
+    else { setAwayName(name); setAwayRoster(roster); }
+    setShowTeamLibrary(false);
+  };
   const [activeSession, setActiveSession] = useState<GameSession | null>(null);
   const [mySessionRole, setMySessionRole] = useState<SessionRole | null>(null);
   const [showSessionSetup, setShowSessionSetup] = useState(false);
@@ -637,10 +653,11 @@ const App: React.FC = () => {
         line: p.line || (p.position === 'G' ? 'G1' : p.position === 'D' ? 'P1' : '1'),
       }));
       if (players.length === 0) throw new Error('No players found in pasted text');
-      if (isHome) { setHomeRoster(sortByNumber(players)); setPasteRosterHome(''); }
-      else { setAwayRoster(sortByNumber(players)); setPasteRosterAway(''); }
+      const sortedPlayers = sortByNumber(players);
+      if (isHome) { setHomeRoster(sortedPlayers); setPasteRosterHome(''); }
+      else { setAwayRoster(sortedPlayers); setPasteRosterAway(''); }
       setSyncMessage('');
-      alert(`✅ ${players.length} players imported successfully!`);
+      setSavePrompt({ teamName: teamName.trim(), roster: sortedPlayers, side: isHome ? 'home' : 'away' });
     } catch (err: any) {
       alert(`Paste Sync Error: ${err.message}`);
     } finally {
@@ -902,6 +919,23 @@ const App: React.FC = () => {
         <SessionJoin
           onJoined={handleSessionJoined}
           onCancel={() => setShowSessionJoin(false)}
+        />
+      )}
+
+      {/* Team library */}
+      <TeamLibrary
+        isOpen={showTeamLibrary}
+        onClose={() => setShowTeamLibrary(false)}
+        onLoadTeam={handleLibraryTeamLoaded}
+      />
+
+      {/* Save team prompt — shown after roster import */}
+      {savePrompt && (
+        <SaveTeamPrompt
+          teamName={savePrompt.teamName}
+          roster={savePrompt.roster}
+          onSaved={() => { setSavePrompt(null); toast.success('Team saved to library!'); }}
+          onSkip={() => setSavePrompt(null)}
         />
       )}
       
@@ -1348,10 +1382,13 @@ const App: React.FC = () => {
                     <div className={`w-3 h-3 rounded-full ${isHome ? 'bg-blue-500' : 'bg-red-500'}`}></div>
                     <span className="text-[12px] font-black uppercase tracking-widest text-white">{team} LINEUP</span>
                   </div>
-                  <button onClick={() => {
-                    if (isHome) { setHomeRoster([]); setHomeRosterUrl(''); setHomeSources([]); setPasteRosterHome(''); }
-                    else { setAwayRoster([]); setAwayRosterUrl(''); setAwaySources([]); setPasteRosterAway(''); }
-                  }} className="text-[9px] font-black text-slate-700 hover:text-red-500 uppercase transition-colors">Clear Roster</button>
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => handleLoadFromLibrary(isHome ? 'home' : 'away')} className="text-[9px] font-black text-cyan-500 hover:text-cyan-300 uppercase transition-colors">📚 Load from Library</button>
+                    <button onClick={() => {
+                      if (isHome) { setHomeRoster([]); setHomeRosterUrl(''); setHomeSources([]); setPasteRosterHome(''); }
+                      else { setAwayRoster([]); setAwayRosterUrl(''); setAwaySources([]); setPasteRosterAway(''); }
+                    }} className="text-[9px] font-black text-slate-700 hover:text-red-500 uppercase transition-colors">Clear Roster</button>
+                  </div>
                 </div>
                 <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-10 scrollbar-none">
                   <section className="space-y-6">
