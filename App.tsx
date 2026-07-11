@@ -1577,8 +1577,8 @@ const App: React.FC = () => {
                   <div className="flex items-center gap-3">
                     <button onClick={() => handleLoadFromLibrary(isHome ? 'home' : 'away')} className="text-[9px] font-black text-cyan-500 hover:text-cyan-300 uppercase transition-colors">📚 Load from Library</button>
                     <button onClick={() => {
-                      if (isHome) { setHomeRoster([]); setHomeRosterUrl(''); setHomeSources([]); setPasteRosterHome(''); }
-                      else { setAwayRoster([]); setAwayRosterUrl(''); setAwaySources([]); setPasteRosterAway(''); }
+                      if (isHome) { setHomeRoster([]); setHomeRosterUrl(''); setHomeSources([]); setPasteRosterHome(''); setHomeName(''); setHomeLogo(''); }
+                      else { setAwayRoster([]); setAwayRosterUrl(''); setAwaySources([]); setPasteRosterAway(''); setAwayName(''); setAwayLogo(''); }
                     }} className="text-[9px] font-black text-slate-700 hover:text-red-500 uppercase transition-colors">Clear Roster</button>
                   </div>
                 </div>
