@@ -13,6 +13,7 @@ export interface SavedTeam {
   name: string;
   league: string;
   roster: Player[];
+  logo: string;
   isShared: boolean;
   createdAt: string;
   updatedAt: string;
@@ -25,10 +26,11 @@ export async function saveTeam(
   league: string,
   roster: Player[],
   isShared: boolean,
+  logo: string = '',
 ): Promise<SavedTeam> {
   const { data, error } = await supabase
     .from('teams')
-    .insert({ user_id: userId, name, league, roster, is_shared: isShared })
+    .insert({ user_id: userId, name, league, roster, is_shared: isShared, logo })
     .select()
     .single();
  
@@ -39,13 +41,14 @@ export async function saveTeam(
 // ── Update an existing team ─────────────────────────────────
 export async function updateTeam(
   teamId: string,
-  updates: Partial<{ name: string; league: string; roster: Player[]; isShared: boolean }>,
+  updates: Partial<{ name: string; league: string; roster: Player[]; isShared: boolean; logo: string }>,
 ): Promise<void> {
   const dbUpdates: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (updates.name !== undefined) dbUpdates.name = updates.name;
   if (updates.league !== undefined) dbUpdates.league = updates.league;
   if (updates.roster !== undefined) dbUpdates.roster = updates.roster;
   if (updates.isShared !== undefined) dbUpdates.is_shared = updates.isShared;
+  if (updates.logo !== undefined) dbUpdates.logo = updates.logo;
  
   const { error } = await supabase.from('teams').update(dbUpdates).eq('id', teamId);
   if (error) throw new Error(`Failed to update team: ${error.message}`);
@@ -103,6 +106,7 @@ function mapTeam(row: Record<string, unknown>): SavedTeam {
     name: row.name as string,
     league: (row.league as string) || '',
     roster: (row.roster as Player[]) || [],
+    logo: (row.logo as string) || '',
     isShared: (row.is_shared as boolean) || false,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
