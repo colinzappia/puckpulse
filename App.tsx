@@ -1263,8 +1263,8 @@ const App: React.FC = () => {
 
             {/* Home/Away/Hide Rosters */}
             <div className="flex items-center bg-white/5 p-0.5 rounded-xl border border-white/10 shrink-0 shadow-inner gap-0.5">
-              <button onClick={() => setActiveTeam(Team.HOME)} className={`px-2.5 sm:px-4 py-2 rounded-lg text-[10px] sm:text-xs font-black uppercase transition-all ${activeTeam === Team.HOME ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>{homeName.length > 6 ? 'HM' : homeName}</button>
-              <button onClick={() => setActiveTeam(Team.AWAY)} className={`px-2.5 sm:px-4 py-2 rounded-lg text-[10px] sm:text-xs font-black uppercase transition-all ${activeTeam === Team.AWAY ? 'bg-red-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>{awayName.length > 6 ? 'AW' : awayName}</button>
+              <button onClick={() => setActiveTeam(Team.HOME)} className={`px-2.5 sm:px-4 py-2 rounded-lg text-[10px] sm:text-xs font-black uppercase transition-all ${activeTeam === Team.HOME ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>{homeName ? homeName.trim().split(' ').pop() : 'Home'}</button>
+              <button onClick={() => setActiveTeam(Team.AWAY)} className={`px-2.5 sm:px-4 py-2 rounded-lg text-[10px] sm:text-xs font-black uppercase transition-all ${activeTeam === Team.AWAY ? 'bg-red-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>{awayName ? awayName.trim().split(' ').pop() : 'Away'}</button>
               <button onClick={() => setShowLineups(!showLineups)} className={`px-2 sm:px-4 py-2 rounded-lg text-[9px] sm:text-xs font-black uppercase transition-all border ${showLineups ? 'bg-blue-600 text-white border-blue-400 shadow-lg' : 'bg-white/5 text-slate-500 border-white/5 hover:bg-white/10'}`}>
                 {showLineups ? 'HIDE' : 'SHOW'}
               </button>
