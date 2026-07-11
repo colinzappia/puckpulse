@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { GameEvent, EventType, Team, TeamStats, Zone, Player, PenaltyType } from './types';
@@ -104,19 +103,49 @@ interface GoalLinePopupProps {
   pendingGoal: { team: any; playerNumber: string; x: number; y: number };
   homeName: string;
   awayName: string;
-  onConfirm: (line?: string) => void;
+  homeRoster: Player[];
+  awayRoster: Player[];
+  onConfirm: (line?: string, playersOnIce?: string[]) => void;
 }
 
-const GoalLinePopup: React.FC<GoalLinePopupProps> = ({ pendingGoal, homeName, awayName, onConfirm }) => {
+const GoalLinePopup: React.FC<GoalLinePopupProps> = ({ pendingGoal, homeName, awayName, homeRoster, awayRoster, onConfirm }) => {
   const scoringTeamName = pendingGoal.team === Team.HOME ? homeName : awayName;
   const isHome = pendingGoal.team === Team.HOME;
+  const roster = isHome ? homeRoster : awayRoster;
+
+  const [selectedLine, setSelectedLine] = useState<string | null>(null);
+  const [overriding, setOverriding] = useState(false);
+  const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
+
+  // When a line is selected, pre-populate with that line's players
+  const handleLineSelect = (line: string, lineKey: string) => {
+    setSelectedLine(line);
+    const linePlayers = roster
+      .filter(p => p.line === lineKey)
+      .map(p => p.number);
+    setSelectedPlayers(linePlayers);
+  };
+
+  const togglePlayer = (number: string) => {
+    setSelectedPlayers(prev =>
+      prev.includes(number) ? prev.filter(n => n !== number) : [...prev, number]
+    );
+  };
+
+  const lineGroups = [
+    { label: 'Line 1', key: '1' }, { label: 'Line 2', key: '2' },
+    { label: 'Line 3', key: '3' }, { label: 'Line 4', key: '4' },
+  ];
+  const pairGroups = [
+    { label: 'Pair 1', key: 'P1' }, { label: 'Pair 2', key: 'P2' }, { label: 'Pair 3', key: 'P3' },
+  ];
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 999999, background: 'rgba(0,0,0,0.88)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-      <div style={{ background: '#0f1620', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '1.25rem', padding: '1.75rem', width: '100%', maxWidth: '380px', boxShadow: '0 30px 60px rgba(0,0,0,0.9)' }}>
-        
+      <div style={{ background: '#0f1620', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '1.25rem', padding: '1.75rem', width: '100%', maxWidth: '380px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 30px 60px rgba(0,0,0,0.9)' }}>
+
         {/* Spinning red light */}
-        <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
           <div style={{ position: 'relative', width: '72px', height: '72px', margin: '0 auto 0.875rem' }}>
             <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: '#dc2626', opacity: 0.35, animation: 'ping 1s cubic-bezier(0,0,0.2,1) infinite' }} />
             <div style={{ position: 'absolute', inset: '5px', borderRadius: '50%', background: '#ef4444', animation: 'spin 0.75s linear infinite' }} />
@@ -129,34 +158,103 @@ const GoalLinePopup: React.FC<GoalLinePopupProps> = ({ pendingGoal, homeName, aw
           <div style={{ display: 'inline-block', padding: '0.25rem 1rem', borderRadius: '999px', background: isHome ? '#2563eb' : '#dc2626', color: 'white', fontSize: '0.8rem', fontWeight: 900, marginBottom: '0.625rem' }}>
             {scoringTeamName}
           </div>
-          <div style={{ color: '#94a3b8', fontSize: '0.875rem' }}>Which {scoringTeamName} line was on ice?</div>
+          <div style={{ color: '#94a3b8', fontSize: '0.875rem' }}>
+            {!selectedLine ? `Which ${scoringTeamName} line was on ice?` : overriding ? 'Select players on ice' : `${selectedLine} selected`}
+          </div>
         </div>
 
-        {/* Forward lines */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.625rem', marginBottom: '0.625rem' }}>
-          {['Line 1', 'Line 2', 'Line 3', 'Line 4'].map(line => (
-            <button key={line} onClick={() => onConfirm(`${scoringTeamName} ${line}`)}
-              style={{ padding: '1rem 0.5rem', background: 'rgba(21,128,61,0.25)', border: '1px solid rgba(34,197,94,0.35)', color: 'white', fontWeight: 900, borderRadius: '0.875rem', fontSize: '0.875rem', cursor: 'pointer', touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}>
-              {scoringTeamName} {line}
+        {!selectedLine ? (
+          <>
+            {/* Forward lines */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.625rem', marginBottom: '0.625rem' }}>
+              {lineGroups.map(({ label, key }) => (
+                <button key={key} onClick={() => handleLineSelect(`${scoringTeamName} ${label}`, key)}
+                  style={{ padding: '1rem 0.5rem', background: 'rgba(21,128,61,0.25)', border: '1px solid rgba(34,197,94,0.35)', color: 'white', fontWeight: 900, borderRadius: '0.875rem', fontSize: '0.875rem', cursor: 'pointer' }}>
+                  {scoringTeamName} {label}
+                </button>
+              ))}
+            </div>
+            {/* Defence pairings */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.625rem', marginBottom: '0.875rem' }}>
+              {pairGroups.map(({ label, key }) => (
+                <button key={key} onClick={() => handleLineSelect(`${scoringTeamName} ${label}`, key)}
+                  style={{ padding: '0.875rem 0.25rem', background: 'rgba(29,78,216,0.25)', border: '1px solid rgba(59,130,246,0.35)', color: 'white', fontWeight: 900, borderRadius: '0.875rem', fontSize: '0.75rem', cursor: 'pointer' }}>
+                  {label}
+                </button>
+              ))}
+            </div>
+            {/* Skip */}
+            <button onClick={() => onConfirm(undefined)}
+              style={{ width: '100%', padding: '0.875rem', background: 'rgba(255,255,255,0.06)', color: '#94a3b8', fontWeight: 700, borderRadius: '0.875rem', fontSize: '0.875rem', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.08)' }}>
+              Skip — log without line info
             </button>
-          ))}
-        </div>
-
-        {/* Defense pairings */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.625rem', marginBottom: '0.875rem' }}>
-          {['Pair 1', 'Pair 2', 'Pair 3'].map(pair => (
-            <button key={pair} onClick={() => onConfirm(`${scoringTeamName} ${pair}`)}
-              style={{ padding: '0.875rem 0.25rem', background: 'rgba(29,78,216,0.25)', border: '1px solid rgba(59,130,246,0.35)', color: 'white', fontWeight: 900, borderRadius: '0.875rem', fontSize: '0.75rem', cursor: 'pointer', touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}>
-              {pair}
+          </>
+        ) : !overriding ? (
+          <>
+            {/* Line confirmed — show override option */}
+            <div style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: '0.875rem', padding: '0.875rem', marginBottom: '0.875rem', textAlign: 'center' }}>
+              <div style={{ color: '#22c55e', fontWeight: 700, fontSize: '0.875rem', marginBottom: '0.25rem' }}>{selectedLine}</div>
+              {selectedPlayers.length > 0 ? (
+                <div style={{ color: '#94a3b8', fontSize: '0.75rem' }}>
+                  {selectedPlayers.map(n => {
+                    const p = roster.find(r => r.number === n);
+                    return p ? `#${n} ${p.name.split(' ').pop()}` : `#${n}`;
+                  }).join(' · ')}
+                </div>
+              ) : (
+                <div style={{ color: '#64748b', fontSize: '0.75rem' }}>No players assigned to this line</div>
+              )}
+            </div>
+            <button onClick={() => setOverriding(true)}
+              style={{ width: '100%', padding: '0.875rem', background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.3)', color: '#fbbf24', fontWeight: 700, borderRadius: '0.875rem', fontSize: '0.875rem', cursor: 'pointer', marginBottom: '0.625rem' }}>
+              Override players on ice
             </button>
-          ))}
-        </div>
-
-        {/* Skip */}
-        <button onClick={() => onConfirm(undefined)}
-          style={{ width: '100%', padding: '0.875rem', background: 'rgba(255,255,255,0.06)', color: '#94a3b8', fontWeight: 700, borderRadius: '0.875rem', fontSize: '0.875rem', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.08)', touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}>
-          Skip — log without line info
-        </button>
+            <button onClick={() => onConfirm(selectedLine, selectedPlayers)}
+              style={{ width: '100%', padding: '0.875rem', background: 'rgba(34,197,94,0.2)', border: '1px solid rgba(34,197,94,0.4)', color: '#22c55e', fontWeight: 900, borderRadius: '0.875rem', fontSize: '0.875rem', cursor: 'pointer', marginBottom: '0.625rem' }}>
+              Confirm
+            </button>
+            <button onClick={() => setSelectedLine(null)}
+              style={{ width: '100%', padding: '0.75rem', background: 'transparent', color: '#64748b', fontWeight: 600, borderRadius: '0.875rem', fontSize: '0.8rem', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.06)' }}>
+              ← Back
+            </button>
+          </>
+        ) : (
+          <>
+            {/* Player override picker */}
+            <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.75rem', textAlign: 'center' }}>
+              Tap to toggle players who were actually on ice
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem', marginBottom: '0.875rem', maxHeight: '240px', overflowY: 'auto' }}>
+              {roster.filter(p => p.position !== 'G').map(p => {
+                const on = selectedPlayers.includes(p.number);
+                return (
+                  <button key={p.number} onClick={() => togglePlayer(p.number)}
+                    style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.625rem 0.875rem', borderRadius: '0.75rem', border: `1px solid ${on ? 'rgba(34,197,94,0.4)' : 'rgba(255,255,255,0.08)'}`, background: on ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.03)', cursor: 'pointer', textAlign: 'left' }}>
+                    <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: on ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 900, color: on ? '#22c55e' : '#64748b', flexShrink: 0 }}>
+                      #{p.number}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '0.8rem', fontWeight: 600, color: on ? '#fff' : '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
+                      <div style={{ fontSize: '0.65rem', color: '#64748b' }}>{p.position} · Line {p.line}</div>
+                    </div>
+                    {on && <span style={{ color: '#22c55e', fontSize: '1rem', flexShrink: 0 }}>✓</span>}
+                  </button>
+                );
+              })}
+            </div>
+            <div style={{ fontSize: '0.75rem', color: '#64748b', textAlign: 'center', marginBottom: '0.75rem' }}>
+              {selectedPlayers.length} player{selectedPlayers.length !== 1 ? 's' : ''} selected
+            </div>
+            <button onClick={() => onConfirm(selectedLine, selectedPlayers)}
+              style={{ width: '100%', padding: '0.875rem', background: 'rgba(34,197,94,0.2)', border: '1px solid rgba(34,197,94,0.4)', color: '#22c55e', fontWeight: 900, borderRadius: '0.875rem', fontSize: '0.875rem', cursor: 'pointer', marginBottom: '0.625rem' }}>
+              Confirm {selectedPlayers.length} players
+            </button>
+            <button onClick={() => setOverriding(false)}
+              style={{ width: '100%', padding: '0.75rem', background: 'transparent', color: '#64748b', fontWeight: 600, borderRadius: '0.875rem', fontSize: '0.8rem', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.06)' }}>
+              ← Back
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
@@ -540,7 +638,7 @@ const App: React.FC = () => {
     return 'low';
   };
 
-  const confirmGoal = useCallback((lineOnIce?: string) => {
+  const confirmGoal = useCallback((lineOnIce?: string, playersOnIce?: string[]) => {
     if (!pendingGoal) return;
     const { x, y, team, playerNumber: pNum } = pendingGoal;
     const quality = getShotQuality(x, y, team);
@@ -554,12 +652,13 @@ const App: React.FC = () => {
       zone: getTeamZone(team, x),
       playerNumber: pNum || undefined,
       coordinates: { x, y },
-      metadata: { shotQuality: quality, lineOnIce }
+      metadata: { shotQuality: quality, lineOnIce, playersOnIce }
     };
     setEvents(prev => [...prev, newEvent]);
+    if (activeSession && user) broadcastEvent(activeSession.id, newEvent, user.id).catch(console.error);
     setLastEvent({ type: EventType.GOAL, playerNumber: pNum, team });
     setPendingGoal(null);
-  }, [pendingGoal, currentPeriod, getTeamZone]);
+  }, [pendingGoal, currentPeriod, getTeamZone, activeSession, user]);
 
   const handlePlot = useCallback((x: number, y: number) => {
     if (mapPlotType === EventType.FACEOFF_WIN || mapPlotType === EventType.FACEOFF_LOSS) {
@@ -1507,7 +1606,7 @@ const App: React.FC = () => {
 
     {/* Goal line popup via portal */}
     {pendingGoal !== null && createPortal(
-      <GoalLinePopup pendingGoal={pendingGoal} homeName={homeName} awayName={awayName} onConfirm={confirmGoal} />,
+      <GoalLinePopup pendingGoal={pendingGoal} homeName={homeName} awayName={awayName} homeRoster={homeRoster} awayRoster={awayRoster} onConfirm={confirmGoal} />,
       document.body
     )}
 
