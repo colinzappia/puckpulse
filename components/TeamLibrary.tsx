@@ -1,4 +1,3 @@
-
 // ============================================================
 // TeamLibrary.tsx
 // Full-screen panel for browsing and loading saved rosters.
@@ -15,7 +14,7 @@ import { Player } from '../types';
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  onLoadTeam: (name: string, roster: Player[]) => void;
+  onLoadTeam: (name: string, roster: Player[], logo: string) => void;
 }
 
 const LEAGUE_COLORS: Record<string, string> = {
@@ -119,6 +118,11 @@ export default function TeamLibrary({ isOpen, onClose, onLoadTeam }: Props) {
               return (
                 <div key={team.id} style={{ background: '#0f1620', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 14, marginBottom: 10 }}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 10 }}>
+                    {team.logo ? (
+                      <img src={team.logo} alt="" style={{ width: 36, height: 36, objectFit: 'contain', borderRadius: 6, background: 'rgba(255,255,255,0.05)', padding: 3, flexShrink: 0 }} />
+                    ) : (
+                      <div style={{ width: 36, height: 36, borderRadius: 6, background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>🏒</div>
+                    )}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', marginBottom: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {team.name}
@@ -161,7 +165,7 @@ export default function TeamLibrary({ isOpen, onClose, onLoadTeam }: Props) {
                   </div>
 
                   <button
-                    onClick={() => { onLoadTeam(team.name, team.roster); onClose(); }}
+                    onClick={() => { onLoadTeam(team.name, team.roster, team.logo || ''); onClose(); }}
                     style={{ width: '100%', padding: '9px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: 'rgba(96,165,250,0.12)', border: '0.5px solid rgba(96,165,250,0.3)', color: '#60a5fa' }}
                   >
                     Load this roster
