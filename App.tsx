@@ -1110,6 +1110,9 @@ const App: React.FC = () => {
           onClose={() => setAttachmentEvent(null)}
         />
       )}
+
+      {/* Team library */}
+      <TeamLibrary
         isOpen={showTeamLibrary}
         onClose={() => setShowTeamLibrary(false)}
         onLoadTeam={handleLibraryTeamLoaded}
