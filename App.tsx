@@ -1074,10 +1074,23 @@ const App: React.FC = () => {
     setShowLanding(true);
   };
 
+  // Intercept browser back button — go to landing page instead of previous site
+  React.useEffect(() => {
+    if (showLanding) return;
+    window.history.pushState({ tch: true }, '');
+    const handlePopState = () => {
+      sessionStorage.removeItem('tch_launched');
+      setShowLanding(true);
+      window.history.pushState({ tch: true }, '');
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [showLanding]);
+
   if (showLanding) return <LandingPage onLaunch={handleLaunch} onContact={() => { handleLaunch(); setTimeout(() => setShowContact(true), 100); }} onAdvertise={() => { handleLaunch(); setTimeout(() => setShowAdvertise(true), 100); }} onAbout={() => { handleLaunch(); setTimeout(() => setShowAbout(true), 100); }} />;
   if (!isSignedIn) return <AuthGate onAuthenticated={() => setIsAuthenticated(true)} />;
 
-  const ADMIN_EMAILS = ['colinzappia@gmail.com', 'derekfroats19@gmail.com'];
+  const ADMIN_EMAILS = ['colinzappia@gmail.com'];
   const userEmail = currentUser?.primaryEmailAddress?.emailAddress?.toLowerCase() || user?.primaryEmailAddress?.emailAddress?.toLowerCase() || '';
   const isAdmin = ADMIN_EMAILS.includes(userEmail);
 
