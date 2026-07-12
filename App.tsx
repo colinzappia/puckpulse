@@ -368,7 +368,7 @@ const App: React.FC = () => {
     };
   }, []);
 
-  const { isSignedIn, userId } = useAuth();
+  const { isSignedIn, userId, isLoaded: authLoaded } = useAuth();
   const { user } = useClerk();
   const { user: currentUser } = useUser();
 
@@ -1088,6 +1088,19 @@ const App: React.FC = () => {
   }, [showLanding]);
 
   if (showLanding) return <LandingPage onLaunch={handleLaunch} onContact={() => { handleLaunch(); setTimeout(() => setShowContact(true), 100); }} onAdvertise={() => { handleLaunch(); setTimeout(() => setShowAdvertise(true), 100); }} onAbout={() => { handleLaunch(); setTimeout(() => setShowAbout(true), 100); }} />;
+
+  // Show loading screen while Clerk is initialising — prevents blank page flash
+  if (!authLoaded) return (
+    <div className="min-h-screen bg-[#05070a] flex flex-col items-center justify-center gap-4">
+      <img src="/Top_Cheese_Hockey_logo.png" alt="Top Cheese Hockey" className="h-24 w-auto" />
+      <div className="flex gap-2 mt-4">
+        <span className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{animationDelay:'0ms'}}/>
+        <span className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{animationDelay:'150ms'}}/>
+        <span className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{animationDelay:'300ms'}}/>
+      </div>
+    </div>
+  );
+
   if (!isSignedIn) return <AuthGate onAuthenticated={() => setIsAuthenticated(true)} />;
 
   const ADMIN_EMAILS = ['colinzappia@gmail.com'];
