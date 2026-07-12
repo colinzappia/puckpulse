@@ -41,7 +41,7 @@ export default function TeamLibrary({ isOpen, onClose, onLoadTeam }: Props) {
     Promise.all([loadMyTeams(user.id), loadSharedTeams()])
       .then(([mine, shared]) => {
         setMyTeams(mine);
-        setSharedTeams(shared.filter(s => s.userId !== user.id));
+        setSharedTeams(shared);
       })
       .finally(() => setLoading(false));
   }, [isOpen, user]);
