@@ -1103,7 +1103,11 @@ const App: React.FC = () => {
 
   if (!isSignedIn) return <AuthGate onAuthenticated={() => setIsAuthenticated(true)} />;
 
-  const ADMIN_EMAILS = ['colinzappia@gmail.com'];
+  const ADMIN_EMAILS = [
+    'colinzappia@gmail.com',
+    'derekfroats19@gmail.com',
+    'macopelo17@gmail.com',
+  ];
   const userEmail = currentUser?.primaryEmailAddress?.emailAddress?.toLowerCase() || user?.primaryEmailAddress?.emailAddress?.toLowerCase() || '';
   const isAdmin = ADMIN_EMAILS.includes(userEmail);
 
