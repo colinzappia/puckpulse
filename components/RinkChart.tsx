@@ -259,6 +259,16 @@ const RinkChart: React.FC<RinkChartProps> = ({
           </g>
         ))}
 
+        {/* Top Cheese Hockey logo — centre ice circle */}
+        <image
+          href="/Top_Cheese_Hockey_logo.png"
+          x={500 - 55} y={212.5 - 55}
+          width={110} height={110}
+          opacity="0.18"
+          preserveAspectRatio="xMidYMid meet"
+          style={{ pointerEvents: 'none' }}
+        />
+
         {events.map(e => {
           if (!e.coordinates) return null;
           const style = getEventStyle(e);
