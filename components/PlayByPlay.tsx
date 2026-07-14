@@ -24,7 +24,8 @@ const PlayByPlay: React.FC<PlayByPlayProps> = ({
     switch (type) {
       case EventType.GOAL: return '🥅';
       case EventType.SHOT: return '🏒';
-      case EventType.TURNOVER: return '🔄';
+      case EventType.GIVEAWAY: return '🔄';
+      case EventType.TAKEAWAY: return '🎯';
       case EventType.HIT: return '💥';
       case EventType.PENALTY: return '🚨';
       case EventType.FACEOFF_WIN: return '⚪';
