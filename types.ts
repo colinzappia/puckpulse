@@ -1,4 +1,5 @@
 
+ 
 export enum EventType {
   GOAL = 'GOAL',
   SHOT = 'SHOT',
@@ -8,12 +9,13 @@ export enum EventType {
   FACEOFF_WIN = 'FACEOFF_WIN',
   FACEOFF_LOSS = 'FACEOFF_LOSS',
   PENALTY = 'PENALTY',
-  TURNOVER = 'TURNOVER',
+  GIVEAWAY = 'GIVEAWAY',
+  TAKEAWAY = 'TAKEAWAY',
   BLOCK = 'BLOCK',
   PP_SHOT_FOR = 'PP_SHOT_FOR',
   PP_SHOT_AGAINST = 'PP_SHOT_AGAINST'
 }
-
+ 
 export enum PenaltyType {
   TRIPPING = 'Tripping',
   SLASHING = 'Slashing',
@@ -26,25 +28,25 @@ export enum PenaltyType {
   SLEW_FOOTING = 'Slew-footing',
   FIGHTING = 'Fighting'
 }
-
+ 
 export enum Team {
   HOME = 'HOME',
   AWAY = 'AWAY'
 }
-
+ 
 export enum Zone {
   DEFENSIVE = 'DEFENSIVE',
   NEUTRAL = 'NEUTRAL',
   OFFENSIVE = 'OFFENSIVE'
 }
-
+ 
 export interface Player {
   number: string;
   name: string;
   position: 'LW' | 'RW' | 'C' | 'LD' | 'RD' | 'D' | 'G' | string;
   line?: string; // e.g., '1', '2', '3', '4', 'P1', 'P2', 'P3', 'G1', 'G2'
 }
-
+ 
 export interface GameEvent {
   id: string;
   timestamp: number;
@@ -61,7 +63,7 @@ export interface GameEvent {
     [key: string]: any;
   };
 }
-
+ 
 export interface TeamStats {
   name: string;
   goals: number;
@@ -73,7 +75,7 @@ export interface TeamStats {
   blocks: number;
   roster: Player[];
 }
-
+ 
 export interface PeriodSummary {
   period: number;
   homeStats: Partial<TeamStats>;
