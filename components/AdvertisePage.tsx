@@ -124,7 +124,7 @@ const AdvertisePage: React.FC<AdvertisePageProps> = ({ isOpen, onClose }) => {
                 {[
                   { label: 'Active Coaches', value: 'Growing' },
                   { label: 'Games Tracked', value: 'Daily' },
-                  { label: 'Audience', value: 'North America' },
+                  { label: 'Audience', value: 'North American' },
                 ].map(s => (
                   <div key={s.label} className="text-center">
                     <p className="text-xl font-black text-yellow-400">{s.value}</p>
