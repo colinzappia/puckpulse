@@ -28,7 +28,8 @@ function getEventLabel(type: EventType): string {
     [EventType.GOAL]: '🥅 Goal',
     [EventType.SHOT]: '🏒 Shot',
     [EventType.PENALTY]: '⚠️ Penalty',
-    [EventType.TURNOVER]: '🔄 Turnover',
+    [EventType.GIVEAWAY]: '🔄 Giveaway',
+    [EventType.TAKEAWAY]: '🎯 Takeaway',
     [EventType.HIT]: '💥 Hit',
   };
   return labels[type] || type;
