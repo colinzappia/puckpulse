@@ -39,16 +39,6 @@ const CIRCLE_DOTS = [
   { x: 169, y: 64.5 },   // Right Bottom End
 ];
 
-// Small hit-zone indicators for the neutral-zone dots (no drawn faceoff
-// circle exists there on a real rink, so we draw a subtle dashed ring
-// instead, kept clear of the centre-ice circle).
-const NEUTRAL_ZONE_DOTS = [
-  { x: 80, y: 20.5 },
-  { x: 80, y: 64.5 },
-  { x: 120, y: 20.5 },
-  { x: 120, y: 64.5 },
-];
-
 const RinkChart: React.FC<RinkChartProps> = ({ 
   events, 
   leftLogo,
@@ -270,19 +260,6 @@ const RinkChart: React.FC<RinkChartProps> = ({
             fill="none" 
             stroke={dot.x === 100 ? BRIGHT_BLUE : BRIGHT_RED} 
             strokeWidth="2" 
-            opacity="0.3" 
-          />
-        ))}
-
-        {NEUTRAL_ZONE_DOTS.map((dot, i) => (
-          <circle 
-            key={`neutral-zone-${i}`} 
-            cx={dot.x * 5} cy={dot.y * 5} 
-            r={NEUTRAL_FACEOFF_ZONE_RADIUS} 
-            fill="none" 
-            stroke={BRIGHT_RED} 
-            strokeWidth="2" 
-            strokeDasharray="4 4"
             opacity="0.3" 
           />
         ))}
