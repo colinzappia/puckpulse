@@ -283,11 +283,9 @@ const UserManual: React.FC<UserManualProps> = ({ isOpen, onClose }) => {
       <div className="absolute inset-0 z-0 overflow-hidden">
         <ThemedBackground className="absolute inset-0" />
       </div>
-      {/* Dark overlay to improve text readability */}
-      <div className="absolute inset-0 z-0 bg-black/60" />
 
       {/* Header */}
-      <div className="relative z-10 px-6 py-4 flex items-center justify-between border-b border-white/10 bg-black/70 shrink-0">
+      <div className="relative z-10 px-6 py-4 flex items-center justify-between border-b border-white/10 bg-black/50 backdrop-blur-sm shrink-0">
         <div className="flex items-center gap-4">
           <img src="/Top_Cheese_Hockey_logo.png" alt="Top Cheese Hockey" className="h-12 w-auto" />
           <div>
@@ -306,7 +304,7 @@ const UserManual: React.FC<UserManualProps> = ({ isOpen, onClose }) => {
       <div className="relative z-10 flex flex-1 overflow-hidden">
 
         {/* Sidebar */}
-        <div className="w-48 sm:w-56 shrink-0 border-r border-white/10 bg-black/70 overflow-y-auto py-4">
+        <div className="w-48 sm:w-56 shrink-0 border-r border-white/10 bg-black/40 backdrop-blur-sm overflow-y-auto py-4">
           {sections.map(s => (
             <button
               key={s.id}
@@ -324,7 +322,7 @@ const UserManual: React.FC<UserManualProps> = ({ isOpen, onClose }) => {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto px-6 sm:px-10 py-8 bg-black/50">
+        <div className="flex-1 overflow-y-auto px-6 sm:px-10 py-8">
           <div className="max-w-2xl">
             <div className="flex items-center gap-3 mb-6">
               <span className="text-3xl">{current.icon}</span>
