@@ -31,7 +31,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onContact, onAdvert
       <section className="pt-32 pb-20 px-6 flex flex-col items-center text-center relative">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(200,232,245,0.05)_0%,transparent_70%)] pointer-events-none" />
         
-        <img src="/Top_Cheese_Hockey_logo.png" alt="Top Cheese Hockey" className="h-[32rem] w-auto mb-8" />
+        <img src="/Top_Cheese_Hockey_logo.png" alt="Top Cheese Hockey" className="w-64 sm:w-80 md:w-96 lg:w-[28rem] max-w-full h-auto mb-8" />
         
         <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 text-blue-300 text-xs font-bold tracking-widest uppercase px-4 py-2 rounded-full mb-6">
           <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
