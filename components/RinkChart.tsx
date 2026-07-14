@@ -10,16 +10,25 @@ interface RinkChartProps {
   activeEventType?: EventType;
 }
 
+// Radius (px, in the *5-scaled SVG space) of the clickable zone around each
+// faceoff dot. Main dots use the same radius as their drawn faceoff circle.
+// Neutral-zone dots have no drawn circle in real rinks, so they get a
+// smaller dedicated hit zone — sized so it can never reach into the
+// centre-ice circle (closest approach is ~148px, circle radius is 75px,
+// leaving ~73px of clearance; 45px keeps a healthy margin).
+const MAIN_FACEOFF_ZONE_RADIUS = 75;
+const NEUTRAL_FACEOFF_ZONE_RADIUS = 45;
+
 const FACEOFF_DOTS = [
-  { x: 100, y: 42.5 },   // Center Ice
-  { x: 31, y: 20.5 },    // Left Top End
-  { x: 31, y: 64.5 },    // Left Bottom End
-  { x: 169, y: 20.5 },   // Right Top End
-  { x: 169, y: 64.5 },   // Right Bottom End
-  { x: 80, y: 20.5 },    // Left Top Neutral
-  { x: 80, y: 64.5 },    // Left Bottom Neutral
-  { x: 120, y: 20.5 },   // Right Top Neutral
-  { x: 120, y: 64.5 },   // Right Bottom Neutral
+  { x: 100, y: 42.5, zoneRadius: MAIN_FACEOFF_ZONE_RADIUS },     // Center Ice
+  { x: 31, y: 20.5, zoneRadius: MAIN_FACEOFF_ZONE_RADIUS },      // Left Top End
+  { x: 31, y: 64.5, zoneRadius: MAIN_FACEOFF_ZONE_RADIUS },      // Left Bottom End
+  { x: 169, y: 20.5, zoneRadius: MAIN_FACEOFF_ZONE_RADIUS },     // Right Top End
+  { x: 169, y: 64.5, zoneRadius: MAIN_FACEOFF_ZONE_RADIUS },     // Right Bottom End
+  { x: 80, y: 20.5, zoneRadius: NEUTRAL_FACEOFF_ZONE_RADIUS },   // Left Top Neutral
+  { x: 80, y: 64.5, zoneRadius: NEUTRAL_FACEOFF_ZONE_RADIUS },   // Left Bottom Neutral
+  { x: 120, y: 20.5, zoneRadius: NEUTRAL_FACEOFF_ZONE_RADIUS },  // Right Top Neutral
+  { x: 120, y: 64.5, zoneRadius: NEUTRAL_FACEOFF_ZONE_RADIUS },  // Right Bottom Neutral
 ];
 
 const CIRCLE_DOTS = [
@@ -28,6 +37,16 @@ const CIRCLE_DOTS = [
   { x: 31, y: 64.5 },    // Left Bottom End
   { x: 169, y: 20.5 },   // Right Top End
   { x: 169, y: 64.5 },   // Right Bottom End
+];
+
+// Small hit-zone indicators for the neutral-zone dots (no drawn faceoff
+// circle exists there on a real rink, so we draw a subtle dashed ring
+// instead, kept clear of the centre-ice circle).
+const NEUTRAL_ZONE_DOTS = [
+  { x: 80, y: 20.5 },
+  { x: 80, y: 64.5 },
+  { x: 120, y: 20.5 },
+  { x: 120, y: 64.5 },
 ];
 
 const RinkChart: React.FC<RinkChartProps> = ({ 
@@ -85,7 +104,13 @@ const RinkChart: React.FC<RinkChartProps> = ({
         const dist = Math.sqrt(Math.pow(dot.x - px, 2) + Math.pow(dot.y - py, 2));
         if (dist < minDistance) { minDistance = dist; closestDot = dot; }
       });
-      px = closestDot.x; py = closestDot.y; // always snap to nearest dot
+      // Click coords (px, py) are in unit space; zoneRadius is stored in the
+      // *5-scaled px space used for rendering, so convert before comparing.
+      const withinZone = minDistance <= closestDot.zoneRadius / 5;
+      if (!withinZone) {
+        return; // click missed every dot's clickable zone — don't plot
+      }
+      px = closestDot.x; py = closestDot.y; // snap to the dot's centre
     }
 
     onPlot(px, py);
@@ -245,6 +270,19 @@ const RinkChart: React.FC<RinkChartProps> = ({
             fill="none" 
             stroke={dot.x === 100 ? BRIGHT_BLUE : BRIGHT_RED} 
             strokeWidth="2" 
+            opacity="0.3" 
+          />
+        ))}
+
+        {NEUTRAL_ZONE_DOTS.map((dot, i) => (
+          <circle 
+            key={`neutral-zone-${i}`} 
+            cx={dot.x * 5} cy={dot.y * 5} 
+            r={NEUTRAL_FACEOFF_ZONE_RADIUS} 
+            fill="none" 
+            stroke={BRIGHT_RED} 
+            strokeWidth="2" 
+            strokeDasharray="4 4"
             opacity="0.3" 
           />
         ))}
