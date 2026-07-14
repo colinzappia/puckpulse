@@ -95,9 +95,12 @@ const AdvertisePage: React.FC<AdvertisePageProps> = ({ isOpen, onClose }) => {
     <ThemedBackground className="min-h-screen flex flex-col">
       {/* Header */}
       <div className="px-6 py-5 flex items-center justify-between border-b border-white/10 bg-black/30 backdrop-blur-sm shrink-0">
-        <div>
-          <h2 className="text-2xl font-black text-white tracking-tight">Advertise With Us</h2>
-          <p className="text-xs text-slate-500 mt-0.5">Reach hockey coaches across Canada</p>
+        <div className="flex items-center gap-4">
+          <img src="/Top_Cheese_Hockey_logo.png" alt="Top Cheese Hockey" className="h-12 w-auto" />
+          <div>
+            <h2 className="text-2xl font-black text-white tracking-tight">Advertise With Us</h2>
+            <p className="text-xs text-slate-500 mt-0.5">Reach hockey coaches across North America</p>
+          </div>
         </div>
         <button onClick={onClose} className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white text-lg font-bold transition-colors">×</button>
       </div>
@@ -115,13 +118,13 @@ const AdvertisePage: React.FC<AdvertisePageProps> = ({ isOpen, onClose }) => {
             {/* Intro */}
             <div className="text-center mb-10">
               <p className="text-slate-300 text-lg max-w-2xl mx-auto">
-                Top Cheese Hockey puts your brand in front of hockey coaches at every level — from minor hockey to junior professional teams across Canada.
+                Top Cheese Hockey puts your brand in front of hockey coaches at every level — from minor hockey to junior professional teams across North America.
               </p>
               <div className="flex justify-center gap-8 mt-6">
                 {[
                   { label: 'Active Coaches', value: 'Growing' },
                   { label: 'Games Tracked', value: 'Daily' },
-                  { label: 'Audience', value: 'Canada' },
+                  { label: 'Audience', value: 'North America' },
                 ].map(s => (
                   <div key={s.label} className="text-center">
                     <p className="text-xl font-black text-yellow-400">{s.value}</p>
