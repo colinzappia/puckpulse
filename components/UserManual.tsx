@@ -14,15 +14,42 @@ const sections = [
     subsections: [
       {
         title: 'Setting team names',
-        content: 'Tap the "Roster Setup" button in the top right corner. Enter your home and away team names. You can also upload team logos by tapping the logo placeholder and selecting an image from your device.'
+        content: 'Tap the "Roster Setup" button in the top right corner. Enter your home and away team names. The app automatically displays the team nickname (last word of the name) on the rink screen — so a team entered as "City Nickname" will display just the nickname on the toggle buttons and shot counters. You can also upload team logos by tapping the logo placeholder and selecting an image from your device.'
       },
       {
         title: 'Paste Roster Import',
-        content: 'The fastest and most reliable way to load a roster. Go to any league website (Pointstreak, HockeyDB, your league site, etc.), select the roster table with your finger or mouse, and copy it. Then in Roster Setup, paste the text into the paste area and tap Import Roster. The AI reads the raw text and builds your lineup in seconds. Works on any device, any league, any website.'
+        content: 'The fastest and most reliable way to load a roster. Go to any league website (Pointstreak, HockeyDB, your league site, etc.), select the roster table with your finger or mouse, and copy it. Then in Roster Setup, paste the text into the paste area and tap Import Roster. The AI reads the raw text and builds your lineup in seconds. Works on any device, any league, any website.\n\nAfter importing, you\'ll be prompted to save the roster to your Team Library for quick reuse in future games.'
       },
       {
         title: 'Manual roster entry',
         content: 'You can also add players one at a time. Tap "Add Player", enter their jersey number, full name, and position. Assign them to a line or pairing (1–4 for forwards, P1–P3 for defense, G1–G2 for goalies).'
+      },
+      {
+        title: 'Loading from Team Library',
+        content: 'Tap "📚 Load from Library" in either team\'s roster header to browse previously saved rosters. Choose from My Teams (your private rosters) or Shared (rosters saved by anyone on your plan). Tap "Load this roster" to instantly populate the lineup — no re-entry needed.'
+      }
+    ]
+  },
+  {
+    id: 'library',
+    icon: '📚',
+    title: 'Team Library',
+    subsections: [
+      {
+        title: 'What is the Team Library?',
+        content: 'The Team Library stores your rosters in the cloud so you never have to re-enter them. Once a roster is saved, it\'s available on any device, for any game, instantly. Teams can be kept private (My Teams) or shared with everyone on your plan (Shared).'
+      },
+      {
+        title: 'Saving a roster',
+        content: 'After importing a roster via paste, a prompt slides up asking if you\'d like to save it. Enter or confirm the team name, pick a league (optional), and toggle "Share with all users" if you want others on your plan to be able to load it too. Tap "Save to library" to confirm.\n\nYou can skip saving and the roster will still be active for the current game — saving just makes it reusable.'
+      },
+      {
+        title: 'My Teams vs Shared',
+        content: '• My Teams — private to you. Rosters only you can see and load.\n\n• Shared — visible to everyone on your plan. If one user saves the Ottawa 67\'s roster and marks it shared, no one else ever has to enter it again.\n\nYou can only delete rosters you created yourself.'
+      },
+      {
+        title: 'Managing saved teams',
+        content: 'Open the Team Library by tapping "📚 Load from Library" in roster setup. Use the search bar to find teams by name or league.\n\nTap "Edit" on any of your own teams to update it — you can change the name, logo URL, league, add or remove individual players, and toggle shared on or off. Tap "Save changes" to update it in the library.\n\nTap the ✕ on any of your own teams to delete it. Shared teams created by others can be loaded but not edited or deleted by you.'
       }
     ]
   },
@@ -36,12 +63,16 @@ const sections = [
         content: '1. Select the active team using the Home / Away toggle.\n2. Tap a player from the lineup grid — their name will highlight to confirm selection.\n3. Select the event type from the toolbar: SHOT, GOAL, SAVE, MISS, etc.\n4. Tap the location on the rink diagram where the event occurred. The event dot appears instantly.'
       },
       {
+        title: 'Goal popup — logging who was on ice',
+        content: 'When a goal is logged, a popup appears asking which line was on ice. The popup adapts based on your tracking mode:\n\n• Home or Away mode — only your team\'s roster appears, whether it\'s a goal for or against. Pick the line that was on ice for your team.\n\n• Neutral mode — first select which line from the scoring team scored, then select which players from the defending team were on ice against.\n\nAfter selecting a line, you\'ll see which players are assigned to it. Tap "Override players on ice" to swap in specific players if the actual lineup on ice differed from the preset lines — useful for double shifts, injuries, or special teams mix-ups. Tap "Skip" to log the goal without line tracking.'
+      },
+      {
         title: 'Moving an event dot',
-        content: 'Plotted in the wrong spot? No problem. Press and hold any event dot on the rink for a moment, then drag it to the correct location and release. This works with both your finger on a tablet and a mouse on a computer. The event updates instantly in the play-by-play log as well.'
+        content: 'Plotted in the wrong spot? Press and hold any event dot on the rink for a moment, then drag it to the correct location and release. The event updates instantly in the play-by-play log as well.'
       },
       {
         title: 'Quick logging tips',
-        content: 'The app is designed for speed during live games:\n\n• Your selected player stays active between events — no need to re-tap after each log\n• Your selected event type (SHOT, GOAL, etc.) also stays selected\n• Watch for the green flash on the rink — it confirms your event was logged\n• Use the ↺ REPEAT button in the toolbar to instantly log the same event again for the same player\n• The active player badge in the toolbar shows who is currently selected'
+        content: 'The app is designed for speed during live games:\n\n• Your selected player stays active between events — no need to re-tap after each log\n• Your selected event type (SHOT, GOAL, etc.) also stays selected\n• Watch for the green flash on the rink — it confirms your event was logged\n• The event toolbar scrolls horizontally — swipe to reveal all event types\n• The active player badge in the toolbar shows who is currently selected'
       },
       {
         title: 'Logging a penalty',
@@ -49,7 +80,11 @@ const sections = [
       },
       {
         title: 'Logging a faceoff',
-        content: 'Tap the 🏒 Faceoffs floating button on the bottom left of the rink to open the Faceoff Hub panel. Select the centre for each team using the player buttons, then tap WIN or LOSS. The event is logged instantly for both teams.\n\nSwitch to the Breakdown tab to see live win percentages, zone stats, and head-to-head matchup data between specific centres.'
+        content: 'Tap the 🏒 Faceoffs button in the event toolbar to open the Faceoff Hub panel. Select the centre for each team using the player buttons, then tap WIN or LOSS. The event is logged instantly for both teams.\n\nSwitch to the Breakdown tab to see live win percentages, zone stats, and head-to-head matchup data between specific centres.'
+      },
+      {
+        title: 'Attaching a video clip to an event',
+        content: 'Every logged event in the Tactical Feed can have a video clip and notes attached to it.\n\n1. In the Tactical Feed, hover over or long-press any event — a 🎬 button appears.\n2. Tap it to open the Clips & Notes panel for that event.\n3. Tap "+ Add clip" to attach a clip via:\n   • Paste URL — paste a link from Hudl, Catapult, YouTube, or any video platform\n   • Upload file — select a video file directly from your device\n4. Add an optional text note for context.\n5. Tap "Save clip" to attach it.\n\nClips are visible to all users on your plan. YouTube links embed and play directly in the panel. Hudl and Catapult links open in your browser. Only the person who attached a clip can delete it.'
       },
       {
         title: 'Undoing an event',
@@ -107,6 +142,10 @@ const sections = [
       {
         title: 'Showing rosters during the game',
         content: 'Tap "Show Rosters" to reveal the full lineup grid on screen. This is useful when you need to quickly select players without opening the full roster panel. Tap again to collapse it and free up screen space.'
+      },
+      {
+        title: 'Team nickname display',
+        content: 'The rink screen shows your team\'s nickname (the last word of the team name) on the Home/Away toggle buttons and shot counters to keep the layout clean on mobile. For example, a team named "City Nickname" would display as "Nickname". The full team name still appears everywhere else in the app.'
       }
     ]
   },
@@ -121,18 +160,41 @@ const sections = [
       },
       {
         title: 'Player Stats',
-        content: 'Tap the 📊 Player Stats floating button on the bottom right of the rink at any time to see a per-player breakdown for both teams. Stats include goals, shots, hits, penalties, faceoff wins/losses, and blocks. The top performer is highlighted with a ⭐.'
+        content: 'Tap the 📊 Player Stats button (below the rink on mobile, floating on tablet/desktop) at any time to see a per-player breakdown for both teams. Stats include goals, shots, hits, penalties, faceoff wins/losses, and blocks. The top performer is highlighted with a ⭐.'
       },
       {
         title: 'Starting a new game',
         content: 'Tap the green New Game button in the header to clear all events, rosters, and team names and start fresh. You will be asked to confirm before anything is cleared — make sure you have exported your report first!'
-      },
+      }
     ]
   },
   {
-    id: 'exports',
-    icon: '📊',
-    title: 'Exporting Reports',
+    id: 'history',
+    icon: '📁',
+    title: 'Game History',
+    subsections: [
+      {
+        title: 'What is Game History?',
+        content: 'Game History saves your completed game data to the cloud so you can access it anytime — no need to keep files on your device. Every saved game stores the full event log, rosters, scores, and team logos so reports can be regenerated on demand.'
+      },
+      {
+        title: 'Saving a game',
+        content: 'At the end of a game, tap "💾 Save game to history" on the end game screen. The game is saved to your account instantly. You can still download reports separately if you want a file copy.'
+      },
+      {
+        title: 'Viewing past games',
+        content: 'Tap "📁 Game History" in the menu (accessible from the ⋯ button in the header). This opens a panel with two tabs:\n\n• My Games — your own saved games, newest first\n• Shared — games shared by anyone on your plan\n\nEach card shows the teams, final score, date, and number of events logged. Tap any game to open the full stats summary.'
+      },
+      {
+        title: 'Re-downloading reports',
+        content: 'Tap any saved game to open its detail view. From there you can download a fresh PDF, Excel, or HTML report at any time — even weeks after the game was played.'
+      },
+      {
+        title: 'Sharing a game report',
+        content: 'In the game detail view, toggle "Share with plan" to make the report visible to everyone on your plan in the Shared tab. Toggle it off to make it private again. Only the person who saved the game can share or delete it.'
+      }
+    ]
+  },
     subsections: [
       {
         title: 'PDF Game Summary Report',
@@ -171,7 +233,7 @@ const sections = [
       },
       {
         title: 'Changing roles during the game',
-        content: 'The admin can change any user\'s role at any time during the game. Tap the ⋯ button in the Live Session banner at the top of the screen. You\'ll see a list of everyone in the session — tap Logger or Viewer next to any user to change their role instantly. The change takes effect on their device immediately, no refresh needed.'
+        content: 'The admin can change any user\'s role at any time during the game. Tap the ⋯ button in the Live Session banner at the top of the screen. You\'ll see a list of everyone in the session by name — tap Logger or Viewer next to any user to change their role instantly. The change takes effect on their device immediately, no refresh needed.'
       },
       {
         title: 'Ending or leaving a session',
@@ -186,15 +248,19 @@ const sections = [
     subsections: [
       {
         title: 'Before the game',
-        content: 'Load your roster before the game using the Paste Roster feature. Go to your league website, copy the roster, and paste it into the app. Confirm jersey numbers match your actual lineup — coaches often make changes from the official roster.'
+        content: 'Load your roster before the game using the Paste Roster feature or the Team Library. Confirm jersey numbers match your actual lineup — coaches often make changes from the official roster. Set up your Live Session code and share it with your team before puck drop so everyone is connected and ready.'
       },
       {
         title: 'During the game',
-        content: 'Assign one person to do the logging so the head coach can focus on the bench. Log events immediately — it\'s easy to forget the exact location after a whistle. Don\'t worry about perfection; approximate locations are still valuable.'
+        content: 'Assign one person to do the logging so the head coach can focus on the bench. Log events immediately — it\'s easy to forget the exact location after a whistle. Don\'t worry about perfection; approximate locations are still valuable. Use the goal popup to track which lines are on ice for every goal — this powers your plus/minus data.'
       },
       {
         title: 'After the game',
-        content: 'Generate the AI game summary while the game is fresh. Export your reports before closing the app. If you were in a Live Session, all events were saved to the server automatically — but export your report to keep a permanent copy for your records. Review shot location patterns with your staff before the next practice.'
+        content: 'Generate the AI game summary while the game is fresh. Tap "💾 Save game to history" before ending so your data is safely stored in the cloud. Export your reports for a permanent file copy. If you were in a Live Session, all events were already saved automatically. Attach any video clips to key events while the game is still fresh in your mind. Review shot location patterns with your staff before the next practice.'
+      },
+      {
+        title: 'Navigation tip',
+        content: 'If you tap your phone\'s back button while on the rink tracking screen, the app will return to the home page rather than leaving the site entirely. To get back to the rink, simply launch the app again from the home page.'
       }
     ]
   }
@@ -213,12 +279,17 @@ const UserManual: React.FC<UserManualProps> = ({ isOpen, onClose }) => {
       <div className="absolute inset-0 z-0 overflow-hidden">
         <ThemedBackground className="absolute inset-0" />
       </div>
-      
+      {/* Dark overlay to improve text readability */}
+      <div className="absolute inset-0 z-0 bg-black/60" />
+
       {/* Header */}
-      <div className="relative z-10 px-6 py-5 flex items-center justify-between border-b border-white/10 bg-black/40 shrink-0">
-        <div>
-          <h2 className="text-2xl sm:text-3xl font-black italic uppercase text-white tracking-tighter">User Manual</h2>
-          <p className="text-[10px] font-bold text-blue-400 uppercase tracking-[0.3em] mt-0.5">Top Cheese Hockey Elite Suite</p>
+      <div className="relative z-10 px-6 py-4 flex items-center justify-between border-b border-white/10 bg-black/70 shrink-0">
+        <div className="flex items-center gap-4">
+          <img src="/Top_Cheese_Hockey_logo.png" alt="Top Cheese Hockey" className="h-12 w-auto" />
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-black italic uppercase text-white tracking-tighter">User Manual</h2>
+            <p className="text-[10px] font-bold text-blue-400 uppercase tracking-[0.3em] mt-0.5">Top Cheese Hockey Elite Suite</p>
+          </div>
         </div>
         <button
           onClick={onClose}
@@ -231,7 +302,7 @@ const UserManual: React.FC<UserManualProps> = ({ isOpen, onClose }) => {
       <div className="relative z-10 flex flex-1 overflow-hidden">
 
         {/* Sidebar */}
-        <div className="w-48 sm:w-56 shrink-0 border-r border-white/10 bg-black/20 overflow-y-auto py-4">
+        <div className="w-48 sm:w-56 shrink-0 border-r border-white/10 bg-black/70 overflow-y-auto py-4">
           {sections.map(s => (
             <button
               key={s.id}
@@ -249,7 +320,7 @@ const UserManual: React.FC<UserManualProps> = ({ isOpen, onClose }) => {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto px-6 sm:px-10 py-8">
+        <div className="flex-1 overflow-y-auto px-6 sm:px-10 py-8 bg-black/50">
           <div className="max-w-2xl">
             <div className="flex items-center gap-3 mb-6">
               <span className="text-3xl">{current.icon}</span>
@@ -258,9 +329,9 @@ const UserManual: React.FC<UserManualProps> = ({ isOpen, onClose }) => {
 
             <div className="space-y-6">
               {current.subsections.map((sub, i) => (
-                <div key={i} className="bg-white/5 border border-white/10 rounded-xl p-5">
+                <div key={i} className="bg-black/60 border border-white/10 rounded-xl p-5">
                   <h4 className="text-sm font-bold text-blue-400 uppercase tracking-wider mb-3">{sub.title}</h4>
-                  <div className="text-white/80 text-sm leading-relaxed whitespace-pre-line">{sub.content}</div>
+                  <div className="text-white/90 text-sm leading-relaxed whitespace-pre-line">{sub.content}</div>
                 </div>
               ))}
             </div>
