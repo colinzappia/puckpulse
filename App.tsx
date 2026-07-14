@@ -592,7 +592,7 @@ const App: React.FC = () => {
   const [fowHomeCenter, setFowHomeCenter] = useState<string>('');
   const [fowAwayCenter, setFowAwayCenter] = useState<string>('');
   const [visibleTypes, setVisibleTypes] = useState<EventType[]>([
-    EventType.GOAL, EventType.SHOT, EventType.TURNOVER, EventType.PENALTY,
+    EventType.GOAL, EventType.SHOT, EventType.GIVEAWAY, EventType.TAKEAWAY, EventType.PENALTY,
     EventType.BLOCK, EventType.FACEOFF_WIN, EventType.FACEOFF_LOSS,
     EventType.PP_SHOT_FOR, EventType.PP_SHOT_AGAINST,
     EventType.HIT
@@ -642,7 +642,8 @@ const App: React.FC = () => {
     { type: EventType.BLOCK, label: 'BLOCK', color: 'bg-slate-600', dotColor: '#94a3b8' },
     { type: EventType.PP_SHOT_FOR, label: 'PP SHOT', color: 'bg-yellow-500', dotColor: '#eab308' },
     { type: EventType.PP_SHOT_AGAINST, label: 'PK SHOT', color: 'bg-pink-500', dotColor: '#ec4899' },
-    { type: EventType.TURNOVER, label: 'TO', color: 'bg-orange-600', dotColor: '#f97316' },
+    { type: EventType.GIVEAWAY, label: 'GIVE', color: 'bg-orange-600', dotColor: '#f97316' },
+    { type: EventType.TAKEAWAY, label: 'TAKE', color: 'bg-teal-600', dotColor: '#14b8a6' },
     { type: EventType.PENALTY, label: 'PIM', color: 'bg-red-600', dotColor: '#ef4444' },
     { type: EventType.HIT, label: 'HIT', color: 'bg-purple-600', dotColor: '#a855f7' },
   ], []);
@@ -687,7 +688,7 @@ const App: React.FC = () => {
     away: awayRoster.filter(p => p.position?.toUpperCase().includes('C'))
   }), [homeRoster, awayRoster]);
 
-  const getStatsForRange = useCallback((team: Team, periodFilter?: number | 'total'): TeamStats & { turnovers: number, faceoffLosses: number, penaltiesCount: number } => {
+  const getStatsForRange = useCallback((team: Team, periodFilter?: number | 'total'): TeamStats & { giveaways: number, takeaways: number, faceoffLosses: number, penaltiesCount: number } => {
     const teamEvents = events.filter(e => e.team === team && (periodFilter === 'total' || periodFilter === undefined || e.period === periodFilter));
     return {
       name: team === Team.HOME ? homeName : awayName,
@@ -698,7 +699,8 @@ const App: React.FC = () => {
       pim: teamEvents.filter(e => e.type === EventType.PENALTY).length * 2,
       faceoffWins: teamEvents.filter(e => e.type === EventType.FACEOFF_WIN).length,
       faceoffLosses: teamEvents.filter(e => e.type === EventType.FACEOFF_LOSS).length,
-      turnovers: teamEvents.filter(e => e.type === EventType.TURNOVER).length,
+      giveaways: teamEvents.filter(e => e.type === EventType.GIVEAWAY).length,
+      takeaways: teamEvents.filter(e => e.type === EventType.TAKEAWAY).length,
       blocks: teamEvents.filter(e => e.type === EventType.BLOCK).length,
       penaltiesCount: teamEvents.filter(e => e.type === EventType.PENALTY).length,
       roster: team === Team.HOME ? homeRoster : awayRoster
