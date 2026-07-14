@@ -146,6 +146,7 @@ const RinkChart: React.FC<RinkChartProps> = ({
   const BRIGHT_RED = "#ff0000";
   const BRIGHT_BLUE = "#2563eb";
   const SOLID_CREASE_BLUE = "#4182f9";
+  const AWAY_RING_WHITE = "#ffffff";
   const rinkWidth = 1000;
   const rinkHeight = 425;
   const centerLineX = 500;
@@ -275,6 +276,10 @@ const RinkChart: React.FC<RinkChartProps> = ({
           const cx = e.coordinates.x * 5;
           const cy = e.coordinates.y * 5;
           const isDragging = draggingRef.current?.id === e.id;
+          // NOTE: assumes GameEvent has a `team` field of type Team with an
+          // AWAY member (imported from '../types'). Adjust this condition
+          // if your away-team indicator is named/typed differently.
+          const isAway = e.team === Team.AWAY;
           return (
             <g key={e.id} className="animate-in fade-in zoom-in duration-300" style={{ cursor: 'grab' }}>
               {/* Invisible larger hit target for easier grabbing */}
@@ -305,6 +310,8 @@ const RinkChart: React.FC<RinkChartProps> = ({
                 r={style.size} 
                 fill={style.color} 
                 fillOpacity={style.opacity}
+                stroke={isAway ? AWAY_RING_WHITE : 'none'}
+                strokeWidth={isAway ? 1.5 : 0}
                 className="drop-shadow-lg"
                 filter={style.glow ? "url(#glow-filter)" : undefined}
               />
