@@ -195,6 +195,10 @@ const sections = [
       }
     ]
   },
+  {
+    id: 'exports',
+    icon: '📊',
+    title: 'Exporting Reports',
     subsections: [
       {
         title: 'PDF Game Summary Report',
