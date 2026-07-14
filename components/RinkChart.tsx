@@ -125,7 +125,8 @@ const RinkChart: React.FC<RinkChartProps> = ({
     // Event-specific colors
     const SHOT_CYAN = '#06b6d4';
     const GOAL_GREEN = '#22c55e';
-    const TURNOVER_ORANGE = '#f97316';
+    const GIVEAWAY_ORANGE = '#f97316';
+    const TAKEAWAY_TEAL = '#14b8a6';
     const PENALTY_RED = '#ef4444';
     const HIT_GRAY = '#a855f7';
     const BLOCK_SLATE = '#94a3b8';
@@ -143,8 +144,10 @@ const RinkChart: React.FC<RinkChartProps> = ({
         return { color: PP_FOR_GOLD, size: 7, glow: false, opacity: 1 };
       case EventType.PP_SHOT_AGAINST:
         return { color: PP_AGAINST_PINK, size: 7, glow: false, opacity: 1 };
-      case EventType.TURNOVER: 
-        return { color: TURNOVER_ORANGE, size: 6, opacity: 0.8 };
+      case EventType.GIVEAWAY: 
+        return { color: GIVEAWAY_ORANGE, size: 6, opacity: 0.8 };
+      case EventType.TAKEAWAY: 
+        return { color: TAKEAWAY_TEAL, size: 6, opacity: 0.8 };
       case EventType.PENALTY: 
         return { color: PENALTY_RED, size: 8, glow: true, opacity: 1 };
       case EventType.FACEOFF_WIN: 
