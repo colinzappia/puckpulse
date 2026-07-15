@@ -10,7 +10,7 @@ const getPeriodLabel = (p: number): string => {
 import * as XLSX from 'xlsx';
 // @ts-ignore
 import html2pdf from 'html2pdf.js';
- 
+
 interface ExportData {
   homeName: string;
   awayName: string;
@@ -21,7 +21,7 @@ interface ExportData {
   summaries: Record<string, string>;
   maxPeriod: number;
 }
- 
+
 const getEventColor = (type: EventType) => {
   switch (type) {
     case EventType.GOAL: return '#22c55e';
@@ -32,17 +32,21 @@ const getEventColor = (type: EventType) => {
     case EventType.TAKEAWAY: return '#14b8a6';
     case EventType.PENALTY: return '#ef4444';
     case EventType.HIT: return '#64748b';
+    case EventType.ZONE_ENTRY_CARRY: return '#4f46e5';
+    case EventType.ZONE_ENTRY_DUMP: return '#d97706';
+    case EventType.ZONE_ENTRY_PASS: return '#0ea5e9';
+    case EventType.ZONE_ENTRY_DENIED: return '#e11d48';
     default: return '#ffffff';
   }
 };
- 
+
 const renderRinkSVG = (periodEvents: GameEvent[]) => {
   const rinkWidth = 1000;
   const rinkHeight = 425;
   const goalLineOffset = 55;
   const centerLineX = 500;
   const blueLineOffset = 375;
- 
+
   let eventCircles = periodEvents.map(e => {
     if (!e.coordinates) return '';
     const color = getEventColor(e.type);
@@ -51,7 +55,7 @@ const renderRinkSVG = (periodEvents: GameEvent[]) => {
     const cy = e.coordinates.y * 5;
     return `<circle cx="${cx}" cy="${cy}" r="${size}" fill="${color}" stroke="#000" stroke-width="1" />`;
   }).join('');
- 
+
   return `
     <svg viewBox="0 0 ${rinkWidth} ${rinkHeight}" style="width:100%; height:auto; background:#111; border-radius:40px; border:2px solid #333;">
       <rect x="5" y="5" width="990" height="415" rx="140" ry="140" fill="none" stroke="#444" stroke-width="2" />
@@ -64,11 +68,11 @@ const renderRinkSVG = (periodEvents: GameEvent[]) => {
     </svg>
   `;
 };
- 
+
 export async function downloadPDFReport(data: ExportData) {
   const dateStr = new Date().toLocaleDateString();
   const timeStr = new Date().toLocaleTimeString();
- 
+
   let periodSections = '';
   for (let p = 1; p <= data.maxPeriod; p++) {
     const pEvents = data.events.filter(e => e.period === p);
@@ -87,7 +91,7 @@ export async function downloadPDFReport(data: ExportData) {
       </section>
     `;
   }
- 
+
   const reportContainer = document.createElement('div');
   reportContainer.style.position = 'absolute';
   reportContainer.style.left = '-9999px';
@@ -105,7 +109,7 @@ export async function downloadPDFReport(data: ExportData) {
           DATE: ${dateStr}<br/>KICKOFF: ${timeStr}
         </div>
       </div>
- 
+
       <div style="display: flex; gap: 20px; margin-bottom: 40px;">
         <div style="flex: 1; padding: 20px; background: #f8f8f8; border-radius: 15px; text-align: center;">
           <div style="font-size: 10px; font-weight: 900; color: #666; text-transform: uppercase;">${data.homeName}</div>
@@ -116,18 +120,18 @@ export async function downloadPDFReport(data: ExportData) {
           <div style="font-size: 48px; font-weight: 900;">${data.stats.away.goals}</div>
         </div>
       </div>
- 
+
       <h2 style="font-size: 18px; text-transform: uppercase; border-left: 4px solid #111; padding-left: 10px; margin-bottom: 20px;">Game Overview</h2>
       <div style="background: #fdfdfd; padding: 20px; border-radius: 15px; border: 1px dashed #ccc; font-size: 13px; line-height: 1.6; margin-bottom: 40px;">
         ${data.summaries['total']}
       </div>
- 
+
       ${periodSections}
     </div>
   `;
- 
+
   document.body.appendChild(reportContainer);
- 
+
   const opt = {
     margin: 0,
     filename: `TopCheeseHockey-Report-${data.homeName}-vs-${data.awayName}.pdf`,
@@ -135,7 +139,7 @@ export async function downloadPDFReport(data: ExportData) {
     html2canvas: { scale: 2, useCORS: true, logging: false },
     jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
   };
- 
+
   try {
     // html2pdf can be a function or have a default property depending on how it's bundled
     const exporter = typeof html2pdf === 'function' ? html2pdf : (html2pdf as any).default;
@@ -150,11 +154,11 @@ export async function downloadPDFReport(data: ExportData) {
     document.body.removeChild(reportContainer);
   }
 }
- 
+
 export function downloadHTMLExport(data: ExportData) {
   const dateStr = new Date().toLocaleDateString();
   const timeStr = new Date().toLocaleTimeString();
- 
+
   let periodSections = '';
   for (let p = 1; p <= data.maxPeriod; p++) {
     const pEvents = data.events.filter(e => e.period === p);
@@ -173,7 +177,7 @@ export function downloadHTMLExport(data: ExportData) {
       </section>
     `;
   }
- 
+
   const htmlContent = `
     <!DOCTYPE html>
     <html lang="en">
@@ -204,7 +208,7 @@ export function downloadHTMLExport(data: ExportData) {
             DATE: ${dateStr}<br/>KICKOFF: ${timeStr}
           </div>
         </div>
- 
+
         <div style="display: flex; gap: 20px; margin-bottom: 40px;">
           <div style="flex: 1; padding: 20px; background: #f8f8f8; border-radius: 15px; text-align: center;">
             <div style="font-size: 10px; font-weight: 900; color: #666; text-transform: uppercase;">${data.homeName}</div>
@@ -215,18 +219,18 @@ export function downloadHTMLExport(data: ExportData) {
             <div style="font-size: 48px; font-weight: 900;">${data.stats.away.goals}</div>
           </div>
         </div>
- 
+
         <h2 style="font-size: 18px; text-transform: uppercase; border-left: 4px solid #111; padding-left: 10px; margin-bottom: 20px;">Game Overview</h2>
         <div style="background: #fdfdfd; padding: 20px; border-radius: 15px; border: 1px dashed #ccc; font-size: 13px; line-height: 1.6; margin-bottom: 40px;">
           ${data.summaries['total']}
         </div>
- 
+
         ${periodSections}
       </div>
     </body>
     </html>
   `;
- 
+
   const blob = new Blob([htmlContent], { type: 'text/html' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -237,10 +241,10 @@ export function downloadHTMLExport(data: ExportData) {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
- 
+
 export function downloadExcelReport(data: ExportData) {
   const wb = XLSX.utils.book_new();
- 
+
   // 1. Summary Sheet
   const summaryData = [
     ["PUKKPULSE GAME SUMMARY", ""],
@@ -255,7 +259,7 @@ export function downloadExcelReport(data: ExportData) {
   ];
   const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
   XLSX.utils.book_append_sheet(wb, wsSummary, "Overview");
- 
+
   // 2. Full Game Log
   const logHeader = ["Period", "Time", "Team", "Event", "Player #", "Zone", "Notes"];
   const logRows = data.events.sort((a,b) => a.timestamp - b.timestamp).map(e => [
@@ -269,22 +273,22 @@ export function downloadExcelReport(data: ExportData) {
   ]);
   const wsLog = XLSX.utils.aoa_to_sheet([logHeader, ...logRows]);
   XLSX.utils.book_append_sheet(wb, wsLog, "Game Log");
- 
+
   // 3. Home Roster
   const homeRosterHeader = ["Number", "Name", "Position"];
   const homeRosterRows = data.stats.home.roster.map(p => [p.number, p.name, p.position]);
   const wsHomeRoster = XLSX.utils.aoa_to_sheet([homeRosterHeader, ...homeRosterRows]);
   XLSX.utils.book_append_sheet(wb, wsHomeRoster, `${data.homeName.slice(0, 20)} Roster`);
- 
+
   // 4. Away Roster
   const awayRosterHeader = ["Number", "Name", "Position"];
   const awayRosterRows = data.stats.away.roster.map(p => [p.number, p.name, p.position]);
   const wsAwayRoster = XLSX.utils.aoa_to_sheet([awayRosterHeader, ...awayRosterRows]);
   XLSX.utils.book_append_sheet(wb, wsAwayRoster, `${data.awayName.slice(0, 20)} Roster`);
- 
+
   XLSX.writeFile(wb, `TopCheeseHockey-Data-${data.homeName}-vs-${data.awayName}.xlsx`);
 }
- 
+
 /** 
  * Legacy support for HTML, but redirected to PDF by default as requested. 
  * We keep the interface similar to maintain compatibility with App.tsx calls.
@@ -292,4 +296,3 @@ export function downloadExcelReport(data: ExportData) {
 export async function downloadGameReport(data: ExportData) {
   return downloadPDFReport(data);
 }
- 
