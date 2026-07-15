@@ -1109,6 +1109,7 @@ const App: React.FC = () => {
     'colinzappia@gmail.com',
     'derekfroats19@gmail.com',
     'macopelo17@gmail.com',
+    'marcodinardo24@gmail.com',
   ];
   const userEmail = currentUser?.primaryEmailAddress?.emailAddress?.toLowerCase() || user?.primaryEmailAddress?.emailAddress?.toLowerCase() || '';
   const isAdmin = ADMIN_EMAILS.includes(userEmail);
