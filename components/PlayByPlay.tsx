@@ -30,6 +30,10 @@ const PlayByPlay: React.FC<PlayByPlayProps> = ({
       case EventType.PENALTY: return '🚨';
       case EventType.FACEOFF_WIN: return '⚪';
       case EventType.FACEOFF_LOSS: return '⚫';
+      case EventType.ZONE_ENTRY_CARRY: return '▲';
+      case EventType.ZONE_ENTRY_DUMP: return '■';
+      case EventType.ZONE_ENTRY_PASS: return '◆';
+      case EventType.ZONE_ENTRY_DENIED: return '✕';
       default: return '📍';
     }
   };
