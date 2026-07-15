@@ -39,6 +39,67 @@ const CIRCLE_DOTS = [
   { x: 169, y: 64.5 },   // Right Bottom End
 ];
 
+const ZONE_ENTRY_TYPES = [
+  EventType.ZONE_ENTRY_CARRY,
+  EventType.ZONE_ENTRY_DUMP,
+  EventType.ZONE_ENTRY_PASS,
+  EventType.ZONE_ENTRY_DENIED,
+];
+
+// Blue line x-positions in "unit" space (the coordinate system used by
+// click handling and FACEOFF_DOTS, i.e. before the *5 scaling used only for
+// rendering). Mirrors blueLineOffset (375px) declared inside the component.
+const LEFT_BLUE_LINE_X = 75;   // 375 / 5
+const RIGHT_BLUE_LINE_X = 125; // (1000 - 375) / 5
+
+// Shape used for each zone entry type's dot. Deliberately keyed off event
+// type (not the generic style.shape field) so this never touches how HIT
+// or any other existing event renders.
+const ZONE_ENTRY_SHAPES: Partial<Record<EventType, 'triangle' | 'square' | 'diamond' | 'x'>> = {
+  [EventType.ZONE_ENTRY_CARRY]: 'triangle',
+  [EventType.ZONE_ENTRY_DUMP]: 'square',
+  [EventType.ZONE_ENTRY_PASS]: 'diamond',
+  [EventType.ZONE_ENTRY_DENIED]: 'x',
+};
+
+// Renders the shape marker for a zone entry dot. Kept separate from the
+// default circle rendering used by every other event type.
+const EntryMarker: React.FC<{
+  shape: 'triangle' | 'square' | 'diamond' | 'x';
+  cx: number; cy: number; size: number; color: string; isAway: boolean; pointRight: boolean;
+}> = ({ shape, cx, cy, size, color, isAway, pointRight }) => {
+  const stroke = isAway ? '#ffffff' : 'none';
+  const strokeWidth = isAway ? 1.5 : 0;
+
+  if (shape === 'triangle') {
+    // Points toward the attacking zone (away from centre ice) so entry
+    // direction is legible at a glance.
+    const s = size * 1.4;
+    const points = pointRight
+      ? `${cx - s * 0.6},${cy - s} ${cx - s * 0.6},${cy + s} ${cx + s},${cy}`
+      : `${cx + s * 0.6},${cy - s} ${cx + s * 0.6},${cy + s} ${cx - s},${cy}`;
+    return <polygon points={points} fill={color} stroke={stroke} strokeWidth={strokeWidth} className="drop-shadow-lg" />;
+  }
+  if (shape === 'square') {
+    const s = size * 1.8;
+    return <rect x={cx - s / 2} y={cy - s / 2} width={s} height={s} fill={color} stroke={stroke} strokeWidth={strokeWidth} className="drop-shadow-lg" />;
+  }
+  if (shape === 'diamond') {
+    const s = size * 1.3;
+    const points = `${cx},${cy - s} ${cx + s},${cy} ${cx},${cy + s} ${cx - s},${cy}`;
+    return <polygon points={points} fill={color} stroke={stroke} strokeWidth={strokeWidth} className="drop-shadow-lg" />;
+  }
+  // 'x' — denied entry
+  const s = size * 1.1;
+  return (
+    <g>
+      <line x1={cx - s} y1={cy - s} x2={cx + s} y2={cy + s} stroke={color} strokeWidth={3} strokeLinecap="round" />
+      <line x1={cx - s} y1={cy + s} x2={cx + s} y2={cy - s} stroke={color} strokeWidth={3} strokeLinecap="round" />
+      {isAway && <circle cx={cx} cy={cy} r={s + 3} fill="none" stroke="#ffffff" strokeWidth={1.5} opacity={0.7} />}
+    </g>
+  );
+};
+
 const RinkChart: React.FC<RinkChartProps> = ({ 
   events, 
   leftLogo,
@@ -103,6 +164,16 @@ const RinkChart: React.FC<RinkChartProps> = ({
       px = closestDot.x; py = closestDot.y; // snap to the dot's centre
     }
 
+    const isZoneEntry = ZONE_ENTRY_TYPES.includes(activeEventType as EventType);
+    if (isZoneEntry) {
+      // Snap only the x-axis to whichever blue line is nearer — entries
+      // don't happen at fixed spots like faceoffs, so we don't snap y.
+      // Keeping the real y click position preserves entry lane (middle
+      // vs. down the wall), which is the whole point of tracking this.
+      px = Math.abs(px - LEFT_BLUE_LINE_X) < Math.abs(px - RIGHT_BLUE_LINE_X) ? LEFT_BLUE_LINE_X : RIGHT_BLUE_LINE_X;
+      py = Math.max(4, Math.min(81, py)); // clamp to rink bounds
+    }
+
     onPlot(px, py);
   };
 
@@ -132,6 +203,10 @@ const RinkChart: React.FC<RinkChartProps> = ({
     const BLOCK_SLATE = '#94a3b8';
     const PP_FOR_GOLD = '#eab308';
     const PP_AGAINST_PINK = '#ec4899';
+    const ENTRY_CARRY_INDIGO = '#4f46e5';
+    const ENTRY_DUMP_AMBER = '#d97706';
+    const ENTRY_PASS_SKY = '#0ea5e9';
+    const ENTRY_DENIED_ROSE = '#e11d48';
 
     switch (event.type) {
       case EventType.GOAL: 
@@ -156,6 +231,14 @@ const RinkChart: React.FC<RinkChartProps> = ({
         return { color: 'none', size: 4, opacity: 0.4 };
       case EventType.HIT: 
         return { color: HIT_GRAY, size: 5, opacity: 0.85, shape: 'diamond' };
+      case EventType.ZONE_ENTRY_CARRY:
+        return { color: ENTRY_CARRY_INDIGO, size: 6, opacity: 1 };
+      case EventType.ZONE_ENTRY_DUMP:
+        return { color: ENTRY_DUMP_AMBER, size: 6, opacity: 0.9 };
+      case EventType.ZONE_ENTRY_PASS:
+        return { color: ENTRY_PASS_SKY, size: 6, opacity: 1 };
+      case EventType.ZONE_ENTRY_DENIED:
+        return { color: ENTRY_DENIED_ROSE, size: 5, opacity: 0.85 };
       default: 
         return { color: '#ffffff', size: 5, opacity: 0.8 };
     }
@@ -179,6 +262,7 @@ const RinkChart: React.FC<RinkChartProps> = ({
   const watermarkLogoSize = 90;
 
   const isFaceoffToolActive = activeEventType === EventType.FACEOFF_WIN || activeEventType === EventType.FACEOFF_LOSS;
+  const isZoneEntryToolActive = ZONE_ENTRY_TYPES.includes(activeEventType as EventType);
 
   // Center the logo horizontally in the open ice between the end-zone
   // faceoff circle's outer edge and the blue line, with margin on both
@@ -250,8 +334,20 @@ const RinkChart: React.FC<RinkChartProps> = ({
         />
 
         <line x1={centerLineX} y1="5" x2={centerLineX} y2="420" stroke={BRIGHT_RED} strokeWidth="6" />
-        <line x1={blueLineOffset} y1="5" x2={blueLineOffset} y2="420" stroke={BRIGHT_BLUE} strokeWidth="8" opacity="0.8" />
-        <line x1={rinkWidth - blueLineOffset} y1="5" x2={rinkWidth - blueLineOffset} y2="420" stroke={BRIGHT_BLUE} strokeWidth="8" opacity="0.8" />
+        <line 
+          x1={blueLineOffset} y1="5" x2={blueLineOffset} y2="420" 
+          stroke={BRIGHT_BLUE} 
+          strokeWidth={isZoneEntryToolActive ? 12 : 8} 
+          opacity={isZoneEntryToolActive ? 1 : 0.8} 
+          className="transition-all duration-300"
+        />
+        <line 
+          x1={rinkWidth - blueLineOffset} y1="5" x2={rinkWidth - blueLineOffset} y2="420" 
+          stroke={BRIGHT_BLUE} 
+          strokeWidth={isZoneEntryToolActive ? 12 : 8} 
+          opacity={isZoneEntryToolActive ? 1 : 0.8} 
+          className="transition-all duration-300"
+        />
         <line x1={goalLineOffset} y1="35" x2={goalLineOffset} y2="390" stroke={BRIGHT_RED} strokeWidth="3" />
         <line x1={rinkWidth - goalLineOffset} y1="35" x2={rinkWidth - goalLineOffset} y2="390" stroke={BRIGHT_RED} strokeWidth="3" />
 
@@ -298,6 +394,7 @@ const RinkChart: React.FC<RinkChartProps> = ({
           // AWAY member (imported from '../types'). Adjust this condition
           // if your away-team indicator is named/typed differently.
           const isAway = e.team === Team.AWAY;
+          const entryShape = ZONE_ENTRY_SHAPES[e.type];
           return (
             <g key={e.id} className="animate-in fade-in zoom-in duration-300" style={{ cursor: 'grab' }}>
               {/* Invisible larger hit target for easier grabbing */}
@@ -323,16 +420,27 @@ const RinkChart: React.FC<RinkChartProps> = ({
                   />
                 </>
               )}
-              <circle 
-                cx={cx} cy={cy} 
-                r={style.size} 
-                fill={style.color} 
-                fillOpacity={style.opacity}
-                stroke={isAway ? AWAY_RING_WHITE : 'none'}
-                strokeWidth={isAway ? 1.5 : 0}
-                className="drop-shadow-lg"
-                filter={style.glow ? "url(#glow-filter)" : undefined}
-              />
+              {entryShape ? (
+                <EntryMarker 
+                  shape={entryShape} 
+                  cx={cx} cy={cy} 
+                  size={style.size} 
+                  color={style.color} 
+                  isAway={isAway} 
+                  pointRight={cx > centerLineX}
+                />
+              ) : (
+                <circle 
+                  cx={cx} cy={cy} 
+                  r={style.size} 
+                  fill={style.color} 
+                  fillOpacity={style.opacity}
+                  stroke={isAway ? AWAY_RING_WHITE : 'none'}
+                  strokeWidth={isAway ? 1.5 : 0}
+                  className="drop-shadow-lg"
+                  filter={style.glow ? "url(#glow-filter)" : undefined}
+                />
+              )}
             </g>
           );
         })}
