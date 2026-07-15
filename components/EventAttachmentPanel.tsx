@@ -31,6 +31,10 @@ function getEventLabel(type: EventType): string {
     [EventType.GIVEAWAY]: '🔄 Giveaway',
     [EventType.TAKEAWAY]: '🎯 Takeaway',
     [EventType.HIT]: '💥 Hit',
+    [EventType.ZONE_ENTRY_CARRY]: '▲ Carry-in',
+    [EventType.ZONE_ENTRY_DUMP]: '■ Dump-in',
+    [EventType.ZONE_ENTRY_PASS]: '◆ Pass entry',
+    [EventType.ZONE_ENTRY_DENIED]: '✕ Denied entry',
   };
   return labels[type] || type;
 }
