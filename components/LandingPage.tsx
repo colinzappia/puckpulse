@@ -275,8 +275,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onContact, onAdvert
       <footer className="px-6 py-8 text-center text-slate-600 text-sm border-t border-white/5 bg-black/30 backdrop-blur-sm">
         © 2026 Top Cheese Hockey · Built for hockey people, by hockey people
         <span className="mx-2">·</span>
-        <button onClick={() => onAdvertise && onAdvertise()} className="hover:text-slate-300 transition-colors bg-transparent border-none cursor-pointer text-inherit">📢 Advertise With Us</button>
-        <span className="mx-2">·</span>
+        {onAdvertise && (
+          <>
+            <button onClick={onAdvertise} className="hover:text-slate-300 transition-colors bg-transparent border-none cursor-pointer text-inherit">📢 Advertise With Us</button>
+            <span className="mx-2">·</span>
+          </>
+        )}
         <button onClick={() => onContact && onContact()} className="hover:text-slate-400 transition-colors bg-transparent border-none cursor-pointer text-inherit">Support</button>
         <span className="mx-2">·</span>
         <button onClick={() => onAbout && onAbout()} className="hover:text-slate-300 transition-colors bg-transparent border-none cursor-pointer text-inherit">About</button>
