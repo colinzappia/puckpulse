@@ -341,6 +341,95 @@ const GoalLinePopup: React.FC<GoalLinePopupProps> = ({ pendingGoal, homeName, aw
   );
 };
 
+// ── FACEOFF POPUP ────────────────────────────────────────────
+interface FaceoffPopupProps {
+  pendingFaceoff: { x: number; y: number };
+  homeName: string;
+  awayName: string;
+  homeRoster: Player[];
+  awayRoster: Player[];
+  onConfirm: (homeCenter: string, awayCenter: string, winner: Team) => void;
+  onCancel: () => void;
+}
+
+const FaceoffPopup: React.FC<FaceoffPopupProps> = ({ homeName, awayName, homeRoster, awayRoster, onConfirm, onCancel }) => {
+  const [homeCenter, setHomeCenter] = useState('');
+  const [awayCenter, setAwayCenter] = useState('');
+  const [winner, setWinner] = useState<Team | null>(null);
+
+  const homeCentres = homeRoster.filter(p => p.position?.toUpperCase() === 'C');
+  const awayCentres = awayRoster.filter(p => p.position?.toUpperCase() === 'C');
+  const homeOthers = homeRoster.filter(p => p.position?.toUpperCase() !== 'C' && p.position?.toUpperCase() !== 'G');
+  const awayOthers = awayRoster.filter(p => p.position?.toUpperCase() !== 'C' && p.position?.toUpperCase() !== 'G');
+  const canConfirm = !!homeCenter && !!awayCenter && winner !== null;
+
+  const renderCentreGroup = (
+    label: string, accent: string, accentBg: string,
+    centres: Player[], others: Player[], selected: string, onSelect: (num: string) => void
+  ) => (
+    <div style={{ marginBottom: '1rem' }}>
+      <p style={{ fontSize: '0.7rem', fontWeight: 900, color: accent, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>{label} Centre</p>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+        {centres.map(p => (
+          <button key={p.number} onClick={() => onSelect(p.number)}
+            style={{ padding: '0.4rem 0.7rem', borderRadius: '0.6rem', fontSize: '0.75rem', fontWeight: 900, border: `1px solid ${selected === p.number ? accent : 'rgba(255,255,255,0.08)'}`, background: selected === p.number ? accentBg : 'rgba(255,255,255,0.03)', color: selected === p.number ? '#fff' : '#94a3b8', cursor: 'pointer' }}>
+            #{p.number} {p.name.split(' ').pop()}
+          </button>
+        ))}
+        {centres.length === 0 && <span style={{ fontSize: '0.7rem', color: '#475569' }}>No centres found</span>}
+      </div>
+      {others.length > 0 && (
+        <select value="" onChange={e => e.target.value && onSelect(e.target.value)}
+          style={{ marginTop: '0.4rem', width: '100%', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '0.5rem', padding: '0.4rem 0.6rem', fontSize: '0.75rem', color: '#94a3b8' }}>
+          <option value="">Other player...</option>
+          {others.map(p => <option key={p.number} value={p.number}>#{p.number} {p.name} ({p.position})</option>)}
+        </select>
+      )}
+    </div>
+  );
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 999999, background: 'rgba(0,0,0,0.88)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+      <div style={{ background: '#0f1620', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '1.25rem', padding: '1.5rem', width: '100%', maxWidth: '420px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 30px 60px rgba(0,0,0,0.9)' }}>
+
+        <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
+          <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#eab308', margin: '0 auto 0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>🏒</div>
+          <div style={{ color: 'white', fontWeight: 900, fontSize: '1.25rem' }}>Faceoff</div>
+          <div style={{ color: '#64748b', fontSize: '0.75rem', marginTop: '0.2rem' }}>Who's taking this draw?</div>
+        </div>
+
+        {renderCentreGroup(homeName, '#60a5fa', '#2563eb', homeCentres, homeOthers, homeCenter, setHomeCenter)}
+        {renderCentreGroup(awayName, '#f87171', '#dc2626', awayCentres, awayOthers, awayCenter, setAwayCenter)}
+
+        <div style={{ marginBottom: '1.25rem' }}>
+          <p style={{ fontSize: '0.7rem', fontWeight: 900, color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem', textAlign: 'center' }}>Who won the draw?</p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
+            <button onClick={() => setWinner(Team.HOME)}
+              style={{ padding: '0.9rem', borderRadius: '0.75rem', fontWeight: 900, fontSize: '0.85rem', border: `2px solid ${winner === Team.HOME ? '#60a5fa' : 'rgba(255,255,255,0.08)'}`, background: winner === Team.HOME ? 'rgba(37,99,235,0.35)' : 'rgba(255,255,255,0.03)', color: winner === Team.HOME ? '#fff' : '#94a3b8', cursor: 'pointer' }}>
+              ✓ {homeName}
+            </button>
+            <button onClick={() => setWinner(Team.AWAY)}
+              style={{ padding: '0.9rem', borderRadius: '0.75rem', fontWeight: 900, fontSize: '0.85rem', border: `2px solid ${winner === Team.AWAY ? '#f87171' : 'rgba(255,255,255,0.08)'}`, background: winner === Team.AWAY ? 'rgba(220,38,38,0.35)' : 'rgba(255,255,255,0.03)', color: winner === Team.AWAY ? '#fff' : '#94a3b8', cursor: 'pointer' }}>
+              ✓ {awayName}
+            </button>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '0.6rem' }}>
+          <button onClick={onCancel}
+            style={{ flex: 1, padding: '0.75rem', borderRadius: '0.75rem', background: 'rgba(255,255,255,0.05)', color: '#94a3b8', fontWeight: 800, fontSize: '0.8rem', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer' }}>
+            Cancel
+          </button>
+          <button disabled={!canConfirm} onClick={() => canConfirm && onConfirm(homeCenter, awayCenter, winner!)}
+            style={{ flex: 2, padding: '0.75rem', borderRadius: '0.75rem', background: canConfirm ? '#eab308' : 'rgba(234,179,8,0.2)', color: canConfirm ? '#000' : '#78716c', fontWeight: 900, fontSize: '0.85rem', border: 'none', cursor: canConfirm ? 'pointer' : 'not-allowed' }}>
+            Log Faceoff
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const App: React.FC = () => {
   const [showLanding, setShowLanding] = useState(() => {
     return sessionStorage.getItem('tch_launched') !== 'true';
@@ -354,7 +443,6 @@ const App: React.FC = () => {
   const [showAdvertise, setShowAdvertise] = useState(false);
   const [showPlayerStats, setShowPlayerStats] = useState(false);
   const [showManual, setShowManual] = useState(false);
-  const [showFaceoffPanel, setShowFaceoffPanel] = useState(false);
   const [showEntriesPanel, setShowEntriesPanel] = useState(false);
   const [entryDumpSubtype, setEntryDumpSubtype] = useState<DumpInSubtype | ''>('');
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -591,8 +679,6 @@ const App: React.FC = () => {
 
   const [showFeed, setShowFeed] = useState(true);
   const [showLineups, setShowLineups] = useState(true);
-  const [fowHomeCenter, setFowHomeCenter] = useState<string>('');
-  const [fowAwayCenter, setFowAwayCenter] = useState<string>('');
   const [visibleTypes, setVisibleTypes] = useState<EventType[]>([]);
   const [homeName, setHomeName] = useState(() => {
     try { return sessionStorage.getItem('tch_homeName') || 'HOME'; } catch { return 'HOME'; }
@@ -630,6 +716,7 @@ const App: React.FC = () => {
   const [plotFlash, setPlotFlash] = useState(false);
   const [showEndGame, setShowEndGame] = useState(false);
   const [pendingGoal, setPendingGoal] = useState<{x: number; y: number; team: Team; playerNumber: string} | null>(null);
+  const [pendingFaceoff, setPendingFaceoff] = useState<{x: number; y: number} | null>(null);
   const [isRosterSwapped, setIsRosterSwapped] = useState(false);
   const [showNewGameConfirm, setShowNewGameConfirm] = useState(false);
 
@@ -772,19 +859,27 @@ const App: React.FC = () => {
     setPendingGoal(null);
   }, [pendingGoal, currentPeriod, getTeamZone, activeSession, user]);
 
+  const confirmFaceoff = useCallback((homeCenter: string, awayCenter: string, winner: Team) => {
+    if (!pendingFaceoff) return;
+    const { x, y } = pendingFaceoff;
+    const homeWins = winner === Team.HOME;
+    const newFaceoffEvents: GameEvent[] = [
+      { id: Math.random().toString(36).substr(2, 9), timestamp: Date.now(), gameTime: '20:00', period: currentPeriod, type: homeWins ? EventType.FACEOFF_WIN : EventType.FACEOFF_LOSS, team: Team.HOME, zone: getTeamZone(Team.HOME, x), playerNumber: homeCenter, coordinates: { x, y } },
+      { id: Math.random().toString(36).substr(2, 9), timestamp: Date.now() + 1, gameTime: '20:00', period: currentPeriod, type: homeWins ? EventType.FACEOFF_LOSS : EventType.FACEOFF_WIN, team: Team.AWAY, zone: getTeamZone(Team.AWAY, x), playerNumber: awayCenter, coordinates: { x, y } }
+    ];
+    setEvents(prev => [...prev, ...newFaceoffEvents]);
+    if (activeSession && user) {
+      newFaceoffEvents.forEach(ev => broadcastEvent(activeSession.id, ev, user.id).catch(console.error));
+    }
+    setLastEvent({ type: winner === Team.HOME ? EventType.FACEOFF_WIN : EventType.FACEOFF_LOSS, playerNumber: homeCenter, team: Team.HOME });
+    setPendingFaceoff(null);
+  }, [pendingFaceoff, currentPeriod, getTeamZone, activeSession, user]);
+
   const handlePlot = useCallback((x: number, y: number) => {
     if (mapPlotType === EventType.FACEOFF_WIN || mapPlotType === EventType.FACEOFF_LOSS) {
-      if (!fowHomeCenter || !fowAwayCenter) {
-        toast.error("Please select centers in the Faceoff Hub before plotting.");
-        return;
-      }
-      // WIN = active team wins, LOSS = active team loses
-      const homeWins = (activeTeam === Team.HOME && mapPlotType === EventType.FACEOFF_WIN) || (activeTeam === Team.AWAY && mapPlotType === EventType.FACEOFF_LOSS);
-      setEvents(prev => [...prev,
-        { id: Math.random().toString(36).substr(2, 9), timestamp: Date.now(), gameTime: '20:00', period: currentPeriod, type: homeWins ? EventType.FACEOFF_WIN : EventType.FACEOFF_LOSS, team: Team.HOME, zone: getTeamZone(Team.HOME, x), playerNumber: fowHomeCenter, coordinates: { x, y } },
-        { id: Math.random().toString(36).substr(2, 9), timestamp: Date.now() + 1, gameTime: '20:00', period: currentPeriod, type: homeWins ? EventType.FACEOFF_LOSS : EventType.FACEOFF_WIN, team: Team.AWAY, zone: getTeamZone(Team.AWAY, x), playerNumber: fowAwayCenter, coordinates: { x, y } }
-      ]);
-      // Keep panel open for quick successive faceoffs — user can close manually
+      // Location comes first — centres and the winner are chosen in the
+      // popup that appears next (see FaceoffPopup / confirmFaceoff).
+      setPendingFaceoff({ x, y });
       return;
     }
 
@@ -817,7 +912,7 @@ const App: React.FC = () => {
     if (activeSession && user) {
       broadcastEvent(activeSession.id, newEvent, user.id).catch(console.error);
     }
-  }, [mapPlotType, fowHomeCenter, fowAwayCenter, activeTeam, playerNumber, currentPeriod, getTeamZone, entryDumpSubtype]);
+  }, [mapPlotType, activeTeam, playerNumber, currentPeriod, getTeamZone, entryDumpSubtype]);
 
   const handleManageSubscription = async () => {
     const email = currentUser?.primaryEmailAddress?.emailAddress;
@@ -1372,7 +1467,7 @@ const App: React.FC = () => {
                     {toolbarButtons.map(btn => (
                       <button key={btn.type} onClick={() => setMapPlotType(btn.type)} className={`px-3 py-2 rounded-xl text-[10px] font-black uppercase transition-all flex items-center justify-center shadow-lg active:scale-90 shrink-0 ${mapPlotType === btn.type ? `${btn.color} text-white ring-2 ring-white/20` : 'bg-white/5 text-slate-500 hover:bg-white/10'}`}>{btn.label}</button>
                     ))}
-                    <button onClick={() => setShowFaceoffPanel(true)} className="px-3 py-2 rounded-xl text-[10px] font-black uppercase transition-all flex items-center justify-center shadow-lg active:scale-90 bg-yellow-600/20 text-yellow-400 border border-yellow-500/30 hover:bg-yellow-600/40 shrink-0">Faceoffs</button>
+                    <button onClick={() => setMapPlotType(mapPlotType === EventType.FACEOFF_WIN || mapPlotType === EventType.FACEOFF_LOSS ? EventType.SHOT : EventType.FACEOFF_WIN)} className={`px-3 py-2 rounded-xl text-[10px] font-black uppercase transition-all flex items-center justify-center shadow-lg active:scale-90 border shrink-0 ${mapPlotType === EventType.FACEOFF_WIN || mapPlotType === EventType.FACEOFF_LOSS ? 'bg-yellow-500 text-black border-yellow-300 ring-2 ring-yellow-300/40' : 'bg-yellow-600/20 text-yellow-400 border-yellow-500/30 hover:bg-yellow-600/40'}`}>🏒 Faceoffs</button>
                     <button onClick={() => setShowEntriesPanel(true)} className="px-3 py-2 rounded-xl text-[10px] font-black uppercase transition-all flex items-center justify-center shadow-lg active:scale-90 bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 hover:bg-indigo-600/40 shrink-0">Entries</button>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
@@ -1402,96 +1497,6 @@ const App: React.FC = () => {
             <span>📊</span><span>Player Stats</span>
           </button>
         </div>
-
-        {/* FACEOFF INLINE PANEL */}
-        {showFaceoffPanel && (
-          <div className="w-full bg-[#0a0e14] border-b border-yellow-500/20 animate-in slide-in-from-top duration-200">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
-              <div className="flex items-center gap-3">
-                <span className="text-yellow-400 font-black text-sm">🏒 Faceoff</span>
-                <span className="text-xs text-slate-500">Select centres, choose WIN or LOSS, then tap a dot on the rink</span>
-              </div>
-              <button onClick={() => { setShowFaceoffPanel(false); if (mapPlotType === EventType.FACEOFF_WIN || mapPlotType === EventType.FACEOFF_LOSS) setMapPlotType(EventType.SHOT); }} className="text-slate-500 hover:text-white text-lg font-bold px-2">×</button>
-            </div>
-            <div className="p-4 grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
-              {/* Home centre */}
-              <div className="bg-blue-900/20 border border-blue-500/20 rounded-xl p-3">
-                <p className="text-xs font-black text-blue-400 uppercase tracking-wider mb-2">{homeName} Centre</p>
-                <div className="flex flex-wrap gap-1.5 mb-2">
-                  {homeRoster.filter(p => p.position?.toUpperCase() === 'C').map(p => (
-                    <button key={p.number} onClick={() => setFowHomeCenter(p.number)}
-                      className={`px-2.5 py-1.5 rounded-lg text-xs font-black transition-all border ${fowHomeCenter === p.number ? 'bg-blue-600 text-white border-blue-400' : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'}`}>
-                      #{p.number} {p.name.split(' ').pop()}
-                    </button>
-                  ))}
-                  {homeRoster.filter(p => p.position?.toUpperCase() === 'C').length === 0 && (
-                    <span className="text-xs text-slate-600">No centres found</span>
-                  )}
-                </div>
-                {homeRoster.filter(p => p.position?.toUpperCase() !== 'C' && p.position?.toUpperCase() !== 'G').length > 0 && (
-                  <select
-                    onChange={e => e.target.value && setFowHomeCenter(e.target.value)}
-                    className="w-full bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-slate-400 outline-none"
-                    value=""
-                  >
-                    <option value="">Other player...</option>
-                    {homeRoster.filter(p => p.position?.toUpperCase() !== 'C' && p.position?.toUpperCase() !== 'G').map(p => (
-                      <option key={p.number} value={p.number}>#{p.number} {p.name} ({p.position})</option>
-                    ))}
-                  </select>
-                )}
-              </div>
-
-              {/* WIN / LOSS — sets plot type then user taps rink */}
-              <div className="flex flex-col gap-3 items-center">
-                <div className="grid grid-cols-2 gap-3 w-full">
-                  <button
-                    onClick={() => { setMapPlotType(EventType.FACEOFF_WIN); }}
-                    className={`py-4 font-black rounded-xl text-sm transition-all active:scale-95 shadow-lg border ${mapPlotType === EventType.FACEOFF_WIN ? 'bg-yellow-500 text-white border-yellow-300 ring-2 ring-yellow-300/40' : 'bg-yellow-600/30 text-yellow-300 border-yellow-500/30 hover:bg-yellow-600/50'}`}
-                  >✓ {activeTeam === Team.HOME ? homeName : awayName} WIN</button>
-                  <button
-                    onClick={() => { setMapPlotType(EventType.FACEOFF_LOSS); }}
-                    className={`py-4 font-black rounded-xl text-sm transition-all active:scale-95 shadow-lg border ${mapPlotType === EventType.FACEOFF_LOSS ? 'bg-slate-500 text-white border-slate-300 ring-2 ring-slate-300/40' : 'bg-slate-700/50 text-slate-300 border-slate-500/30 hover:bg-slate-600/50'}`}
-                  >✗ {activeTeam === Team.HOME ? homeName : awayName} LOSS</button>
-                </div>
-                {(mapPlotType === EventType.FACEOFF_WIN || mapPlotType === EventType.FACEOFF_LOSS) && (
-                  <p className="text-xs text-yellow-400 animate-pulse text-center">👆 Now tap a faceoff dot on the rink</p>
-                )}
-                {(!fowHomeCenter || !fowAwayCenter) && (
-                  <p className="text-xs text-slate-600 text-center">Select both centres first</p>
-                )}
-              </div>
-
-              {/* Away centre */}
-              <div className="bg-red-900/20 border border-red-500/20 rounded-xl p-3">
-                <p className="text-xs font-black text-red-400 uppercase tracking-wider mb-2">{awayName} Centre</p>
-                <div className="flex flex-wrap gap-1.5 mb-2">
-                  {awayRoster.filter(p => p.position?.toUpperCase() === 'C').map(p => (
-                    <button key={p.number} onClick={() => setFowAwayCenter(p.number)}
-                      className={`px-2.5 py-1.5 rounded-lg text-xs font-black transition-all border ${fowAwayCenter === p.number ? 'bg-red-600 text-white border-red-400' : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'}`}>
-                      #{p.number} {p.name.split(' ').pop()}
-                    </button>
-                  ))}
-                  {awayRoster.filter(p => p.position?.toUpperCase() === 'C').length === 0 && (
-                    <span className="text-xs text-slate-600">No centres found</span>
-                  )}
-                </div>
-                {awayRoster.filter(p => p.position?.toUpperCase() !== 'C' && p.position?.toUpperCase() !== 'G').length > 0 && (
-                  <select
-                    onChange={e => e.target.value && setFowAwayCenter(e.target.value)}
-                    className="w-full bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-slate-400 outline-none"
-                    value=""
-                  >
-                    <option value="">Other player...</option>
-                    {awayRoster.filter(p => p.position?.toUpperCase() !== 'C' && p.position?.toUpperCase() !== 'G').map(p => (
-                      <option key={p.number} value={p.number}>#{p.number} {p.name} ({p.position})</option>
-                    ))}
-                  </select>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* ENTRIES INLINE PANEL */}
         {showEntriesPanel && (
@@ -1842,6 +1847,12 @@ const App: React.FC = () => {
     {/* Goal line popup via portal */}
     {pendingGoal !== null && createPortal(
       <GoalLinePopup pendingGoal={pendingGoal} homeName={homeName} awayName={awayName} homeRoster={homeRoster} awayRoster={awayRoster} myTeam={myTeam} onConfirm={confirmGoal} />,
+      document.body
+    )}
+
+    {/* Faceoff popup via portal */}
+    {pendingFaceoff !== null && createPortal(
+      <FaceoffPopup pendingFaceoff={pendingFaceoff} homeName={homeName} awayName={awayName} homeRoster={homeRoster} awayRoster={awayRoster} onConfirm={confirmFaceoff} onCancel={() => setPendingFaceoff(null)} />,
       document.body
     )}
 
