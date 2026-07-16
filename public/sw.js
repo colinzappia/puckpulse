@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tch-v1';
+const CACHE_NAME = 'tch-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -29,7 +29,9 @@ self.addEventListener('activate', event => {
 
 // Fetch strategy:
 // - API calls: network only, fail gracefully
-// - Everything else: cache first, then network
+// - Everything else: network first, cache fallback (so new deploys and
+//   local changes show up immediately when online — the cache only
+//   kicks in when there's genuinely no connection)
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
@@ -51,17 +53,14 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // App shell and assets — cache first, network fallback
+  // App shell and assets — network first, cache fallback for offline use
   event.respondWith(
-    caches.match(event.request).then(cached => {
-      const networkFetch = fetch(event.request).then(response => {
-        if (response && response.status === 200 && response.type === 'basic') {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-        }
-        return response;
-      }).catch(() => cached);
-      return cached || networkFetch;
-    })
+    fetch(event.request).then(response => {
+      if (response && response.status === 200 && response.type === 'basic') {
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+      }
+      return response;
+    }).catch(() => caches.match(event.request))
   );
 });
