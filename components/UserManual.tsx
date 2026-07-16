@@ -72,7 +72,7 @@ const sections = [
       },
       {
         title: 'Quick logging tips',
-        content: 'The app is designed for speed during live games:\n\n• Your selected player stays active between events — no need to re-tap after each log\n• Your selected event type (SHOT, GOAL, etc.) also stays selected\n• Watch for the green flash on the rink — it confirms your event was logged\n• The event toolbar scrolls horizontally — swipe to reveal all event types\n• The active player badge in the toolbar shows who is currently selected'
+        content: 'The app is designed for speed during live games:\n\n• Your selected player stays active between events — no need to re-tap after each log\n• Your selected event type (SHOT, GOAL, etc.) also stays selected\n• Watch for the green flash on the rink — it confirms your event was logged\n• The event toolbar scrolls horizontally — swipe to reveal all event types\n• The active player badge in the toolbar shows who is currently selected\n• Goals, faceoffs, and zone entries all work the same way: tap the location on the rink first, then fill in the details (scorer, centres, entry type) in the popup that appears'
       },
       {
         title: 'Logging a penalty',
@@ -80,7 +80,11 @@ const sections = [
       },
       {
         title: 'Logging a faceoff',
-        content: 'Tap the 🏒 Faceoffs button in the event toolbar to open the Faceoff Hub panel. Select the centre for each team using the player buttons, then tap WIN or LOSS. The event is logged instantly for both teams.\n\nSwitch to the Breakdown tab to see live win percentages, zone stats, and head-to-head matchup data between specific centres.'
+        content: 'Tap the 🏒 Faceoffs button in the event toolbar to arm the faceoff tool — the faceoff circles on the rink brighten to show they\'re ready. Tap anywhere inside the circle where the draw took place (the whole circle is clickable, not just the centre dot).\n\nA popup appears: pick each team\'s centre, then choose which team won the draw. Tap "Log Faceoff" and the event is logged instantly for both teams. Tap the Faceoffs button again to disarm it.\n\nSwitch to the Breakdown tab to see live win percentages, zone stats, and head-to-head matchup data between specific centres.'
+      },
+      {
+        title: 'Logging a zone entry',
+        content: 'Tap the ⛸ Zone Entries button in the event toolbar to arm the tool — both blue lines highlight to show they\'re ready. Tap near either blue line where the entry happened. It snaps to that blue line but keeps your exact up-ice/down-ice position, so entries through the middle vs. down the wall are still captured accurately.\n\nA popup appears asking how the entry happened: Carry-in, Dump-in, Pass, or Denied. If you pick Dump-in, an optional row unfolds to specify the type — Cross-corner, Soft chip, High on glass, or Rim around boards. Tap "Log Entry" to save it, or tap the Zone Entries button again to disarm the tool.\n\nEach entry type has its own shape on the rink map so you can tell them apart at a glance: ▲ carry-in, ■ dump-in, ◆ pass, ✕ denied.'
       },
       {
         title: 'Attaching a video clip to an event',
