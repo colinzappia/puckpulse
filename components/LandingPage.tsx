@@ -38,10 +38,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onContact, onAdvert
           AI-Powered Live Hockey Analytics
         </div>
 
-        <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black leading-tight tracking-tight mb-6">
+        <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black leading-tight tracking-tight mb-4">
           The coaching edge<br />
           your bench <span className="tch-gradient-text">deserves</span>
         </h1>
+
+        <p className="text-xl sm:text-2xl font-black text-cyan-300 mb-4 tracking-tight">
+          Takes the guesswork out of gut-feel coaching.
+        </p>
 
         <p className="text-lg text-slate-400 max-w-xl mb-6">
           Track. Analyze. Win. Live game tracking, instant roster management, and powerful hockey insights—all in one place.
