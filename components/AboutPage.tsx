@@ -21,10 +21,13 @@ const AboutPage: React.FC<AboutPageProps> = ({ onClose, onContact }) => {
       <div className="relative bg-black/30 backdrop-blur-sm border-b border-white/5 px-6 sm:px-16 py-16 flex flex-col lg:flex-row items-center gap-12 max-w-6xl mx-auto w-full">
         <div className="flex-1">
           <p className="text-xs font-black text-cyan-400 uppercase tracking-[0.3em] mb-3">About Top Cheese Hockey</p>
-          <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight leading-tight mb-5">
+          <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight leading-tight mb-4">
             Built by a coach.<br/>
             <span className="text-cyan-400">For every coach.</span>
           </h1>
+          <p className="text-xl font-black text-cyan-300 mb-4 tracking-tight">
+            Takes the guesswork out of gut-feel coaching.
+          </p>
           <p className="text-slate-300 text-lg leading-relaxed max-w-xl">
             Pro-level hockey analytics that belong on every bench — not just in NHL front offices.
           </p>
@@ -95,7 +98,7 @@ const AboutPage: React.FC<AboutPageProps> = ({ onClose, onContact }) => {
             Every coach deserves the same information the pros have.
           </h2>
           <p className="text-slate-300 text-lg leading-relaxed">
-            NHL teams spend millions on analytics. Minor hockey coaches track games on paper. Top Cheese Hockey bridges that gap — bringing live shot tracking, AI tactical intel, faceoff analytics, and professional game summary reports to any coach, at any level, on any device.
+            NHL teams spend millions on analytics. Minor hockey coaches track games on paper — or worse, on gut feel. Top Cheese Hockey bridges that gap — bringing live shot tracking, AI tactical intel, faceoff analytics, and professional game summary reports to any coach, at any level, on any device.
           </p>
         </section>
 
