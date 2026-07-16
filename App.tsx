@@ -1456,7 +1456,7 @@ const App: React.FC = () => {
                           const playersOnLine = roster.filter(p => p.line === lineNum);
                           const playersInThisSlot = playersOnLine.filter(p => {
                             if (p.position === pos) return true;
-                            if (p.position === 'F') { const fPlayers = playersOnLine.filter(pl => pl.position === 'F'); return fPlayers.indexOf(p) === posIdx; }
+                            if (p.position === 'F') { const fPlayers = playersOnLine.filter(pl => pl.position === 'F'); const idx = fPlayers.indexOf(p); return posIdx === 2 ? idx >= 2 : idx === posIdx; }
                             return false;
                           });
                           return (
@@ -1481,7 +1481,7 @@ const App: React.FC = () => {
                           const playersInThisSlot = playersOnPair.filter(p => {
                             if (p.position === 'LD' && posIdx === 0) return true;
                             if (p.position === 'RD' && posIdx === 1) return true;
-                            if (p.position === 'D') { const dPlayers = playersOnPair.filter(pl => pl.position === 'D'); return dPlayers.indexOf(p) === posIdx; }
+                            if (p.position === 'D') { const dPlayers = playersOnPair.filter(pl => pl.position === 'D'); const idx = dPlayers.indexOf(p); return posIdx === 1 ? idx >= 1 : idx === 0; }
                             return false;
                           });
                           return (
