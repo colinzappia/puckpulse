@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 
-interface Sponsor {
+interface Partner {
   name: string;
   tagline: string;
-  logo?: string;        // URL to sponsor logo image
+  logo?: string;        // URL to partner logo image
   backgroundColor: string;
   textColor: string;
   accentColor: string;
@@ -11,14 +11,14 @@ interface Sponsor {
 }
 
 // ============================================================
-// EDIT YOUR SPONSORS HERE
-// Add as many sponsors as you like.
-// Each sponsor rotates automatically every 8 seconds.
-// To use only one sponsor, just leave one entry in the array.
+// EDIT YOUR PARTNERS HERE
+// Add as many partners as you like.
+// Each partner rotates automatically every 8 seconds.
+// To use only one partner, just leave one entry in the array.
 // ============================================================
-const SPONSORS: Sponsor[] = [
+const PARTNERS: Partner[] = [
   {
-    name: "YOUR SPONSOR HERE",
+    name: "YOUR PARTNER HERE",
     tagline: "Contact us to advertise on Top Cheese Hockey",
     backgroundColor: "#0f1620",
     textColor: "#94a3b8",
@@ -37,26 +37,26 @@ const AdBanner: React.FC<AdBannerProps> = ({ position, onContactClick }) => {
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
-    if (SPONSORS.length <= 1) return;
+    if (PARTNERS.length <= 1) return;
     const interval = setInterval(() => {
       setVisible(false);
       setTimeout(() => {
-        setCurrentIndex(prev => (prev + 1) % SPONSORS.length);
+        setCurrentIndex(prev => (prev + 1) % PARTNERS.length);
         setVisible(true);
       }, 400);
     }, 8000);
     return () => clearInterval(interval);
   }, []);
 
-  const sponsor = SPONSORS[currentIndex];
+  const partner = PARTNERS[currentIndex];
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (sponsor.link.startsWith('mailto') && onContactClick) {
+    if (partner.link.startsWith('mailto') && onContactClick) {
       onContactClick();
-    } else if (sponsor.link.startsWith('http')) {
-      window.open(sponsor.link, '_blank', 'noopener,noreferrer');
+    } else if (partner.link.startsWith('http')) {
+      window.open(partner.link, '_blank', 'noopener,noreferrer');
     }
   };
 
@@ -64,48 +64,48 @@ const AdBanner: React.FC<AdBannerProps> = ({ position, onContactClick }) => {
     <div
       onClick={handleClick}
       className="block w-full transition-all duration-300"
-      style={{ opacity: visible ? 1 : 0, cursor: sponsor.link ? 'pointer' : 'default' }}
+      style={{ opacity: visible ? 1 : 0, cursor: partner.link ? 'pointer' : 'default' }}
     >
       <div
         className="w-full flex items-center justify-between px-6 py-4 border-white/5"
         style={{
-          backgroundColor: sponsor.backgroundColor,
+          backgroundColor: partner.backgroundColor,
           borderTopWidth: position === 'bottom' ? '1px' : '0',
           borderBottomWidth: position === 'top' ? '1px' : '0',
           borderStyle: 'solid',
           borderColor: 'rgba(255,255,255,0.05)',
         }}
       >
-        {/* Left — Sponsored label */}
+        {/* Left — Partner label */}
         <span
           className="text-[10px] font-black uppercase tracking-[0.2em] shrink-0"
-          style={{ color: sponsor.accentColor, opacity: 0.7 }}
+          style={{ color: partner.accentColor, opacity: 0.7 }}
         >
-          Sponsored
+          Partner
         </span>
 
-        {/* Center — Sponsor info */}
+        {/* Center — Partner info */}
         <div className="flex items-center gap-3 mx-4 overflow-hidden">
-          {sponsor.logo && (
+          {partner.logo && (
             <img
-              src={sponsor.logo}
-              alt={sponsor.name}
+              src={partner.logo}
+              alt={partner.name}
               className="h-6 w-auto object-contain shrink-0"
             />
           )}
           <div className="flex items-center gap-2 overflow-hidden">
             <span
               className="text-base font-black uppercase tracking-wider shrink-0"
-              style={{ color: sponsor.textColor }}
+              style={{ color: partner.textColor }}
             >
-              {sponsor.name}
+              {partner.name}
             </span>
             <span className="text-white/10 shrink-0">·</span>
             <span
               className="text-sm truncate"
-              style={{ color: sponsor.textColor, opacity: 0.6 }}
+              style={{ color: partner.textColor, opacity: 0.6 }}
             >
-              {sponsor.tagline}
+              {partner.tagline}
             </span>
           </div>
         </div>
@@ -114,12 +114,12 @@ const AdBanner: React.FC<AdBannerProps> = ({ position, onContactClick }) => {
         <span
           className="text-xs font-black uppercase tracking-wider shrink-0 px-4 py-1.5 rounded-full border"
           style={{
-            color: sponsor.accentColor,
-            borderColor: sponsor.accentColor,
+            color: partner.accentColor,
+            borderColor: partner.accentColor,
             opacity: 0.9,
           }}
         >
-          {sponsor.link.startsWith('mailto') ? 'Advertise Here' : 'Learn More'}
+          {partner.link.startsWith('mailto') ? 'Advertise Here' : 'Learn More'}
         </span>
       </div>
     </div>
