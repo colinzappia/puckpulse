@@ -593,13 +593,7 @@ const App: React.FC = () => {
   const [showLineups, setShowLineups] = useState(true);
   const [fowHomeCenter, setFowHomeCenter] = useState<string>('');
   const [fowAwayCenter, setFowAwayCenter] = useState<string>('');
-  const [visibleTypes, setVisibleTypes] = useState<EventType[]>([
-    EventType.GOAL, EventType.SHOT, EventType.GIVEAWAY, EventType.TAKEAWAY, EventType.PENALTY,
-    EventType.BLOCK, EventType.FACEOFF_WIN, EventType.FACEOFF_LOSS,
-    EventType.PP_SHOT_FOR, EventType.PP_SHOT_AGAINST,
-    EventType.HIT,
-    EventType.ZONE_ENTRY_CARRY, EventType.ZONE_ENTRY_DUMP, EventType.ZONE_ENTRY_PASS, EventType.ZONE_ENTRY_DENIED
-  ]);
+  const [visibleTypes, setVisibleTypes] = useState<EventType[]>([]);
   const [homeName, setHomeName] = useState(() => {
     try { return sessionStorage.getItem('tch_homeName') || 'HOME'; } catch { return 'HOME'; }
   });
