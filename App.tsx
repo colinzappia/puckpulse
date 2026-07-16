@@ -1481,7 +1481,7 @@ const App: React.FC = () => {
                           const playersInThisSlot = playersOnPair.filter(p => {
                             if (p.position === 'LD' && posIdx === 0) return true;
                             if (p.position === 'RD' && posIdx === 1) return true;
-                            if (p.position === 'D') { const dPlayers = playersOnPair.filter(pl => pl.position === 'D' || pl.position === 'LD' || pl.position === 'RD'); return dPlayers.indexOf(p) === posIdx; }
+                            if (p.position === 'D') { const dPlayers = playersOnPair.filter(pl => pl.position === 'D'); return dPlayers.indexOf(p) === posIdx; }
                             return false;
                           });
                           return (
