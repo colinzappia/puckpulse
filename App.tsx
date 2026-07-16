@@ -43,6 +43,11 @@ import {
 } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 
+// Ad banner (top/bottom) and the "Advertise With Us" page are switched off
+// while building up the paid user base. Flip this back to `true` to bring
+// both back — no other changes needed.
+const ADS_ENABLED = false;
+
 const getPeriodLabel = (p: number) => {
   if (p === 1) return '1st';
   if (p === 2) return '2nd';
@@ -1301,7 +1306,7 @@ const App: React.FC = () => {
     return () => window.removeEventListener('popstate', handlePopState);
   }, [showLanding]);
 
-  if (showLanding) return <LandingPage onLaunch={handleLaunch} onContact={() => { handleLaunch(); setTimeout(() => setShowContact(true), 100); }} onAdvertise={() => { handleLaunch(); setTimeout(() => setShowAdvertise(true), 100); }} onAbout={() => { handleLaunch(); setTimeout(() => setShowAbout(true), 100); }} />;
+  if (showLanding) return <LandingPage onLaunch={handleLaunch} onContact={() => { handleLaunch(); setTimeout(() => setShowContact(true), 100); }} onAdvertise={ADS_ENABLED ? () => { handleLaunch(); setTimeout(() => setShowAdvertise(true), 100); } : undefined} onAbout={() => { handleLaunch(); setTimeout(() => setShowAbout(true), 100); }} />;
 
   // Show loading screen while Clerk is initialising — prevents blank page flash
   if (!authLoaded) return (
@@ -1344,7 +1349,7 @@ const App: React.FC = () => {
 
   return (
     <ThemedBackground intensity="subtle" className="flex flex-col text-slate-200">
-      <AdBanner position="top" onContactClick={() => setShowAdvertise(true)} />
+      {ADS_ENABLED && <AdBanner position="top" onContactClick={() => setShowAdvertise(true)} />}
       <Toaster position="top-center" richColors theme="dark" />
 
       {/* Session banner — shown when a live session is active */}
@@ -1896,7 +1901,7 @@ const App: React.FC = () => {
     )}
 
     <UserManual isOpen={showManual} onClose={() => setShowManual(false)} />
-    <AdBanner position="bottom" onContactClick={() => setShowAdvertise(true)} />
+    {ADS_ENABLED && <AdBanner position="bottom" onContactClick={() => setShowAdvertise(true)} />}
     
     {/* Footer */}
     <div className="flex flex-wrap items-center justify-center gap-3 py-3 bg-black/30 border-t border-white/10 px-4">
@@ -1950,7 +1955,7 @@ const App: React.FC = () => {
 
     <PlayerStats isOpen={showPlayerStats} onClose={() => setShowPlayerStats(false)} events={events} homeRoster={homeRoster} awayRoster={awayRoster} homeName={homeName} awayName={awayName} />
     {showContact && createPortal(<ContactPage onClose={() => setShowContact(false)} />, document.body)}
-    {showAdvertise && createPortal(<AdvertisePage isOpen={showAdvertise} onClose={() => setShowAdvertise(false)} />, document.body)}
+    {ADS_ENABLED && showAdvertise && createPortal(<AdvertisePage isOpen={showAdvertise} onClose={() => setShowAdvertise(false)} />, document.body)}
     {showAbout && createPortal(<AboutPage onClose={() => setShowAbout(false)} onContact={() => { setShowAbout(false); setShowContact(true); }} />, document.body)}
 
     {/* End Game modal */}
