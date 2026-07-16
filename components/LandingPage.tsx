@@ -149,7 +149,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onContact, onAdvert
             <path d="M282 111 L324 120" stroke="#94a3b8" strokeWidth="1.5" strokeDasharray="5,5" />
           </svg>
           <p className="text-xl sm:text-2xl font-bold text-white italic leading-relaxed mb-5">
-            "I built this because I know what a coach needs between whistles — not a complicated system, something fast enough to use with one hand on the bench."
+            "I built this because I know what a coach needs between whistles and between periods — not a complicated system, something fast enough to use with one hand on the bench."
           </p>
           <p className="text-xs font-bold tracking-wide text-yellow-400">
             — Colin Zappia, Founder · 12 Years Coaching Minor &amp; Junior A/B Hockey · 10 Seasons as Colour Analyst, Ottawa 67's on Rogers TV
