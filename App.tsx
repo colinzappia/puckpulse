@@ -430,6 +430,76 @@ const FaceoffPopup: React.FC<FaceoffPopupProps> = ({ homeName, awayName, homeRos
   );
 };
 
+// ── ZONE ENTRY POPUP ─────────────────────────────────────────
+interface EntryPopupProps {
+  pendingEntry: { x: number; y: number };
+  onConfirm: (entryType: EventType, dumpSubtype?: DumpInSubtype) => void;
+  onCancel: () => void;
+}
+
+const EntryPopup: React.FC<EntryPopupProps> = ({ onConfirm, onCancel }) => {
+  const [entryType, setEntryType] = useState<EventType | null>(null);
+  const [dumpSubtype, setDumpSubtype] = useState<DumpInSubtype | ''>('');
+
+  const typeOptions: { type: EventType; label: string; icon: string; color: string; bg: string }[] = [
+    { type: EventType.ZONE_ENTRY_CARRY, label: 'Carry-in', icon: '▲', color: '#818cf8', bg: 'rgba(79,70,229,0.35)' },
+    { type: EventType.ZONE_ENTRY_DUMP, label: 'Dump-in', icon: '■', color: '#fbbf24', bg: 'rgba(217,119,6,0.35)' },
+    { type: EventType.ZONE_ENTRY_PASS, label: 'Pass', icon: '◆', color: '#38bdf8', bg: 'rgba(14,165,233,0.35)' },
+    { type: EventType.ZONE_ENTRY_DENIED, label: 'Denied', icon: '✕', color: '#fb7185', bg: 'rgba(225,29,72,0.35)' },
+  ];
+
+  const canConfirm = entryType !== null;
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 999999, background: 'rgba(0,0,0,0.88)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+      <div style={{ background: '#0f1620', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '1.25rem', padding: '1.5rem', width: '100%', maxWidth: '380px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 30px 60px rgba(0,0,0,0.9)' }}>
+
+        <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
+          <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#4f46e5', margin: '0 auto 0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>⛸</div>
+          <div style={{ color: 'white', fontWeight: 900, fontSize: '1.25rem' }}>Zone Entry</div>
+          <div style={{ color: '#64748b', fontSize: '0.75rem', marginTop: '0.2rem' }}>How did they enter the zone?</div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', marginBottom: entryType === EventType.ZONE_ENTRY_DUMP ? '1rem' : '1.25rem' }}>
+          {typeOptions.map(opt => (
+            <button key={opt.type} onClick={() => setEntryType(opt.type)}
+              style={{ padding: '0.9rem 0.5rem', borderRadius: '0.75rem', fontWeight: 900, fontSize: '0.8rem', border: `2px solid ${entryType === opt.type ? opt.color : 'rgba(255,255,255,0.08)'}`, background: entryType === opt.type ? opt.bg : 'rgba(255,255,255,0.03)', color: entryType === opt.type ? '#fff' : '#94a3b8', cursor: 'pointer' }}>
+              {opt.icon} {opt.label}
+            </button>
+          ))}
+        </div>
+
+        {entryType === EventType.ZONE_ENTRY_DUMP && (
+          <div style={{ marginBottom: '1.25rem', background: 'rgba(217,119,6,0.08)', border: '1px solid rgba(217,119,6,0.25)', borderRadius: '0.75rem', padding: '0.75rem' }}>
+            <p style={{ fontSize: '0.65rem', fontWeight: 900, color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between' }}>
+              <span>Dump-in type</span><span style={{ color: '#64748b', fontWeight: 600, textTransform: 'none' }}>optional</span>
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem' }}>
+              {Object.values(DumpInSubtype).map(subtype => (
+                <button key={subtype} onClick={() => setDumpSubtype(prev => prev === subtype ? '' : subtype)}
+                  style={{ padding: '0.4rem 0.4rem', borderRadius: '0.5rem', fontSize: '0.68rem', fontWeight: 700, border: `1px solid ${dumpSubtype === subtype ? 'rgba(217,119,6,0.6)' : 'rgba(255,255,255,0.06)'}`, background: dumpSubtype === subtype ? 'rgba(217,119,6,0.3)' : 'rgba(255,255,255,0.03)', color: dumpSubtype === subtype ? '#fed7aa' : '#94a3b8', cursor: 'pointer' }}>
+                  {subtype}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: '0.6rem' }}>
+          <button onClick={onCancel}
+            style={{ flex: 1, padding: '0.75rem', borderRadius: '0.75rem', background: 'rgba(255,255,255,0.05)', color: '#94a3b8', fontWeight: 800, fontSize: '0.8rem', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer' }}>
+            Cancel
+          </button>
+          <button disabled={!canConfirm} onClick={() => canConfirm && onConfirm(entryType!, dumpSubtype || undefined)}
+            style={{ flex: 2, padding: '0.75rem', borderRadius: '0.75rem', background: canConfirm ? '#4f46e5' : 'rgba(79,70,229,0.2)', color: canConfirm ? '#fff' : '#78716c', fontWeight: 900, fontSize: '0.85rem', border: 'none', cursor: canConfirm ? 'pointer' : 'not-allowed' }}>
+            Log Entry
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const App: React.FC = () => {
   const [showLanding, setShowLanding] = useState(() => {
     return sessionStorage.getItem('tch_launched') !== 'true';
@@ -443,8 +513,6 @@ const App: React.FC = () => {
   const [showAdvertise, setShowAdvertise] = useState(false);
   const [showPlayerStats, setShowPlayerStats] = useState(false);
   const [showManual, setShowManual] = useState(false);
-  const [showEntriesPanel, setShowEntriesPanel] = useState(false);
-  const [entryDumpSubtype, setEntryDumpSubtype] = useState<DumpInSubtype | ''>('');
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   useEffect(() => {
@@ -717,6 +785,7 @@ const App: React.FC = () => {
   const [showEndGame, setShowEndGame] = useState(false);
   const [pendingGoal, setPendingGoal] = useState<{x: number; y: number; team: Team; playerNumber: string} | null>(null);
   const [pendingFaceoff, setPendingFaceoff] = useState<{x: number; y: number} | null>(null);
+  const [pendingEntry, setPendingEntry] = useState<{x: number; y: number} | null>(null);
   const [isRosterSwapped, setIsRosterSwapped] = useState(false);
   const [showNewGameConfirm, setShowNewGameConfirm] = useState(false);
 
@@ -875,11 +944,43 @@ const App: React.FC = () => {
     setPendingFaceoff(null);
   }, [pendingFaceoff, currentPeriod, getTeamZone, activeSession, user]);
 
+  const confirmEntry = useCallback((entryType: EventType, dumpSubtype?: DumpInSubtype) => {
+    if (!pendingEntry) return;
+    const { x, y } = pendingEntry;
+    const metadata = (entryType === EventType.ZONE_ENTRY_DUMP && dumpSubtype) ? { dumpSubtype } : undefined;
+    const newEvent: GameEvent = {
+      id: Math.random().toString(36).substr(2, 9),
+      timestamp: Date.now(),
+      gameTime: '20:00',
+      period: currentPeriod,
+      type: entryType,
+      team: activeTeam,
+      zone: getTeamZone(activeTeam, x),
+      playerNumber: playerNumber || undefined,
+      coordinates: { x, y },
+      metadata
+    };
+    setEvents(prev => [...prev, newEvent]);
+    setLastEvent({ type: entryType, playerNumber, team: activeTeam });
+    if (activeSession && user) {
+      broadcastEvent(activeSession.id, newEvent, user.id).catch(console.error);
+    }
+    setPendingEntry(null);
+  }, [pendingEntry, currentPeriod, getTeamZone, activeTeam, playerNumber, activeSession, user]);
+
   const handlePlot = useCallback((x: number, y: number) => {
     if (mapPlotType === EventType.FACEOFF_WIN || mapPlotType === EventType.FACEOFF_LOSS) {
       // Location comes first — centres and the winner are chosen in the
       // popup that appears next (see FaceoffPopup / confirmFaceoff).
       setPendingFaceoff({ x, y });
+      return;
+    }
+
+    const zoneEntryTypes = [EventType.ZONE_ENTRY_CARRY, EventType.ZONE_ENTRY_DUMP, EventType.ZONE_ENTRY_PASS, EventType.ZONE_ENTRY_DENIED];
+    if (zoneEntryTypes.includes(mapPlotType)) {
+      // Same idea as faceoffs — location first, then the popup asks how
+      // the entry happened (see EntryPopup / confirmEntry).
+      setPendingEntry({ x, y });
       return;
     }
 
@@ -889,11 +990,7 @@ const App: React.FC = () => {
     }
 
     const quality = mapPlotType === EventType.SHOT ? getShotQuality(x, y, activeTeam) : undefined;
-    const metadata = quality
-      ? { shotQuality: quality }
-      : (mapPlotType === EventType.ZONE_ENTRY_DUMP && entryDumpSubtype)
-        ? { dumpSubtype: entryDumpSubtype }
-        : undefined;
+    const metadata = quality ? { shotQuality: quality } : undefined;
     const newEvent: GameEvent = {
       id: Math.random().toString(36).substr(2, 9),
       timestamp: Date.now(),
@@ -912,7 +1009,7 @@ const App: React.FC = () => {
     if (activeSession && user) {
       broadcastEvent(activeSession.id, newEvent, user.id).catch(console.error);
     }
-  }, [mapPlotType, activeTeam, playerNumber, currentPeriod, getTeamZone, entryDumpSubtype]);
+  }, [mapPlotType, activeTeam, playerNumber, currentPeriod, getTeamZone]);
 
   const handleManageSubscription = async () => {
     const email = currentUser?.primaryEmailAddress?.emailAddress;
@@ -1468,7 +1565,7 @@ const App: React.FC = () => {
                       <button key={btn.type} onClick={() => setMapPlotType(btn.type)} className={`px-3 py-2 rounded-xl text-[10px] font-black uppercase transition-all flex items-center justify-center shadow-lg active:scale-90 shrink-0 ${mapPlotType === btn.type ? `${btn.color} text-white ring-2 ring-white/20` : 'bg-white/5 text-slate-500 hover:bg-white/10'}`}>{btn.label}</button>
                     ))}
                     <button onClick={() => setMapPlotType(mapPlotType === EventType.FACEOFF_WIN || mapPlotType === EventType.FACEOFF_LOSS ? EventType.SHOT : EventType.FACEOFF_WIN)} className={`px-3 py-2 rounded-xl text-[10px] font-black uppercase transition-all flex items-center justify-center shadow-lg active:scale-90 border shrink-0 ${mapPlotType === EventType.FACEOFF_WIN || mapPlotType === EventType.FACEOFF_LOSS ? 'bg-yellow-500 text-black border-yellow-300 ring-2 ring-yellow-300/40' : 'bg-yellow-600/20 text-yellow-400 border-yellow-500/30 hover:bg-yellow-600/40'}`}>🏒 Faceoffs</button>
-                    <button onClick={() => setShowEntriesPanel(true)} className="px-3 py-2 rounded-xl text-[10px] font-black uppercase transition-all flex items-center justify-center shadow-lg active:scale-90 bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 hover:bg-indigo-600/40 shrink-0">Zone Entries</button>
+                    <button onClick={() => { const zoneEntryTypes = [EventType.ZONE_ENTRY_CARRY, EventType.ZONE_ENTRY_DUMP, EventType.ZONE_ENTRY_PASS, EventType.ZONE_ENTRY_DENIED]; setMapPlotType(zoneEntryTypes.includes(mapPlotType) ? EventType.SHOT : EventType.ZONE_ENTRY_CARRY); }} className={`px-3 py-2 rounded-xl text-[10px] font-black uppercase transition-all flex items-center justify-center shadow-lg active:scale-90 border shrink-0 ${[EventType.ZONE_ENTRY_CARRY, EventType.ZONE_ENTRY_DUMP, EventType.ZONE_ENTRY_PASS, EventType.ZONE_ENTRY_DENIED].includes(mapPlotType) ? 'bg-indigo-500 text-white border-indigo-300 ring-2 ring-indigo-300/40' : 'bg-indigo-600/20 text-indigo-400 border-indigo-500/30 hover:bg-indigo-600/40'}`}>⛸ Zone Entries</button>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     {playerNumber && (
@@ -1497,71 +1594,6 @@ const App: React.FC = () => {
             <span>📊</span><span>Player Stats</span>
           </button>
         </div>
-
-        {/* ENTRIES INLINE PANEL */}
-        {showEntriesPanel && (
-          <div className="w-full bg-[#0a0e14] border-b border-indigo-500/20 animate-in slide-in-from-top duration-200">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
-              <div className="flex items-center gap-3">
-                <span className="text-indigo-400 font-black text-sm">⛸ Zone Entry</span>
-                <span className="text-xs text-slate-500">Choose a type, then tap near either blue line</span>
-              </div>
-              <button
-                onClick={() => {
-                  setShowEntriesPanel(false);
-                  const entryTypes = [EventType.ZONE_ENTRY_CARRY, EventType.ZONE_ENTRY_DUMP, EventType.ZONE_ENTRY_PASS, EventType.ZONE_ENTRY_DENIED];
-                  if (entryTypes.includes(mapPlotType)) setMapPlotType(EventType.SHOT);
-                }}
-                className="text-slate-500 hover:text-white text-lg font-bold px-2"
-              >×</button>
-            </div>
-            <div className="p-4">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <button
-                  onClick={() => setMapPlotType(EventType.ZONE_ENTRY_CARRY)}
-                  className={`py-3 font-black rounded-xl text-xs uppercase transition-all active:scale-95 shadow-lg border ${mapPlotType === EventType.ZONE_ENTRY_CARRY ? 'bg-indigo-600 text-white border-indigo-400 ring-2 ring-indigo-300/40' : 'bg-indigo-600/15 text-indigo-300 border-indigo-500/30 hover:bg-indigo-600/30'}`}
-                >▲ Carry-in</button>
-                <button
-                  onClick={() => setMapPlotType(EventType.ZONE_ENTRY_DUMP)}
-                  className={`py-3 font-black rounded-xl text-xs uppercase transition-all active:scale-95 shadow-lg border ${mapPlotType === EventType.ZONE_ENTRY_DUMP ? 'bg-amber-600 text-white border-amber-400 ring-2 ring-amber-300/40' : 'bg-amber-600/15 text-amber-300 border-amber-500/30 hover:bg-amber-600/30'}`}
-                >■ Dump-in</button>
-                <button
-                  onClick={() => setMapPlotType(EventType.ZONE_ENTRY_PASS)}
-                  className={`py-3 font-black rounded-xl text-xs uppercase transition-all active:scale-95 shadow-lg border ${mapPlotType === EventType.ZONE_ENTRY_PASS ? 'bg-sky-600 text-white border-sky-400 ring-2 ring-sky-300/40' : 'bg-sky-600/15 text-sky-300 border-sky-500/30 hover:bg-sky-600/30'}`}
-                >◆ Pass</button>
-                <button
-                  onClick={() => setMapPlotType(EventType.ZONE_ENTRY_DENIED)}
-                  className={`py-3 font-black rounded-xl text-xs uppercase transition-all active:scale-95 shadow-lg border ${mapPlotType === EventType.ZONE_ENTRY_DENIED ? 'bg-rose-600 text-white border-rose-400 ring-2 ring-rose-300/40' : 'bg-rose-600/15 text-rose-300 border-rose-500/30 hover:bg-rose-600/30'}`}
-                >✕ Denied</button>
-              </div>
-
-              {mapPlotType === EventType.ZONE_ENTRY_DUMP && (
-                <div className="mt-3 bg-amber-900/10 border border-amber-500/20 rounded-xl p-3">
-                  <p className="text-[10px] font-black text-amber-400 uppercase tracking-wider mb-2 flex items-center justify-between">
-                    <span>Dump-in type</span>
-                    <span className="text-slate-500 font-medium normal-case">optional</span>
-                  </p>
-                  <div className="grid grid-cols-2 gap-1.5">
-                    {Object.values(DumpInSubtype).map(subtype => (
-                      <button
-                        key={subtype}
-                        onClick={() => setEntryDumpSubtype(prev => prev === subtype ? '' : subtype)}
-                        className={`px-2 py-1.5 rounded-lg text-[11px] font-bold transition-all border ${entryDumpSubtype === subtype ? 'bg-amber-600/30 text-amber-200 border-amber-500/60' : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'}`}
-                      >{subtype}</button>
-                    ))}
-                  </div>
-                  {entryDumpSubtype && (
-                    <button onClick={() => setEntryDumpSubtype('')} className="mt-2 text-[10px] text-slate-500 underline decoration-dotted">Clear subtype</button>
-                  )}
-                </div>
-              )}
-
-              {[EventType.ZONE_ENTRY_CARRY, EventType.ZONE_ENTRY_DUMP, EventType.ZONE_ENTRY_PASS, EventType.ZONE_ENTRY_DENIED].includes(mapPlotType) && (
-                <p className="text-xs text-indigo-400 animate-pulse text-center mt-3">👆 Now tap near a blue line on the rink</p>
-              )}
-            </div>
-          </div>
-        )}
 
         {/* MAP FILTERS */}
         <div className="w-full px-4 py-3 bg-black/40 border-b border-white/5 flex items-center justify-center gap-2 overflow-x-auto scrollbar-none shadow-inner">
@@ -1853,6 +1885,12 @@ const App: React.FC = () => {
     {/* Faceoff popup via portal */}
     {pendingFaceoff !== null && createPortal(
       <FaceoffPopup pendingFaceoff={pendingFaceoff} homeName={homeName} awayName={awayName} homeRoster={homeRoster} awayRoster={awayRoster} onConfirm={confirmFaceoff} onCancel={() => setPendingFaceoff(null)} />,
+      document.body
+    )}
+
+    {/* Zone entry popup via portal */}
+    {pendingEntry !== null && createPortal(
+      <EntryPopup pendingEntry={pendingEntry} onConfirm={confirmEntry} onCancel={() => setPendingEntry(null)} />,
       document.body
     )}
 
