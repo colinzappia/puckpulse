@@ -1,11 +1,17 @@
 import React, { useState } from 'react';
 import ThemedBackground from './ThemedBackground';
+import { usePageMeta } from '../hooks/usePageMeta';
 
 interface ContactPageProps {
   onClose: () => void;
 }
 
 const ContactPage: React.FC<ContactPageProps> = ({ onClose }) => {
+  usePageMeta(
+    'Contact Us | Top Cheese Hockey',
+    'Get in touch with the Top Cheese Hockey team — questions, feedback, partnership inquiries, and support.'
+  );
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
