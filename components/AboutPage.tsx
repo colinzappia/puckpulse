@@ -1,5 +1,6 @@
 import React from 'react';
 import ThemedBackground from './ThemedBackground';
+import { usePageMeta } from '../hooks/usePageMeta';
 
 interface AboutPageProps {
   onClose: () => void;
@@ -7,6 +8,11 @@ interface AboutPageProps {
 }
 
 const AboutPage: React.FC<AboutPageProps> = ({ onClose, onContact }) => {
+  usePageMeta(
+    'About | Top Cheese Hockey',
+    'Top Cheese Hockey was built by a coach, for every coach. Learn about our mission to bring pro-level hockey analytics to every bench, not just NHL front offices.'
+  );
+
   return (
     <div className="fixed inset-0 z-[300] overflow-y-auto">
     <ThemedBackground className="min-h-screen flex flex-col">
@@ -123,7 +129,7 @@ const AboutPage: React.FC<AboutPageProps> = ({ onClose, onContact }) => {
         {/* CTA */}
         <section className="bg-gradient-to-br from-cyan-900/20 to-blue-900/20 border border-cyan-500/20 rounded-3xl p-10 text-center">
           <h2 className="text-2xl font-black text-white mb-3">Questions? Let's talk.</h2>
-          <p className="text-slate-400 mb-6">Whether you're a coach, a potential partner, or just curious — I'd love to hear from you.</p>
+          <p className="text-slate-400 mb-6">Whether you're a coach, a partner, or just curious — I'd love to hear from you.</p>
           <button
             onClick={onContact}
             className="px-8 py-3.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl transition-colors shadow-lg"
