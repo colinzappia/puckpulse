@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { GameEvent, EventType, Team, TeamStats, Zone, Player, PenaltyType, DumpInSubtype } from './types';
 import Header from './components/Header'; // v2
 import RinkChart from './components/RinkChart';
@@ -506,6 +507,8 @@ const EntryPopup: React.FC<EntryPopupProps> = ({ onConfirm, onCancel }) => {
 };
 
 const App: React.FC = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [showLanding, setShowLanding] = useState(() => {
     return sessionStorage.getItem('tch_launched') !== 'true';
   });
@@ -513,11 +516,7 @@ const App: React.FC = () => {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [checkingSubscription, setCheckingSubscription] = useState(false);
   const [legalPage, setLegalPage] = useState<'terms' | 'privacy' | null>(null);
-  const [showContact, setShowContact] = useState(false);
-  const [showAbout, setShowAbout] = useState(false);
-  const [showAdvertise, setShowAdvertise] = useState(false);
   const [showPlayerStats, setShowPlayerStats] = useState(false);
-  const [showManual, setShowManual] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   useEffect(() => {
@@ -1293,9 +1292,12 @@ const App: React.FC = () => {
     setShowLanding(true);
   };
 
-  // Intercept browser back button — go to landing page instead of previous site
+  // Intercept browser back button — go to landing page instead of previous site.
+  // Scoped to the root path only, so it doesn't hijack normal back-navigation
+  // on standalone pages like /about or /manual.
   React.useEffect(() => {
     if (showLanding) return;
+    if (location.pathname !== '/') return;
     window.history.pushState({ tch: true }, '');
     const handlePopState = () => {
       sessionStorage.removeItem('tch_launched');
@@ -1304,9 +1306,25 @@ const App: React.FC = () => {
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [showLanding]);
+  }, [showLanding, location.pathname]);
 
-  if (showLanding) return <LandingPage onLaunch={handleLaunch} onContact={() => { handleLaunch(); setTimeout(() => setShowContact(true), 100); }} onAdvertise={ADS_ENABLED ? () => { handleLaunch(); setTimeout(() => setShowAdvertise(true), 100); } : undefined} onAbout={() => { handleLaunch(); setTimeout(() => setShowAbout(true), 100); }} />;
+  // Standalone public pages — accessible regardless of landing/auth/subscription
+  // state, so Google (and anonymous visitors) can actually reach them instead
+  // of hitting the sign-in wall.
+  if (location.pathname === '/about') {
+    return <AboutPage onClose={() => navigate('/')} onContact={() => navigate('/contact')} />;
+  }
+  if (location.pathname === '/manual') {
+    return <UserManual isOpen={true} onClose={() => navigate('/')} />;
+  }
+  if (location.pathname === '/contact') {
+    return <ContactPage onClose={() => navigate('/')} />;
+  }
+  if (location.pathname === '/advertise' && ADS_ENABLED) {
+    return <AdvertisePage isOpen={true} onClose={() => navigate('/')} />;
+  }
+
+  if (showLanding) return <LandingPage onLaunch={handleLaunch} onContact={() => navigate('/contact')} onAdvertise={ADS_ENABLED ? () => navigate('/advertise') : undefined} onAbout={() => navigate('/about')} />;
 
   // Show loading screen while Clerk is initialising — prevents blank page flash
   if (!authLoaded) return (
@@ -1349,7 +1367,7 @@ const App: React.FC = () => {
 
   return (
     <ThemedBackground intensity="subtle" className="flex flex-col text-slate-200">
-      {ADS_ENABLED && <AdBanner position="top" onContactClick={() => setShowAdvertise(true)} />}
+      {ADS_ENABLED && <AdBanner position="top" onContactClick={() => navigate('/advertise')} />}
       <Toaster position="top-center" richColors theme="dark" />
 
       {/* Session banner — shown when a live session is active */}
@@ -1419,11 +1437,11 @@ const App: React.FC = () => {
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <Header 
           leftTeam={leftTeamDisplay} rightTeam={rightTeamDisplay} period={currentPeriod}
-          onOpenSetup={() => setShowSetup(true)} onOpenManual={() => setShowManual(true)}
+          onOpenSetup={() => setShowSetup(true)} onOpenManual={() => navigate('/manual')}
           onOpenGameHistory={() => setShowGameHistory(true)}
           onSetPeriod={setCurrentPeriod} onSwapSides={() => setIsRosterSwapped(!isRosterSwapped)}
-          onNewGame={handleNewGame} onEndGame={handleEndGame} onOpenAbout={() => setShowAbout(true)} onBackToLanding={handleBackToLanding}
-          onOpenContact={() => setShowContact(true)}
+          onNewGame={handleNewGame} onEndGame={handleEndGame} onOpenAbout={() => navigate('/about')} onBackToLanding={handleBackToLanding}
+          onOpenContact={() => navigate('/contact')}
         />
 
         {/* Session controls — shown when no session is active */}
@@ -1900,8 +1918,7 @@ const App: React.FC = () => {
       </div>
     )}
 
-    <UserManual isOpen={showManual} onClose={() => setShowManual(false)} />
-    {ADS_ENABLED && <AdBanner position="bottom" onContactClick={() => setShowAdvertise(true)} />}
+    {ADS_ENABLED && <AdBanner position="bottom" onContactClick={() => navigate('/advertise')} />}
     
     {/* Footer */}
     <div className="flex flex-wrap items-center justify-center gap-3 py-3 bg-black/30 border-t border-white/10 px-4">
@@ -1909,11 +1926,11 @@ const App: React.FC = () => {
       <span className="text-slate-600">·</span>
       <a href="/privacy.html" target="_blank" rel="noopener noreferrer" className="text-xs text-slate-500 hover:text-slate-300 transition-colors">Privacy</a>
       <span className="text-slate-600">·</span>
-      <button onClick={() => setShowContact(true)} className="text-xs font-bold text-white bg-cyan-600 hover:bg-cyan-500 transition-colors px-4 py-1.5 rounded-full">✉ Contact Us</button>
+      <button onClick={() => navigate('/contact')} className="text-xs font-bold text-white bg-cyan-600 hover:bg-cyan-500 transition-colors px-4 py-1.5 rounded-full">✉ Contact Us</button>
       <span className="text-slate-600">·</span>
-      <button onClick={() => setShowAbout(true)} className="text-xs text-slate-500 hover:text-slate-300 transition-colors">About</button>
+      <button onClick={() => navigate('/about')} className="text-xs text-slate-500 hover:text-slate-300 transition-colors">About</button>
       <span className="text-slate-600">·</span>
-      <button onClick={() => setShowAdvertise(true)} className="text-xs font-bold text-yellow-400 hover:text-yellow-300 transition-colors">📢 Advertise</button>
+      <button onClick={() => navigate('/advertise')} className="text-xs font-bold text-yellow-400 hover:text-yellow-300 transition-colors">📢 Advertise</button>
       <span className="text-slate-600">·</span>
       {!isAdmin && (
         <button onClick={handleManageSubscription} className="text-xs font-bold text-slate-400 hover:text-white transition-colors px-4 py-1.5 rounded-full border border-white/10 hover:border-white/20">⚙ Manage Subscription</button>
@@ -1954,9 +1971,6 @@ const App: React.FC = () => {
     )}
 
     <PlayerStats isOpen={showPlayerStats} onClose={() => setShowPlayerStats(false)} events={events} homeRoster={homeRoster} awayRoster={awayRoster} homeName={homeName} awayName={awayName} />
-    {showContact && createPortal(<ContactPage onClose={() => setShowContact(false)} />, document.body)}
-    {ADS_ENABLED && showAdvertise && createPortal(<AdvertisePage isOpen={showAdvertise} onClose={() => setShowAdvertise(false)} />, document.body)}
-    {showAbout && createPortal(<AboutPage onClose={() => setShowAbout(false)} onContact={() => { setShowAbout(false); setShowContact(true); }} />, document.body)}
 
     {/* End Game modal */}
     {showEndGame && (
