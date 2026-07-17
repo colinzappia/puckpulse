@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import ThemedBackground from './ThemedBackground';
+import { usePageMeta } from '../hooks/usePageMeta';
 
 interface UserManualProps {
   isOpen: boolean;
@@ -276,6 +277,11 @@ const sections = [
 
 const UserManual: React.FC<UserManualProps> = ({ isOpen, onClose }) => {
   const [activeSection, setActiveSection] = useState('setup');
+
+  usePageMeta(
+    'User Manual | Top Cheese Hockey',
+    'Everything you need to know to use Top Cheese Hockey: setup, live game tracking, faceoffs, zone entries, stats, and exporting game reports.'
+  );
 
   if (!isOpen) return null;
 
