@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import ThemedBackground from './ThemedBackground';
 
 interface LandingPageProps {
@@ -149,7 +150,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onContact, onAdvert
             <path d="M282 111 L324 120" stroke="#94a3b8" strokeWidth="1.5" strokeDasharray="5,5" />
           </svg>
           <p className="text-xl sm:text-2xl font-bold text-white italic leading-relaxed mb-5">
-            "I built this because I know what a coach needs between whistles and between periods — not a complicated system, something fast enough to use with one hand on the bench."
+            "I built this because I know what a coach needs between whistles — not a complicated system, something fast enough to use with one hand on the bench."
           </p>
           <p className="text-xs font-bold tracking-wide text-yellow-400">
             — Colin Zappia, Founder · 12 Years Coaching Minor &amp; Junior A/B Hockey · 10 Seasons as Colour Analyst, Ottawa 67's on Rogers TV
@@ -277,13 +278,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onContact, onAdvert
         <span className="mx-2">·</span>
         {onAdvertise && (
           <>
-            <button onClick={onAdvertise} className="hover:text-slate-300 transition-colors bg-transparent border-none cursor-pointer text-inherit">📢 Advertise With Us</button>
+            <Link to="/advertise" className="hover:text-slate-300 transition-colors">📢 Advertise With Us</Link>
             <span className="mx-2">·</span>
           </>
         )}
-        <button onClick={() => onContact && onContact()} className="hover:text-slate-400 transition-colors bg-transparent border-none cursor-pointer text-inherit">Support</button>
+        <Link to="/contact" className="hover:text-slate-400 transition-colors">Support</Link>
         <span className="mx-2">·</span>
-        <button onClick={() => onAbout && onAbout()} className="hover:text-slate-300 transition-colors bg-transparent border-none cursor-pointer text-inherit">About</button>
+        <Link to="/about" className="hover:text-slate-300 transition-colors">About</Link>
         <span className="mx-2">·</span>
         <a href="/terms.html" target="_blank" rel="noopener noreferrer" className="hover:text-slate-300 transition-colors">Terms</a>
         <span className="mx-2">·</span>
