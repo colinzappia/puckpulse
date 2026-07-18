@@ -994,6 +994,7 @@ const App: React.FC = () => {
   const [pendingEntry, setPendingEntry] = useState<{x: number; y: number} | null>(null);
   const [pendingPenalty, setPendingPenalty] = useState<{x: number; y: number; team: Team; playerNumber?: string} | null>(null);
   const [taggingEvent, setTaggingEvent] = useState<string | null>(null);
+  const [playerTagDismissed, setPlayerTagDismissed] = useState(false);
   const [isRosterSwapped, setIsRosterSwapped] = useState(false);
   const [showNewGameConfirm, setShowNewGameConfirm] = useState(false);
 
@@ -1216,6 +1217,7 @@ const App: React.FC = () => {
 
   const handlePlot = useCallback((x: number, y: number) => {
     setTaggingEvent(null);
+    setPlayerTagDismissed(false);
 
     if (mapPlotType === EventType.FACEOFF_WIN || mapPlotType === EventType.FACEOFF_LOSS) {
       // Location comes first — centres and the winner are chosen in the
@@ -1269,6 +1271,7 @@ const App: React.FC = () => {
     // Dot is already plotted — this just offers a quick way to tag/retag
     // who it belongs to, without holding up the plot itself.
     setTaggingEvent(newEvent.id);
+    setPlayerTagDismissed(false);
     // Broadcast to session if active
     if (activeSession && user) {
       broadcastEvent(activeSession.id, newEvent, user.id).catch(console.error);
@@ -1293,7 +1296,7 @@ const App: React.FC = () => {
         : e.metadata;
       return { ...e, playerNumber: num, team: playerTeam, zone: newZone, metadata: newMetadata };
     }));
-    setTaggingEvent(null);
+    setPlayerTagDismissed(true);
   }, [getTeamZone, getShotQuality]);
 
   // Quick, non-blocking updates for a shot's result (on net vs. attempt)
@@ -1458,6 +1461,7 @@ const App: React.FC = () => {
     setPendingEntry(null);
     setPendingPenalty(null);
     setTaggingEvent(null);
+    setPlayerTagDismissed(false);
     try { ['tch_homeRoster','tch_awayRoster','tch_homeName','tch_awayName','tch_homeLogo','tch_awayLogo'].forEach(k => sessionStorage.removeItem(k)); } catch {}
     localStorage.removeItem('tch_game_state');
     setShowEndGame(false);
@@ -1939,7 +1943,7 @@ const App: React.FC = () => {
               );
             })()}
 
-            {taggingEvent && events.some(e => e.id === taggingEvent) && (
+            {taggingEvent && !playerTagDismissed && events.some(e => e.id === taggingEvent) && (
               <div className="w-full px-3 py-2.5 flex items-start gap-3 animate-in slide-in-from-top duration-200 bg-black/40 border-b border-white/10">
                 <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 shrink-0 pt-1.5">Tag:</span>
 
@@ -1977,7 +1981,7 @@ const App: React.FC = () => {
                   })}
                 </div>
 
-                <button onClick={() => setTaggingEvent(null)} className="shrink-0 text-slate-500 hover:text-white text-sm font-bold px-1 pt-1.5">×</button>
+                <button onClick={() => setPlayerTagDismissed(true)} className="shrink-0 text-slate-500 hover:text-white text-sm font-bold px-1 pt-1.5">×</button>
               </div>
             )}
 
