@@ -108,6 +108,8 @@ const DroppableSlot: React.FC<{ id: string, children: React.ReactNode, label: st
 };
 
 // ── GOAL LINE POPUP ──────────────────────────────────────────
+type GoalStrength = 'ES' | 'PP' | 'SH' | 'EN' | 'PS';
+
 interface GoalLinePopupProps {
   pendingGoal: { team: any; playerNumber: string; x: number; y: number };
   homeName: string;
@@ -115,7 +117,7 @@ interface GoalLinePopupProps {
   homeRoster: Player[];
   awayRoster: Player[];
   myTeam: Team | 'NEUTRAL';
-  onConfirm: (line?: string, playersOnIce?: string[], againstPlayersOnIce?: string[]) => void;
+  onConfirm: (line?: string, playersOnIce?: string[], againstPlayersOnIce?: string[], strength?: GoalStrength) => void;
 }
 
 const GoalLinePopup: React.FC<GoalLinePopupProps> = ({ pendingGoal, homeName, awayName, homeRoster, awayRoster, myTeam, onConfirm }) => {
@@ -142,6 +144,7 @@ const GoalLinePopup: React.FC<GoalLinePopupProps> = ({ pendingGoal, homeName, aw
   const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
   const [againstPlayers, setAgainstPlayers] = useState<string[]>([]);
   const [step, setStep] = useState<'line' | 'confirm' | 'override' | 'against'>('line');
+  const [strength, setStrength] = useState<GoalStrength>('ES');
 
   // Forward line and defense pair are picked independently so a full 5-man
   // group (3 forwards + 2 D) can be built from one screen, instead of being
@@ -176,7 +179,7 @@ const GoalLinePopup: React.FC<GoalLinePopupProps> = ({ pendingGoal, homeName, aw
   // is done at this point.
   const proceedAfterScoringSelection = () => {
     if (isNeutral) setStep('against');
-    else onConfirm(selectedLine || undefined, selectedPlayers);
+    else onConfirm(selectedLine || undefined, selectedPlayers, undefined, strength);
   };
 
   const lineGroups = [
@@ -237,6 +240,29 @@ const GoalLinePopup: React.FC<GoalLinePopupProps> = ({ pendingGoal, homeName, aw
           </div>
         </div>
 
+        {step === 'line' && (
+          <div style={{ marginBottom: '1.25rem' }}>
+            <div style={{ fontSize: '0.65rem', color: '#64748b', textAlign: 'center', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>Strength</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.35rem' }}>
+              {([
+                { key: 'ES', label: 'ES' },
+                { key: 'PP', label: 'PP' },
+                { key: 'SH', label: 'SH' },
+                { key: 'EN', label: 'EN' },
+                { key: 'PS', label: 'PS' },
+              ] as { key: GoalStrength; label: string }[]).map(({ key, label }) => {
+                const on = strength === key;
+                return (
+                  <button key={key} onClick={() => setStrength(key)}
+                    style={{ padding: '0.5rem 0.25rem', borderRadius: '0.625rem', fontSize: '0.7rem', fontWeight: 900, border: `1px solid ${on ? '#a855f7' : 'rgba(255,255,255,0.08)'}`, background: on ? 'rgba(168,85,247,0.3)' : 'rgba(255,255,255,0.03)', color: on ? '#fff' : '#64748b', cursor: 'pointer' }}>
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* SINGLE TEAM MODE */}
         {!isNeutral && step === 'line' && (
           <>
@@ -273,7 +299,7 @@ const GoalLinePopup: React.FC<GoalLinePopupProps> = ({ pendingGoal, homeName, aw
               style={{ width: '100%', padding: '0.875rem', background: (selectedFwdKey || selectedDefKey) ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.04)', border: `1px solid ${(selectedFwdKey || selectedDefKey) ? 'rgba(34,197,94,0.4)' : 'rgba(255,255,255,0.06)'}`, color: (selectedFwdKey || selectedDefKey) ? '#22c55e' : '#475569', fontWeight: 900, borderRadius: '0.875rem', fontSize: '0.875rem', cursor: (selectedFwdKey || selectedDefKey) ? 'pointer' : 'not-allowed', marginBottom: '0.5rem' }}>
               Continue
             </button>
-            <button onClick={() => onConfirm(undefined)}
+            <button onClick={() => onConfirm(undefined, undefined, undefined, strength)}
               style={{ width: '100%', padding: '0.75rem', background: 'rgba(255,255,255,0.06)', color: '#94a3b8', fontWeight: 700, borderRadius: '0.875rem', fontSize: '0.8rem', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.08)' }}>
               Skip
             </button>
@@ -366,7 +392,7 @@ const GoalLinePopup: React.FC<GoalLinePopupProps> = ({ pendingGoal, homeName, aw
                   style={{ width: '100%', padding: '0.875rem', background: (selectedFwdKey || selectedDefKey) ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.04)', border: `1px solid ${(selectedFwdKey || selectedDefKey) ? 'rgba(34,197,94,0.4)' : 'rgba(255,255,255,0.06)'}`, color: (selectedFwdKey || selectedDefKey) ? '#22c55e' : '#475569', fontWeight: 900, borderRadius: '0.875rem', fontSize: '0.875rem', cursor: (selectedFwdKey || selectedDefKey) ? 'pointer' : 'not-allowed', marginBottom: '0.5rem' }}>
                   Continue
                 </button>
-                <button onClick={() => onConfirm(undefined)}
+                <button onClick={() => onConfirm(undefined, undefined, undefined, strength)}
                   style={{ width: '100%', padding: '0.75rem', background: 'rgba(255,255,255,0.06)', color: '#94a3b8', fontWeight: 700, borderRadius: '0.875rem', fontSize: '0.8rem', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.08)' }}>
                   Skip
                 </button>
@@ -381,7 +407,7 @@ const GoalLinePopup: React.FC<GoalLinePopupProps> = ({ pendingGoal, homeName, aw
                 </div>
                 {renderPlayerList(defendingRoster, againstPlayers, 'defending')}
                 <div style={{ fontSize: '0.7rem', color: '#64748b', textAlign: 'center', marginBottom: '0.625rem' }}>{againstPlayers.length} defender{againstPlayers.length !== 1 ? 's' : ''} selected</div>
-                <button onClick={() => onConfirm(selectedLine, selectedPlayers, againstPlayers)}
+                <button onClick={() => onConfirm(selectedLine, selectedPlayers, againstPlayers, strength)}
                   style={{ width: '100%', padding: '0.875rem', background: 'rgba(34,197,94,0.2)', border: '1px solid rgba(34,197,94,0.4)', color: '#22c55e', fontWeight: 900, borderRadius: '0.875rem', fontSize: '0.875rem', cursor: 'pointer', marginBottom: '0.5rem' }}>
                   Confirm
                 </button>
@@ -985,7 +1011,7 @@ const App: React.FC = () => {
     return 'low';
   };
 
-  const confirmGoal = useCallback((lineOnIce?: string, playersOnIce?: string[], againstPlayersOnIce?: string[]) => {
+  const confirmGoal = useCallback((lineOnIce?: string, playersOnIce?: string[], againstPlayersOnIce?: string[], strength?: 'ES' | 'PP' | 'SH' | 'EN' | 'PS') => {
     if (!pendingGoal) return;
     const { x, y, team, playerNumber: pNum } = pendingGoal;
     const quality = getShotQuality(x, y, team);
@@ -999,7 +1025,7 @@ const App: React.FC = () => {
       zone: getTeamZone(team, x),
       playerNumber: pNum || undefined,
       coordinates: { x, y },
-      metadata: { shotQuality: quality, lineOnIce, playersOnIce, againstPlayersOnIce }
+      metadata: { shotQuality: quality, lineOnIce, playersOnIce, againstPlayersOnIce, strength: strength || 'ES' }
     };
     setEvents(prev => [...prev, newEvent]);
     if (activeSession && user) broadcastEvent(activeSession.id, newEvent, user.id).catch(console.error);
