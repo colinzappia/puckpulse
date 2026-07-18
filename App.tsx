@@ -975,6 +975,8 @@ const App: React.FC = () => {
   const [showFeed, setShowFeed] = useState(true);
   const [showLineups, setShowLineups] = useState(true);
   const [visibleTypes, setVisibleTypes] = useState<EventType[]>([]);
+  const [shotSubFilter, setShotSubFilter] = useState<'ALL' | 'onNet' | 'attempt' | 'pp' | 'pk'>('ALL');
+  const [shotFilterExpanded, setShotFilterExpanded] = useState(false);
   const [homeName, setHomeName] = useState(() => {
     try { return sessionStorage.getItem('tch_homeName') || 'HOME'; } catch { return 'HOME'; }
   });
@@ -2012,7 +2014,16 @@ const App: React.FC = () => {
             )}
 
             <div className={`w-full max-w-6xl aspect-[200/85] transition-all duration-700 rounded-[5rem] sm:rounded-[8.5rem] p-2 shadow-2xl`}>
-              <RinkChart events={events.filter(e => e.period === currentPeriod && visibleTypes.includes(e.type))} leftLogo={leftTeamDisplay.logo} rightLogo={rightTeamDisplay.logo} onPlot={handlePlot} onMoveEvent={handleMoveEvent} activeEventType={mapPlotType} />
+              <RinkChart events={events.filter(e => {
+                if (e.period !== currentPeriod || !visibleTypes.includes(e.type)) return false;
+                if (e.type === EventType.SHOT && shotSubFilter !== 'ALL') {
+                  if (shotSubFilter === 'onNet') return e.metadata?.onNet !== false;
+                  if (shotSubFilter === 'attempt') return e.metadata?.onNet === false;
+                  if (shotSubFilter === 'pp') return e.metadata?.strength === 'PP';
+                  if (shotSubFilter === 'pk') return e.metadata?.strength === 'PK';
+                }
+                return true;
+              })} leftLogo={leftTeamDisplay.logo} rightLogo={rightTeamDisplay.logo} onPlot={handlePlot} onMoveEvent={handleMoveEvent} activeEventType={mapPlotType} />
             </div>
           </div>
           {/* Player Stats — below rink on mobile, avoids overlap */}
@@ -2035,15 +2046,67 @@ const App: React.FC = () => {
           <div className="flex items-center gap-2">
             {toolbarButtons.map(btn => {
               const isActive = visibleTypes.includes(btn.type);
+              const isShot = btn.type === EventType.SHOT;
               return (
-                <button key={`filter-${btn.type}`} onClick={() => toggleVisibleType(btn.type)} className={`shrink-0 px-4 py-2.5 rounded-xl text-[9px] font-black uppercase transition-all flex items-center gap-2 border shadow-sm ${isActive ? 'bg-white/10 text-white border-white/20' : 'opacity-20 border-transparent bg-transparent'}`}>
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: (btn as any).dotColor }} />
-                  <span>{btn.label}</span>
-                </button>
+                <div key={`filter-${btn.type}`} className="relative shrink-0 flex items-center">
+                  <button
+                    onClick={() => {
+                      toggleVisibleType(btn.type);
+                      // Clicking Shot itself always means "show everything" —
+                      // any active isolation (PP/PK/On Net/Attempt) resets.
+                      if (isShot) setShotSubFilter('ALL');
+                    }}
+                    className={`px-4 py-2.5 rounded-xl text-[9px] font-black uppercase transition-all flex items-center gap-2 border shadow-sm ${isShot ? 'pr-2 rounded-r-none' : ''} ${isActive ? 'bg-white/10 text-white border-white/20' : 'opacity-20 border-transparent bg-transparent'}`}
+                  >
+                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: (btn as any).dotColor }} />
+                    <span>{btn.label}</span>
+                    {isShot && shotSubFilter !== 'ALL' && (
+                      <span className="text-[7px] font-black px-1 py-0.5 rounded bg-cyan-500/30 text-cyan-300">
+                        {shotSubFilter === 'onNet' ? 'NET' : shotSubFilter === 'attempt' ? 'ATT' : shotSubFilter.toUpperCase()}
+                      </span>
+                    )}
+                  </button>
+                  {isShot && (
+                    <button
+                      onClick={() => setShotFilterExpanded(!shotFilterExpanded)}
+                      className={`px-1.5 py-2.5 rounded-xl rounded-l-none border border-l-0 shadow-sm transition-all ${isActive ? 'bg-white/10 text-white border-white/20' : 'opacity-20 border-transparent bg-transparent'}`}
+                    >
+                      <span className={`inline-block transition-transform text-[10px] ${shotFilterExpanded ? 'rotate-180' : ''}`}>▾</span>
+                    </button>
+                  )}
+                </div>
               );
             })}
           </div>
         </div>
+
+        {shotFilterExpanded && (
+          <div className="w-full px-4 py-2.5 bg-black/30 border-b border-white/5 flex items-center justify-center gap-2 overflow-x-auto scrollbar-none animate-in slide-in-from-top duration-200">
+            <span className="text-[8px] font-black uppercase tracking-wider text-slate-500 shrink-0">Isolate shots:</span>
+            {([
+              { key: 'onNet', label: 'On Net', color: '#06b6d4' },
+              { key: 'attempt', label: 'Attempt', color: '#64748b' },
+              { key: 'pp', label: 'PP', color: '#eab308' },
+              { key: 'pk', label: 'PK', color: '#ec4899' },
+            ] as const).map(({ key, label, color }) => {
+              const on = shotSubFilter === key;
+              return (
+                <button
+                  key={key}
+                  onClick={() => setShotSubFilter(on ? 'ALL' : key)}
+                  className="shrink-0 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all border"
+                  style={{
+                    background: on ? `${color}33` : 'rgba(255,255,255,0.03)',
+                    borderColor: on ? color : 'rgba(255,255,255,0.08)',
+                    color: on ? color : '#64748b'
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* DATA COMMAND CENTER */}
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 px-2 sm:px-4 md:px-6 mt-6">
