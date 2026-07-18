@@ -117,12 +117,12 @@ const ShotMarker: React.FC<{
       {onNet ? (
         <path
           d={`M ${cx - s * 0.55} ${cy - s * 0.05} L ${cx - s * 0.1} ${cy + s * 0.45} L ${cx + s * 0.6} ${cy - s * 0.5}`}
-          fill="none" stroke="#16a34a" strokeWidth={size * 0.3} strokeLinecap="round" strokeLinejoin="round"
+          fill="none" stroke="#ffffff" strokeWidth={size * 0.3} strokeLinecap="round" strokeLinejoin="round"
         />
       ) : (
         <>
-          <line x1={cx - s * 0.5} y1={cy - s * 0.5} x2={cx + s * 0.5} y2={cy + s * 0.5} stroke="#dc2626" strokeWidth={size * 0.28} strokeLinecap="round" />
-          <line x1={cx - s * 0.5} y1={cy + s * 0.5} x2={cx + s * 0.5} y2={cy - s * 0.5} stroke="#dc2626" strokeWidth={size * 0.28} strokeLinecap="round" />
+          <line x1={cx - s * 0.5} y1={cy - s * 0.5} x2={cx + s * 0.5} y2={cy + s * 0.5} stroke="#ef4444" strokeWidth={size * 0.28} strokeLinecap="round" />
+          <line x1={cx - s * 0.5} y1={cy + s * 0.5} x2={cx + s * 0.5} y2={cy - s * 0.5} stroke="#ef4444" strokeWidth={size * 0.28} strokeLinecap="round" />
         </>
       )}
     </g>
