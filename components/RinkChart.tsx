@@ -100,6 +100,35 @@ const EntryMarker: React.FC<{
   );
 };
 
+// Renders a shot dot with a small inner glyph showing the result — a green
+// checkmark for shots that reached the net, a red X for attempts that
+// didn't (missed/blocked). Color of the dot itself already encodes
+// strength (ES/PP/PK) via getEventStyle; this just adds the result on top.
+const ShotMarker: React.FC<{
+  cx: number; cy: number; size: number; color: string; isAway: boolean; onNet: boolean;
+}> = ({ cx, cy, size, color, isAway, onNet }) => {
+  const stroke = isAway ? '#ffffff' : 'none';
+  const strokeWidth = isAway ? 1.5 : 0;
+  const s = size * 0.55;
+
+  return (
+    <g>
+      <circle cx={cx} cy={cy} r={size} fill={color} stroke={stroke} strokeWidth={strokeWidth} className="drop-shadow-lg" />
+      {onNet ? (
+        <path
+          d={`M ${cx - s * 0.55} ${cy - s * 0.05} L ${cx - s * 0.1} ${cy + s * 0.45} L ${cx + s * 0.6} ${cy - s * 0.5}`}
+          fill="none" stroke="#16a34a" strokeWidth={size * 0.3} strokeLinecap="round" strokeLinejoin="round"
+        />
+      ) : (
+        <>
+          <line x1={cx - s * 0.5} y1={cy - s * 0.5} x2={cx + s * 0.5} y2={cy + s * 0.5} stroke="#dc2626" strokeWidth={size * 0.28} strokeLinecap="round" />
+          <line x1={cx - s * 0.5} y1={cy + s * 0.5} x2={cx + s * 0.5} y2={cy - s * 0.5} stroke="#dc2626" strokeWidth={size * 0.28} strokeLinecap="round" />
+        </>
+      )}
+    </g>
+  );
+};
+
 const RinkChart: React.FC<RinkChartProps> = ({ 
   events, 
   leftLogo,
@@ -213,8 +242,11 @@ const RinkChart: React.FC<RinkChartProps> = ({
     switch (event.type) {
       case EventType.GOAL: 
         return { color: GOAL_GREEN, size: 9, glow: true, opacity: 1 };
-      case EventType.SHOT: 
-        return { color: SHOT_CYAN, size: 6, opacity: 1 };
+      case EventType.SHOT: {
+        const strength = event.metadata?.strength;
+        const color = strength === 'PP' ? PP_FOR_GOLD : strength === 'PK' ? PP_AGAINST_PINK : SHOT_CYAN;
+        return { color, size: 7, opacity: 1 };
+      }
       case EventType.BLOCK:
         return { color: BLOCK_SLATE, size: 6, opacity: 0.8 };
       case EventType.PP_SHOT_FOR:
@@ -422,7 +454,15 @@ const RinkChart: React.FC<RinkChartProps> = ({
                   />
                 </>
               )}
-              {entryShape ? (
+              {e.type === EventType.SHOT ? (
+                <ShotMarker
+                  cx={cx} cy={cy}
+                  size={style.size}
+                  color={style.color}
+                  isAway={isAway}
+                  onNet={e.metadata?.onNet !== false}
+                />
+              ) : entryShape ? (
                 <EntryMarker 
                   shape={entryShape} 
                   cx={cx} cy={cy} 
