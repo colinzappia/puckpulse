@@ -1955,11 +1955,12 @@ const App: React.FC = () => {
                   <div className="flex items-center gap-1">
                     {(['PP', 'PK'] as const).map(s => {
                       const active = shotStrength === s;
+                      const activeClass = s === 'PP' ? 'bg-amber-500 text-black border-amber-300' : 'bg-pink-500 text-white border-pink-300';
                       return (
                         <button
                           key={s}
                           onClick={() => updateShotMeta(taggingEvent!, { strength: active ? 'ES' : s })}
-                          className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase transition-all border ${active ? 'bg-purple-600 text-white border-purple-400' : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'}`}
+                          className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase transition-all border ${active ? activeClass : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'}`}
                         >{s}</button>
                       );
                     })}
