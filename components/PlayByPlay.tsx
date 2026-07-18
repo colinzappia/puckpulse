@@ -95,6 +95,17 @@ const PlayByPlay: React.FC<PlayByPlayProps> = ({
                         <span className="text-[11px] font-black text-white uppercase truncate tracking-tight">
                           {event.type.replace('_', ' ')} {event.playerNumber && <span className="text-blue-400 ml-0.5">#{event.playerNumber}</span>}
                         </span>
+
+                        {event.type === EventType.SHOT && (
+                          <span className={`inline-flex items-center gap-0.5 text-[8px] font-black px-1.5 py-0.5 rounded shrink-0 ${
+                            event.metadata?.strength === 'PP' ? 'bg-amber-500/20 text-amber-400' :
+                            event.metadata?.strength === 'PK' ? 'bg-pink-500/20 text-pink-400' :
+                            'bg-cyan-500/20 text-cyan-400'
+                          }`}>
+                            {event.metadata?.strength === 'PP' ? 'PP' : event.metadata?.strength === 'PK' ? 'PK' : 'ES'}
+                            {event.metadata?.onNet === false ? ' ✕' : ' ✓'}
+                          </span>
+                        )}
                         
                         <span className="text-[8px] font-black uppercase text-slate-600 tracking-tighter truncate opacity-60">
                           {event.team === Team.HOME ? homeName : awayName}
