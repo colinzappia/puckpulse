@@ -17,6 +17,10 @@ interface PlayerRow {
   position: string;
   goals: number;
   shots: number;
+  shotsOnNet: number;
+  shotsMissed: number;
+  ppShots: number;
+  pkShots: number;
   assists: number;
   hits: number;
   penalties: number;
@@ -36,7 +40,7 @@ function buildPlayerStats(events: GameEvent[], roster: Player[], team: Team): Pl
       number: p.number,
       name: p.name,
       position: p.position,
-      goals: 0, shots: 0, assists: 0, hits: 0,
+      goals: 0, shots: 0, shotsOnNet: 0, shotsMissed: 0, ppShots: 0, pkShots: 0, assists: 0, hits: 0,
       penalties: 0, faceoffWins: 0, faceoffLosses: 0, blocks: 0, plusMinus: 0, total: 0
     });
   });
@@ -47,14 +51,19 @@ function buildPlayerStats(events: GameEvent[], roster: Player[], team: Team): Pl
     if (!map.has(num)) {
       map.set(num, {
         number: num, name: `#${num}`, position: '?',
-        goals: 0, shots: 0, assists: 0, hits: 0,
+        goals: 0, shots: 0, shotsOnNet: 0, shotsMissed: 0, ppShots: 0, pkShots: 0, assists: 0, hits: 0,
         penalties: 0, faceoffWins: 0, faceoffLosses: 0, blocks: 0, plusMinus: 0, total: 0
       });
     }
     const row = map.get(num)!;
     switch (e.type) {
       case EventType.GOAL: row.goals++; break;
-      case EventType.SHOT: row.shots++; break;
+      case EventType.SHOT:
+        row.shots++;
+        if (e.metadata?.onNet === false) row.shotsMissed++; else row.shotsOnNet++;
+        if (e.metadata?.strength === 'PP') row.ppShots++;
+        else if (e.metadata?.strength === 'PK') row.pkShots++;
+        break;
       case EventType.HIT: row.hits++; break;
       case EventType.PENALTY: row.penalties++; break;
       case EventType.FACEOFF_WIN: row.faceoffWins++; break;
@@ -169,13 +178,17 @@ const PlayerStats: React.FC<PlayerStatsProps> = ({
             <p className="text-slate-600 text-xs">Start tracking events on the rink map to see player stats here.</p>
           </div>
         ) : (
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-5xl mx-auto overflow-x-auto">
+            <div style={{ minWidth: '760px' }}>
             {/* Column headers */}
-            <div className="grid grid-cols-[2fr_1fr_repeat(8,1fr)] gap-1 mb-2 px-3">
+            <div className="grid grid-cols-[2fr_1fr_repeat(11,1fr)] gap-1 mb-2 px-3">
               <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Player</span>
               <span className="text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Pos</span>
               <span className="text-xs font-bold text-yellow-500 uppercase tracking-wider text-center">G</span>
-              <span className="text-xs font-bold text-blue-400 uppercase tracking-wider text-center">S</span>
+              <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider text-center">SOG</span>
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider text-center">MISS</span>
+              <span className="text-xs font-bold text-amber-400 uppercase tracking-wider text-center">PP</span>
+              <span className="text-xs font-bold text-pink-400 uppercase tracking-wider text-center">PK</span>
               <span className="text-xs font-bold text-orange-400 uppercase tracking-wider text-center">HIT</span>
               <span className="text-xs font-bold text-red-400 uppercase tracking-wider text-center">PEN</span>
               <span className="text-xs font-bold text-green-400 uppercase tracking-wider text-center">FW</span>
@@ -188,7 +201,7 @@ const PlayerStats: React.FC<PlayerStatsProps> = ({
               {rows.map((row, i) => (
                 <div
                   key={row.number}
-                  className={`grid grid-cols-[2fr_1fr_repeat(8,1fr)] gap-1 items-center px-3 py-2.5 rounded-xl border ${i === 0 ? 'bg-yellow-500/5 border-yellow-500/20' : 'bg-white/3 border-white/5'}`}
+                  className={`grid grid-cols-[2fr_1fr_repeat(11,1fr)] gap-1 items-center px-3 py-2.5 rounded-xl border ${i === 0 ? 'bg-yellow-500/5 border-yellow-500/20' : 'bg-white/3 border-white/5'}`}
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center text-xs font-black text-slate-300 shrink-0">
@@ -199,7 +212,10 @@ const PlayerStats: React.FC<PlayerStatsProps> = ({
                   </div>
                   <span className="text-xs text-slate-500 font-bold text-center">{row.position}</span>
                   <StatBadge value={row.goals} color="text-yellow-400 bg-yellow-500/10" />
-                  <StatBadge value={row.shots} color="text-blue-400 bg-blue-500/10" />
+                  <StatBadge value={row.shotsOnNet} color="text-cyan-400 bg-cyan-500/10" />
+                  <StatBadge value={row.shotsMissed} color="text-slate-400 bg-white/5" />
+                  <StatBadge value={row.ppShots} color="text-amber-400 bg-amber-500/10" />
+                  <StatBadge value={row.pkShots} color="text-pink-400 bg-pink-500/10" />
                   <StatBadge value={row.hits} color="text-orange-400 bg-orange-500/10" />
                   <StatBadge value={row.penalties} color="text-red-400 bg-red-500/10" />
                   <StatBadge value={row.faceoffWins} color="text-green-400 bg-green-500/10" />
@@ -214,7 +230,10 @@ const PlayerStats: React.FC<PlayerStatsProps> = ({
             <div className="flex flex-wrap gap-4 mt-6 px-3">
               {[
                 { key: 'G', label: 'Goals', color: 'text-yellow-400' },
-                { key: 'S', label: 'Shots', color: 'text-blue-400' },
+                { key: 'SOG', label: 'Shots on Goal', color: 'text-cyan-400' },
+                { key: 'MISS', label: 'Missed/Blocked Attempts', color: 'text-slate-400' },
+                { key: 'PP', label: 'Power Play Shots', color: 'text-amber-400' },
+                { key: 'PK', label: 'Penalty Kill Shots', color: 'text-pink-400' },
                 { key: 'HIT', label: 'Hits', color: 'text-orange-400' },
                 { key: 'PEN', label: 'Penalties', color: 'text-red-400' },
                 { key: 'FW', label: 'Faceoff Wins', color: 'text-green-400' },
@@ -227,6 +246,7 @@ const PlayerStats: React.FC<PlayerStatsProps> = ({
                   <span>{l.label}</span>
                 </span>
               ))}
+            </div>
             </div>
           </div>
         )}
