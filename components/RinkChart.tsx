@@ -189,7 +189,9 @@ const RinkChart: React.FC<RinkChartProps> = ({
 
   const handlePointerUp = (e: React.PointerEvent<SVGSVGElement>) => {
     draggingRef.current = null;
-    e.currentTarget.releasePointerCapture(e.pointerId);
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
   };
 
   const getEventStyle = (event: GameEvent) => {
@@ -281,7 +283,7 @@ const RinkChart: React.FC<RinkChartProps> = ({
 
   return (
     <div className="relative aspect-[200/85] bg-transparent overflow-hidden touch-none group">
-      <svg viewBox={`0 0 ${rinkWidth} ${rinkHeight}`} className="w-full h-full cursor-crosshair select-none" onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp}>
+      <svg viewBox={`0 0 ${rinkWidth} ${rinkHeight}`} className="w-full h-full cursor-crosshair select-none touch-none" onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp}>
         <defs>
           <filter id="grayscale">
             <feColorMatrix type="matrix" values="0.3333 0.3333 0.3333 0 0 0.3333 0.3333 0.3333 0 0 0.3333 0.3333 0.3333 0 0 0 0 0 1 0"/>
