@@ -121,8 +121,8 @@ const ShotMarker: React.FC<{
         />
       ) : (
         <>
-          <line x1={cx - s * 0.5} y1={cy - s * 0.5} x2={cx + s * 0.5} y2={cy + s * 0.5} stroke="#ef4444" strokeWidth={size * 0.28} strokeLinecap="round" />
-          <line x1={cx - s * 0.5} y1={cy + s * 0.5} x2={cx + s * 0.5} y2={cy - s * 0.5} stroke="#ef4444" strokeWidth={size * 0.28} strokeLinecap="round" />
+          <line x1={cx - s * 0.5} y1={cy - s * 0.5} x2={cx + s * 0.5} y2={cy + s * 0.5} stroke="#ffffff" strokeWidth={size * 0.28} strokeLinecap="round" />
+          <line x1={cx - s * 0.5} y1={cy + s * 0.5} x2={cx + s * 0.5} y2={cy - s * 0.5} stroke="#ffffff" strokeWidth={size * 0.28} strokeLinecap="round" />
         </>
       )}
     </g>
