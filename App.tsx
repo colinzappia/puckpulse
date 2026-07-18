@@ -143,14 +143,23 @@ const GoalLinePopup: React.FC<GoalLinePopupProps> = ({ pendingGoal, homeName, aw
   const [againstPlayers, setAgainstPlayers] = useState<string[]>([]);
   const [step, setStep] = useState<'line' | 'confirm' | 'override' | 'against'>('line');
 
-  const handleLineSelect = (line: string, lineKey: string) => {
-    const roster = isNeutral ? scoringRoster : (trackingRoster || []);
-    const linePlayers = roster.filter(p => p.line === lineKey).map(p => p.number);
-    setSelectedLine(line);
-    setSelectedPlayers(linePlayers);
-    // Both modes now confirm (and can override) the scoring line's players
-    // before finishing — neutral mode continues on to picking the
-    // defending team afterward, single-team mode finishes right here.
+  // Forward line and defense pair are picked independently so a full 5-man
+  // group (3 forwards + 2 D) can be built from one screen, instead of being
+  // forced to choose only a line OR only a pair.
+  const [selectedFwdKey, setSelectedFwdKey] = useState<string | null>(null);
+  const [selectedDefKey, setSelectedDefKey] = useState<string | null>(null);
+  const toggleFwdKey = (key: string) => setSelectedFwdKey(prev => prev === key ? null : key);
+  const toggleDefKey = (key: string) => setSelectedDefKey(prev => prev === key ? null : key);
+
+  const handleLineContinue = (teamNameForLabel: string, roster: Player[]) => {
+    const fwdPlayers = selectedFwdKey ? roster.filter(p => p.line === selectedFwdKey).map(p => p.number) : [];
+    const defPlayers = selectedDefKey ? roster.filter(p => p.line === selectedDefKey).map(p => p.number) : [];
+    const combined = Array.from(new Set([...fwdPlayers, ...defPlayers]));
+    const labelParts: string[] = [];
+    if (selectedFwdKey) labelParts.push(`Line ${selectedFwdKey}`);
+    if (selectedDefKey) labelParts.push(`Pair ${selectedDefKey.replace('P', '')}`);
+    setSelectedLine(labelParts.length > 0 ? `${teamNameForLabel} ${labelParts.join(' + ')}` : teamNameForLabel);
+    setSelectedPlayers(combined);
     setStep('confirm');
   };
 
@@ -235,22 +244,35 @@ const GoalLinePopup: React.FC<GoalLinePopupProps> = ({ pendingGoal, homeName, aw
               {isGoalFor ? `Which ${trackingTeamName} line scored?` : `Which ${trackingTeamName} line was on ice against?`}
             </div>
 
+            <div style={{ fontSize: '0.68rem', color: '#64748b', textAlign: 'center', marginBottom: '0.4rem' }}>Pick a forward line and/or a defense pair — both combine into one group</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '0.5rem' }}>
-              {lineGroups.map(({ label, key }) => (
-                <button key={key} onClick={() => handleLineSelect(`${trackingTeamName} ${label}`, key)}
-                  style={{ padding: '0.875rem 0.5rem', background: 'rgba(21,128,61,0.25)', border: '1px solid rgba(34,197,94,0.35)', color: 'white', fontWeight: 900, borderRadius: '0.875rem', fontSize: '0.8rem', cursor: 'pointer' }}>
-                  {label}
-                </button>
-              ))}
+              {lineGroups.map(({ label, key }) => {
+                const on = selectedFwdKey === key;
+                return (
+                  <button key={key} onClick={() => toggleFwdKey(key)}
+                    style={{ padding: '0.875rem 0.5rem', background: on ? 'rgba(34,197,94,0.4)' : 'rgba(21,128,61,0.25)', border: `1px solid ${on ? '#22c55e' : 'rgba(34,197,94,0.35)'}`, color: 'white', fontWeight: 900, borderRadius: '0.875rem', fontSize: '0.8rem', cursor: 'pointer' }}>
+                    {on ? '✓ ' : ''}{label}
+                  </button>
+                );
+              })}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem', marginBottom: '0.75rem' }}>
-              {pairGroups.map(({ label, key }) => (
-                <button key={key} onClick={() => handleLineSelect(`${trackingTeamName} ${label}`, key)}
-                  style={{ padding: '0.75rem 0.25rem', background: 'rgba(29,78,216,0.25)', border: '1px solid rgba(59,130,246,0.35)', color: 'white', fontWeight: 900, borderRadius: '0.875rem', fontSize: '0.75rem', cursor: 'pointer' }}>
-                  {label}
-                </button>
-              ))}
+              {pairGroups.map(({ label, key }) => {
+                const on = selectedDefKey === key;
+                return (
+                  <button key={key} onClick={() => toggleDefKey(key)}
+                    style={{ padding: '0.75rem 0.25rem', background: on ? 'rgba(59,130,246,0.4)' : 'rgba(29,78,216,0.25)', border: `1px solid ${on ? '#3b82f6' : 'rgba(59,130,246,0.35)'}`, color: 'white', fontWeight: 900, borderRadius: '0.875rem', fontSize: '0.75rem', cursor: 'pointer' }}>
+                    {on ? '✓ ' : ''}{label}
+                  </button>
+                );
+              })}
             </div>
+            <button
+              disabled={!selectedFwdKey && !selectedDefKey}
+              onClick={() => handleLineContinue(trackingTeamName || '', singleTeamRoster)}
+              style={{ width: '100%', padding: '0.875rem', background: (selectedFwdKey || selectedDefKey) ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.04)', border: `1px solid ${(selectedFwdKey || selectedDefKey) ? 'rgba(34,197,94,0.4)' : 'rgba(255,255,255,0.06)'}`, color: (selectedFwdKey || selectedDefKey) ? '#22c55e' : '#475569', fontWeight: 900, borderRadius: '0.875rem', fontSize: '0.875rem', cursor: (selectedFwdKey || selectedDefKey) ? 'pointer' : 'not-allowed', marginBottom: '0.5rem' }}>
+              Continue
+            </button>
             <button onClick={() => onConfirm(undefined)}
               style={{ width: '100%', padding: '0.75rem', background: 'rgba(255,255,255,0.06)', color: '#94a3b8', fontWeight: 700, borderRadius: '0.875rem', fontSize: '0.8rem', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.08)' }}>
               Skip
@@ -312,25 +334,38 @@ const GoalLinePopup: React.FC<GoalLinePopupProps> = ({ pendingGoal, homeName, aw
           <>
             {step === 'line' && (
               <>
-                <div style={{ color: '#94a3b8', fontSize: '0.8rem', textAlign: 'center', marginBottom: '0.875rem' }}>
+                <div style={{ color: '#94a3b8', fontSize: '0.8rem', textAlign: 'center', marginBottom: '0.5rem' }}>
                   Which {scoringTeamName} line scored?
                 </div>
+                <div style={{ fontSize: '0.68rem', color: '#64748b', textAlign: 'center', marginBottom: '0.4rem' }}>Pick a forward line and/or a defense pair — both combine into one group</div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                  {lineGroups.map(({ label, key }) => (
-                    <button key={key} onClick={() => handleLineSelect(`${scoringTeamName} ${label}`, key)}
-                      style={{ padding: '0.875rem 0.5rem', background: 'rgba(21,128,61,0.25)', border: '1px solid rgba(34,197,94,0.35)', color: 'white', fontWeight: 900, borderRadius: '0.875rem', fontSize: '0.8rem', cursor: 'pointer' }}>
-                      {label}
-                    </button>
-                  ))}
+                  {lineGroups.map(({ label, key }) => {
+                    const on = selectedFwdKey === key;
+                    return (
+                      <button key={key} onClick={() => toggleFwdKey(key)}
+                        style={{ padding: '0.875rem 0.5rem', background: on ? 'rgba(34,197,94,0.4)' : 'rgba(21,128,61,0.25)', border: `1px solid ${on ? '#22c55e' : 'rgba(34,197,94,0.35)'}`, color: 'white', fontWeight: 900, borderRadius: '0.875rem', fontSize: '0.8rem', cursor: 'pointer' }}>
+                        {on ? '✓ ' : ''}{label}
+                      </button>
+                    );
+                  })}
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem', marginBottom: '0.75rem' }}>
-                  {pairGroups.map(({ label, key }) => (
-                    <button key={key} onClick={() => handleLineSelect(`${scoringTeamName} ${label}`, key)}
-                      style={{ padding: '0.75rem 0.25rem', background: 'rgba(29,78,216,0.25)', border: '1px solid rgba(59,130,246,0.35)', color: 'white', fontWeight: 900, borderRadius: '0.875rem', fontSize: '0.75rem', cursor: 'pointer' }}>
-                      {label}
-                    </button>
-                  ))}
+                  {pairGroups.map(({ label, key }) => {
+                    const on = selectedDefKey === key;
+                    return (
+                      <button key={key} onClick={() => toggleDefKey(key)}
+                        style={{ padding: '0.75rem 0.25rem', background: on ? 'rgba(59,130,246,0.4)' : 'rgba(29,78,216,0.25)', border: `1px solid ${on ? '#3b82f6' : 'rgba(59,130,246,0.35)'}`, color: 'white', fontWeight: 900, borderRadius: '0.875rem', fontSize: '0.75rem', cursor: 'pointer' }}>
+                        {on ? '✓ ' : ''}{label}
+                      </button>
+                    );
+                  })}
                 </div>
+                <button
+                  disabled={!selectedFwdKey && !selectedDefKey}
+                  onClick={() => handleLineContinue(scoringTeamName, scoringRoster)}
+                  style={{ width: '100%', padding: '0.875rem', background: (selectedFwdKey || selectedDefKey) ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.04)', border: `1px solid ${(selectedFwdKey || selectedDefKey) ? 'rgba(34,197,94,0.4)' : 'rgba(255,255,255,0.06)'}`, color: (selectedFwdKey || selectedDefKey) ? '#22c55e' : '#475569', fontWeight: 900, borderRadius: '0.875rem', fontSize: '0.875rem', cursor: (selectedFwdKey || selectedDefKey) ? 'pointer' : 'not-allowed', marginBottom: '0.5rem' }}>
+                  Continue
+                </button>
                 <button onClick={() => onConfirm(undefined)}
                   style={{ width: '100%', padding: '0.75rem', background: 'rgba(255,255,255,0.06)', color: '#94a3b8', fontWeight: 700, borderRadius: '0.875rem', fontSize: '0.8rem', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.08)' }}>
                   Skip
