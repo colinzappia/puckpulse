@@ -73,7 +73,18 @@ function buildPlayerStats(events: GameEvent[], roster: Player[], team: Team): Pl
   // side (only ever populated in both-team mode). Checking both against
   // this roster's numbers handles either mode correctly without needing
   // to know which mode the data came from.
-  events.filter(e => e.type === EventType.GOAL).forEach(e => {
+  //
+  // Only even-strength (ES) and shorthanded (SH) goals count toward +/-,
+  // matching standard convention — power play goals never affect +/- for
+  // either side, and empty-net / penalty-shot goals are excluded too since
+  // they're not a reflection of full-strength on-ice play. Goals logged
+  // before strength tracking existed have no `strength` field at all —
+  // those are treated as ES so old games aren't silently zeroed out.
+  events.filter(e => {
+    if (e.type !== EventType.GOAL) return false;
+    const s = e.metadata?.strength;
+    return !s || s === 'ES' || s === 'SH';
+  }).forEach(e => {
     const onIce: string[] = e.metadata?.playersOnIce || [];
     const onIceAgainst: string[] = e.metadata?.againstPlayersOnIce || [];
     roster.forEach(p => {
@@ -209,7 +220,7 @@ const PlayerStats: React.FC<PlayerStatsProps> = ({
                 { key: 'FW', label: 'Faceoff Wins', color: 'text-green-400' },
                 { key: 'FL', label: 'Faceoff Losses', color: 'text-slate-400' },
                 { key: 'BLK', label: 'Blocks', color: 'text-cyan-400' },
-                { key: '+/-', label: 'Plus/Minus (on-ice for vs. against, all situations)', color: 'text-purple-400' },
+                { key: '+/-', label: 'Plus/Minus (even strength & shorthanded only)', color: 'text-purple-400' },
               ].map(l => (
                 <span key={l.key} className="flex items-center gap-1.5 text-xs text-slate-500">
                   <span className={`font-black ${l.color}`}>{l.key}</span>
