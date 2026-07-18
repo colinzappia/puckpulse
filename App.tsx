@@ -975,7 +975,8 @@ const App: React.FC = () => {
   const [showFeed, setShowFeed] = useState(true);
   const [showLineups, setShowLineups] = useState(true);
   const [visibleTypes, setVisibleTypes] = useState<EventType[]>([]);
-  const [shotSubFilter, setShotSubFilter] = useState<'ALL' | 'onNet' | 'attempt' | 'pp' | 'pk'>('ALL');
+  const [shotResultFilter, setShotResultFilter] = useState<'ALL' | 'onNet' | 'attempt'>('ALL');
+  const [shotStrengthFilter, setShotStrengthFilter] = useState<'ALL' | 'pp' | 'pk'>('ALL');
   const [shotFilterExpanded, setShotFilterExpanded] = useState(false);
   const [homeName, setHomeName] = useState(() => {
     try { return sessionStorage.getItem('tch_homeName') || 'HOME'; } catch { return 'HOME'; }
@@ -2020,11 +2021,11 @@ const App: React.FC = () => {
             <div className={`w-full max-w-6xl aspect-[200/85] transition-all duration-700 rounded-[5rem] sm:rounded-[8.5rem] p-2 shadow-2xl`}>
               <RinkChart events={events.filter(e => {
                 if (e.period !== currentPeriod || !visibleTypes.includes(e.type)) return false;
-                if (e.type === EventType.SHOT && shotSubFilter !== 'ALL') {
-                  if (shotSubFilter === 'onNet') return e.metadata?.onNet !== false;
-                  if (shotSubFilter === 'attempt') return e.metadata?.onNet === false;
-                  if (shotSubFilter === 'pp') return e.metadata?.strength === 'PP';
-                  if (shotSubFilter === 'pk') return e.metadata?.strength === 'PK';
+                if (e.type === EventType.SHOT) {
+                  if (shotResultFilter === 'onNet' && e.metadata?.onNet === false) return false;
+                  if (shotResultFilter === 'attempt' && e.metadata?.onNet !== false) return false;
+                  if (shotStrengthFilter === 'pp' && e.metadata?.strength !== 'PP') return false;
+                  if (shotStrengthFilter === 'pk' && e.metadata?.strength !== 'PK') return false;
                 }
                 return true;
               })} leftLogo={leftTeamDisplay.logo} rightLogo={rightTeamDisplay.logo} onPlot={handlePlot} onMoveEvent={handleMoveEvent} activeEventType={mapPlotType} />
@@ -2057,16 +2058,19 @@ const App: React.FC = () => {
                     onClick={() => {
                       toggleVisibleType(btn.type);
                       // Clicking Shot itself always means "show everything" —
-                      // any active isolation (PP/PK/On Net/Attempt) resets.
-                      if (isShot) setShotSubFilter('ALL');
+                      // any active isolation (result and/or strength) resets.
+                      if (isShot) { setShotResultFilter('ALL'); setShotStrengthFilter('ALL'); }
                     }}
                     className={`px-4 py-2.5 rounded-xl text-[9px] font-black uppercase transition-all flex items-center gap-2 border shadow-sm ${isShot ? 'pr-2 rounded-r-none' : ''} ${isActive ? 'bg-white/10 text-white border-white/20' : 'opacity-20 border-transparent bg-transparent'}`}
                   >
                     <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: (btn as any).dotColor }} />
                     <span>{btn.label}</span>
-                    {isShot && shotSubFilter !== 'ALL' && (
+                    {isShot && (shotResultFilter !== 'ALL' || shotStrengthFilter !== 'ALL') && (
                       <span className="text-[7px] font-black px-1 py-0.5 rounded bg-cyan-500/30 text-cyan-300">
-                        {shotSubFilter === 'onNet' ? 'NET' : shotSubFilter === 'attempt' ? 'ATT' : shotSubFilter.toUpperCase()}
+                        {[
+                          shotResultFilter === 'onNet' ? 'NET' : shotResultFilter === 'attempt' ? 'ATT' : null,
+                          shotStrengthFilter !== 'ALL' ? shotStrengthFilter.toUpperCase() : null,
+                        ].filter(Boolean).join('+')}
                       </span>
                     )}
                   </button>
@@ -2085,30 +2089,56 @@ const App: React.FC = () => {
         </div>
 
         {shotFilterExpanded && (
-          <div className="w-full px-4 py-2.5 bg-black/30 border-b border-white/5 flex items-center justify-center gap-2 overflow-x-auto scrollbar-none animate-in slide-in-from-top duration-200">
-            <span className="text-[8px] font-black uppercase tracking-wider text-slate-500 shrink-0">Isolate shots:</span>
-            {([
-              { key: 'onNet', label: 'On Net', color: '#06b6d4' },
-              { key: 'attempt', label: 'Attempt', color: '#64748b' },
-              { key: 'pp', label: 'PP', color: '#eab308' },
-              { key: 'pk', label: 'PK', color: '#ec4899' },
-            ] as const).map(({ key, label, color }) => {
-              const on = shotSubFilter === key;
-              return (
-                <button
-                  key={key}
-                  onClick={() => setShotSubFilter(on ? 'ALL' : key)}
-                  className="shrink-0 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all border"
-                  style={{
-                    background: on ? `${color}33` : 'rgba(255,255,255,0.03)',
-                    borderColor: on ? color : 'rgba(255,255,255,0.08)',
-                    color: on ? color : '#64748b'
-                  }}
-                >
-                  {label}
-                </button>
-              );
-            })}
+          <div className="w-full px-4 py-2.5 bg-black/30 border-b border-white/5 flex items-center justify-center gap-3 overflow-x-auto scrollbar-none animate-in slide-in-from-top duration-200">
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className="text-[8px] font-black uppercase tracking-wider text-slate-500 shrink-0">Result:</span>
+              {([
+                { key: 'onNet', label: 'On Net', color: '#06b6d4' },
+                { key: 'attempt', label: 'Attempt', color: '#64748b' },
+              ] as const).map(({ key, label, color }) => {
+                const on = shotResultFilter === key;
+                return (
+                  <button
+                    key={key}
+                    onClick={() => setShotResultFilter(on ? 'ALL' : key)}
+                    className="shrink-0 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all border"
+                    style={{
+                      background: on ? `${color}33` : 'rgba(255,255,255,0.03)',
+                      borderColor: on ? color : 'rgba(255,255,255,0.08)',
+                      color: on ? color : '#64748b'
+                    }}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+
+            <span className="text-slate-700 shrink-0">·</span>
+
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className="text-[8px] font-black uppercase tracking-wider text-slate-500 shrink-0">Strength:</span>
+              {([
+                { key: 'pp', label: 'PP', color: '#eab308' },
+                { key: 'pk', label: 'PK', color: '#ec4899' },
+              ] as const).map(({ key, label, color }) => {
+                const on = shotStrengthFilter === key;
+                return (
+                  <button
+                    key={key}
+                    onClick={() => setShotStrengthFilter(on ? 'ALL' : key)}
+                    className="shrink-0 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all border"
+                    style={{
+                      background: on ? `${color}33` : 'rgba(255,255,255,0.03)',
+                      borderColor: on ? color : 'rgba(255,255,255,0.08)',
+                      color: on ? color : '#64748b'
+                    }}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
 
