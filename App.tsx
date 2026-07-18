@@ -148,11 +148,10 @@ const GoalLinePopup: React.FC<GoalLinePopupProps> = ({ pendingGoal, homeName, aw
     const linePlayers = roster.filter(p => p.line === lineKey).map(p => p.number);
     setSelectedLine(line);
     setSelectedPlayers(linePlayers);
-    if (isNeutral) {
-      setStep('against');
-    } else {
-      setStep('confirm');
-    }
+    // Both modes now confirm (and can override) the scoring line's players
+    // before finishing — neutral mode continues on to picking the
+    // defending team afterward, single-team mode finishes right here.
+    setStep('confirm');
   };
 
   const togglePlayer = (number: string, side: 'scoring' | 'defending') => {
@@ -161,6 +160,14 @@ const GoalLinePopup: React.FC<GoalLinePopupProps> = ({ pendingGoal, homeName, aw
     } else {
       setAgainstPlayers(prev => prev.includes(number) ? prev.filter(n => n !== number) : [...prev, number]);
     }
+  };
+
+  // What happens after the scoring team's on-ice players are confirmed —
+  // neutral mode still needs to pick the defending team, single-team mode
+  // is done at this point.
+  const proceedAfterScoringSelection = () => {
+    if (isNeutral) setStep('against');
+    else onConfirm(selectedLine || undefined, selectedPlayers);
   };
 
   const lineGroups = [
@@ -174,6 +181,11 @@ const GoalLinePopup: React.FC<GoalLinePopupProps> = ({ pendingGoal, homeName, aw
   // In single team mode — determine if this is a goal for or against
   const isGoalFor = trackingTeam === scoringTeam;
   const singleTeamRoster = trackingRoster || [];
+
+  // Roster to show/toggle for the scoring side's confirm+override steps —
+  // differs by mode since neutral mode tracks both full rosters, while
+  // single-team mode only has the one roster being tracked.
+  const scoringSideRoster = isNeutral ? scoringRoster : singleTeamRoster;
 
   const renderPlayerList = (roster: Player[], selected: string[], side: 'scoring' | 'defending') => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem', maxHeight: '200px', overflowY: 'auto', marginBottom: '0.75rem' }}>
@@ -217,77 +229,81 @@ const GoalLinePopup: React.FC<GoalLinePopupProps> = ({ pendingGoal, homeName, aw
         </div>
 
         {/* SINGLE TEAM MODE */}
-        {!isNeutral && (
+        {!isNeutral && step === 'line' && (
           <>
             <div style={{ color: '#94a3b8', fontSize: '0.8rem', textAlign: 'center', marginBottom: '0.875rem' }}>
               {isGoalFor ? `Which ${trackingTeamName} line scored?` : `Which ${trackingTeamName} line was on ice against?`}
             </div>
 
-            {step === 'line' && (
-              <>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                  {lineGroups.map(({ label, key }) => (
-                    <button key={key} onClick={() => handleLineSelect(`${trackingTeamName} ${label}`, key)}
-                      style={{ padding: '0.875rem 0.5rem', background: 'rgba(21,128,61,0.25)', border: '1px solid rgba(34,197,94,0.35)', color: 'white', fontWeight: 900, borderRadius: '0.875rem', fontSize: '0.8rem', cursor: 'pointer' }}>
-                      {label}
-                    </button>
-                  ))}
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem', marginBottom: '0.75rem' }}>
-                  {pairGroups.map(({ label, key }) => (
-                    <button key={key} onClick={() => handleLineSelect(`${trackingTeamName} ${label}`, key)}
-                      style={{ padding: '0.75rem 0.25rem', background: 'rgba(29,78,216,0.25)', border: '1px solid rgba(59,130,246,0.35)', color: 'white', fontWeight: 900, borderRadius: '0.875rem', fontSize: '0.75rem', cursor: 'pointer' }}>
-                      {label}
-                    </button>
-                  ))}
-                </div>
-                <button onClick={() => onConfirm(undefined)}
-                  style={{ width: '100%', padding: '0.75rem', background: 'rgba(255,255,255,0.06)', color: '#94a3b8', fontWeight: 700, borderRadius: '0.875rem', fontSize: '0.8rem', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  Skip
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '0.5rem' }}>
+              {lineGroups.map(({ label, key }) => (
+                <button key={key} onClick={() => handleLineSelect(`${trackingTeamName} ${label}`, key)}
+                  style={{ padding: '0.875rem 0.5rem', background: 'rgba(21,128,61,0.25)', border: '1px solid rgba(34,197,94,0.35)', color: 'white', fontWeight: 900, borderRadius: '0.875rem', fontSize: '0.8rem', cursor: 'pointer' }}>
+                  {label}
                 </button>
-              </>
-            )}
+              ))}
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem', marginBottom: '0.75rem' }}>
+              {pairGroups.map(({ label, key }) => (
+                <button key={key} onClick={() => handleLineSelect(`${trackingTeamName} ${label}`, key)}
+                  style={{ padding: '0.75rem 0.25rem', background: 'rgba(29,78,216,0.25)', border: '1px solid rgba(59,130,246,0.35)', color: 'white', fontWeight: 900, borderRadius: '0.875rem', fontSize: '0.75rem', cursor: 'pointer' }}>
+                  {label}
+                </button>
+              ))}
+            </div>
+            <button onClick={() => onConfirm(undefined)}
+              style={{ width: '100%', padding: '0.75rem', background: 'rgba(255,255,255,0.06)', color: '#94a3b8', fontWeight: 700, borderRadius: '0.875rem', fontSize: '0.8rem', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.08)' }}>
+              Skip
+            </button>
+          </>
+        )}
 
-            {step === 'confirm' && (
-              <>
-                <div style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: '0.875rem', padding: '0.75rem', marginBottom: '0.75rem', textAlign: 'center' }}>
-                  <div style={{ color: '#22c55e', fontWeight: 700, fontSize: '0.875rem', marginBottom: '0.2rem' }}>{selectedLine}</div>
-                  <div style={{ color: '#94a3b8', fontSize: '0.7rem' }}>
-                    {selectedPlayers.length > 0
-                      ? selectedPlayers.map(n => { const p = singleTeamRoster.find(r => r.number === n); return p ? `#${n} ${p.name.split(' ').pop()}` : `#${n}`; }).join(' · ')
-                      : 'No players assigned to this line'}
-                  </div>
-                </div>
-                <button onClick={() => setStep('override')}
-                  style={{ width: '100%', padding: '0.75rem', background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.3)', color: '#fbbf24', fontWeight: 700, borderRadius: '0.875rem', fontSize: '0.8rem', cursor: 'pointer', marginBottom: '0.5rem' }}>
-                  Override players on ice
-                </button>
-                <button onClick={() => onConfirm(selectedLine, selectedPlayers)}
-                  style={{ width: '100%', padding: '0.875rem', background: 'rgba(34,197,94,0.2)', border: '1px solid rgba(34,197,94,0.4)', color: '#22c55e', fontWeight: 900, borderRadius: '0.875rem', fontSize: '0.875rem', cursor: 'pointer', marginBottom: '0.5rem' }}>
-                  Confirm
-                </button>
-                <button onClick={() => setStep('line')}
-                  style={{ width: '100%', padding: '0.625rem', background: 'transparent', color: '#64748b', fontWeight: 600, borderRadius: '0.875rem', fontSize: '0.75rem', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  ← Back
-                </button>
-              </>
+        {/* SCORING TEAM confirm/override — shared by both modes, so either
+            can manually pick the exact 5 players instead of being locked
+            to whatever the roster's line assignment says */}
+        {step === 'confirm' && (
+          <>
+            <div style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: '0.875rem', padding: '0.75rem', marginBottom: '0.75rem', textAlign: 'center' }}>
+              <div style={{ color: '#22c55e', fontWeight: 700, fontSize: '0.875rem', marginBottom: '0.2rem' }}>{selectedLine}</div>
+              <div style={{ color: '#94a3b8', fontSize: '0.7rem' }}>
+                {selectedPlayers.length > 0
+                  ? selectedPlayers.map(n => { const p = scoringSideRoster.find(r => r.number === n); return p ? `#${n} ${p.name.split(' ').pop()}` : `#${n}`; }).join(' · ')
+                  : 'No players assigned to this line'}
+              </div>
+            </div>
+            {isNeutral && (
+              <div style={{ fontSize: '0.7rem', color: '#64748b', textAlign: 'center', marginBottom: '0.75rem' }}>
+                Next: select {defendingTeamName} players on ice against
+              </div>
             )}
+            <button onClick={() => setStep('override')}
+              style={{ width: '100%', padding: '0.75rem', background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.3)', color: '#fbbf24', fontWeight: 700, borderRadius: '0.875rem', fontSize: '0.8rem', cursor: 'pointer', marginBottom: '0.5rem' }}>
+              Override players on ice
+            </button>
+            <button onClick={proceedAfterScoringSelection}
+              style={{ width: '100%', padding: '0.875rem', background: 'rgba(34,197,94,0.2)', border: '1px solid rgba(34,197,94,0.4)', color: '#22c55e', fontWeight: 900, borderRadius: '0.875rem', fontSize: '0.875rem', cursor: 'pointer', marginBottom: '0.5rem' }}>
+              Confirm
+            </button>
+            <button onClick={() => setStep('line')}
+              style={{ width: '100%', padding: '0.625rem', background: 'transparent', color: '#64748b', fontWeight: 600, borderRadius: '0.875rem', fontSize: '0.75rem', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.06)' }}>
+              ← Back
+            </button>
+          </>
+        )}
 
-            {step === 'override' && (
-              <>
-                <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.625rem', textAlign: 'center' }}>Tap to toggle players who were actually on ice</div>
-                {renderPlayerList(singleTeamRoster, selectedPlayers, 'scoring')}
-                <div style={{ fontSize: '0.7rem', color: '#64748b', textAlign: 'center', marginBottom: '0.625rem' }}>{selectedPlayers.length} player{selectedPlayers.length !== 1 ? 's' : ''} selected</div>
-                <button onClick={() => onConfirm(selectedLine, selectedPlayers)}
-                  style={{ width: '100%', padding: '0.875rem', background: 'rgba(34,197,94,0.2)', border: '1px solid rgba(34,197,94,0.4)', color: '#22c55e', fontWeight: 900, borderRadius: '0.875rem', fontSize: '0.875rem', cursor: 'pointer', marginBottom: '0.5rem' }}>
-                  Confirm {selectedPlayers.length} players
-                </button>
-                <button onClick={() => setStep('confirm')}
-                  style={{ width: '100%', padding: '0.625rem', background: 'transparent', color: '#64748b', fontWeight: 600, borderRadius: '0.875rem', fontSize: '0.75rem', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  ← Back
-                </button>
-              </>
-            )}
+        {step === 'override' && (
+          <>
+            <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.625rem', textAlign: 'center' }}>Tap to toggle players who were actually on ice</div>
+            {renderPlayerList(scoringSideRoster, selectedPlayers, 'scoring')}
+            <div style={{ fontSize: '0.7rem', color: '#64748b', textAlign: 'center', marginBottom: '0.625rem' }}>{selectedPlayers.length} player{selectedPlayers.length !== 1 ? 's' : ''} selected</div>
+            <button onClick={proceedAfterScoringSelection}
+              style={{ width: '100%', padding: '0.875rem', background: 'rgba(34,197,94,0.2)', border: '1px solid rgba(34,197,94,0.4)', color: '#22c55e', fontWeight: 900, borderRadius: '0.875rem', fontSize: '0.875rem', cursor: 'pointer', marginBottom: '0.5rem' }}>
+              Confirm {selectedPlayers.length} players
+            </button>
+            <button onClick={() => setStep('confirm')}
+              style={{ width: '100%', padding: '0.625rem', background: 'transparent', color: '#64748b', fontWeight: 600, borderRadius: '0.875rem', fontSize: '0.75rem', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.06)' }}>
+              ← Back
+            </button>
           </>
         )}
 
@@ -334,7 +350,7 @@ const GoalLinePopup: React.FC<GoalLinePopupProps> = ({ pendingGoal, homeName, aw
                   style={{ width: '100%', padding: '0.875rem', background: 'rgba(34,197,94,0.2)', border: '1px solid rgba(34,197,94,0.4)', color: '#22c55e', fontWeight: 900, borderRadius: '0.875rem', fontSize: '0.875rem', cursor: 'pointer', marginBottom: '0.5rem' }}>
                   Confirm
                 </button>
-                <button onClick={() => setStep('line')}
+                <button onClick={() => setStep('confirm')}
                   style={{ width: '100%', padding: '0.625rem', background: 'transparent', color: '#64748b', fontWeight: 600, borderRadius: '0.875rem', fontSize: '0.75rem', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.06)' }}>
                   ← Back
                 </button>
