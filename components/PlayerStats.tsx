@@ -23,42 +23,34 @@ interface PlayerRow {
   faceoffWins: number;
   faceoffLosses: number;
   blocks: number;
+  plusMinus: number;
   total: number;
 }
 
 function buildPlayerStats(events: GameEvent[], roster: Player[], team: Team): PlayerRow[] {
   const map = new Map<string, PlayerRow>();
 
-  const getPlayerInfo = (num: string) => {
-    const p = roster.find(r => r.number === num);
-    return { name: p?.name || `#${num}`, position: p?.position || '?' };
-  };
-
-  // Pre-populate centres only
-  roster.filter(p => p.position?.toUpperCase() === 'C').forEach(p => {
+  // Initialize from roster
+  roster.forEach(p => {
     map.set(p.number, {
-      number: p.number, name: p.name, position: p.position,
+      number: p.number,
+      name: p.name,
+      position: p.position,
       goals: 0, shots: 0, assists: 0, hits: 0,
-      penalties: 0, faceoffWins: 0, faceoffLosses: 0, blocks: 0, total: 0
+      penalties: 0, faceoffWins: 0, faceoffLosses: 0, blocks: 0, plusMinus: 0, total: 0
     });
   });
 
-  // Add events — non-centres only get added if they took a faceoff
+  // Count events
   events.filter(e => e.team === team && e.playerNumber).forEach(e => {
     const num = e.playerNumber!;
-    const isFaceoff = e.type === EventType.FACEOFF_WIN || e.type === EventType.FACEOFF_LOSS;
-    const isCenter = roster.find(p => p.number === num)?.position?.toUpperCase() === 'C';
-
     if (!map.has(num)) {
-      if (!isFaceoff && !isCenter) return; // skip non-centres who haven't taken a faceoff
-      const info = getPlayerInfo(num);
       map.set(num, {
-        number: num, name: info.name, position: info.position,
+        number: num, name: `#${num}`, position: '?',
         goals: 0, shots: 0, assists: 0, hits: 0,
-        penalties: 0, faceoffWins: 0, faceoffLosses: 0, blocks: 0, total: 0
+        penalties: 0, faceoffWins: 0, faceoffLosses: 0, blocks: 0, plusMinus: 0, total: 0
       });
     }
-
     const row = map.get(num)!;
     switch (e.type) {
       case EventType.GOAL: row.goals++; break;
@@ -69,18 +61,52 @@ function buildPlayerStats(events: GameEvent[], roster: Player[], team: Team): Pl
       case EventType.FACEOFF_LOSS: row.faceoffLosses++; break;
       case EventType.BLOCK: row.blocks++; break;
     }
-    row.total = row.faceoffWins + row.faceoffLosses;
+    row.total = row.goals + row.shots + row.hits + row.faceoffWins + row.blocks;
+  });
+
+  // Plus/minus — checked across ALL goals (not just this team's own events),
+  // since a player can be a -1 on a goal that belongs to the OTHER team.
+  // `playersOnIce` holds whichever team's on-ice group was picked as the
+  // "scoring" side in the goal popup (in single-team mode this is always
+  // the tracked team, for or against; in both-team mode it's specifically
+  // the team that scored), and `againstPlayersOnIce` holds the defending
+  // side (only ever populated in both-team mode). Checking both against
+  // this roster's numbers handles either mode correctly without needing
+  // to know which mode the data came from.
+  events.filter(e => e.type === EventType.GOAL).forEach(e => {
+    const onIce: string[] = e.metadata?.playersOnIce || [];
+    const onIceAgainst: string[] = e.metadata?.againstPlayersOnIce || [];
+    roster.forEach(p => {
+      const row = map.get(p.number);
+      if (!row) return;
+      if (onIce.includes(p.number)) {
+        row.plusMinus += e.team === team ? 1 : -1;
+      } else if (onIceAgainst.includes(p.number)) {
+        row.plusMinus -= 1;
+      }
+    });
   });
 
   return Array.from(map.values())
-    .sort((a, b) => (b.faceoffWins + b.faceoffLosses) - (a.faceoffWins + a.faceoffLosses));
+    .filter(r => r.total > 0 || r.goals > 0 || r.shots > 0 || r.plusMinus !== 0)
+    .sort((a, b) => b.total - a.total);
 }
 
 const StatBadge = ({ value, color }: { value: number; color: string }) => (
   <span className={`inline-flex items-center justify-center w-7 h-7 rounded-lg text-xs font-black ${value > 0 ? color : 'text-slate-700 bg-transparent'}`}>
-    {value === -1 ? '' : value > 0 ? value : '—'}
+    {value > 0 ? value : '—'}
   </span>
 );
+
+const PlusMinusBadge = ({ value }: { value: number }) => {
+  const color = value > 0 ? 'text-green-400 bg-green-500/10' : value < 0 ? 'text-red-400 bg-red-500/10' : 'text-slate-700 bg-transparent';
+  const label = value > 0 ? `+${value}` : value < 0 ? `${value}` : '—';
+  return (
+    <span className={`inline-flex items-center justify-center w-7 h-7 rounded-lg text-xs font-black ${color}`}>
+      {label}
+    </span>
+  );
+};
 
 const PlayerStats: React.FC<PlayerStatsProps> = ({
   events, homeRoster, awayRoster, homeName, awayName, isOpen, onClose
@@ -134,7 +160,7 @@ const PlayerStats: React.FC<PlayerStatsProps> = ({
         ) : (
           <div className="max-w-4xl mx-auto">
             {/* Column headers */}
-            <div className="grid grid-cols-[2fr_1fr_repeat(7,1fr)] gap-1 mb-2 px-3">
+            <div className="grid grid-cols-[2fr_1fr_repeat(8,1fr)] gap-1 mb-2 px-3">
               <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Player</span>
               <span className="text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Pos</span>
               <span className="text-xs font-bold text-yellow-500 uppercase tracking-wider text-center">G</span>
@@ -144,13 +170,14 @@ const PlayerStats: React.FC<PlayerStatsProps> = ({
               <span className="text-xs font-bold text-green-400 uppercase tracking-wider text-center">FW</span>
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider text-center">FL</span>
               <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider text-center">BLK</span>
+              <span className="text-xs font-bold text-purple-400 uppercase tracking-wider text-center">+/-</span>
             </div>
 
             <div className="space-y-1.5">
               {rows.map((row, i) => (
                 <div
                   key={row.number}
-                  className={`grid grid-cols-[2fr_1fr_repeat(7,1fr)] gap-1 items-center px-3 py-2.5 rounded-xl border ${i === 0 ? 'bg-yellow-500/5 border-yellow-500/20' : 'bg-white/3 border-white/5'}`}
+                  className={`grid grid-cols-[2fr_1fr_repeat(8,1fr)] gap-1 items-center px-3 py-2.5 rounded-xl border ${i === 0 ? 'bg-yellow-500/5 border-yellow-500/20' : 'bg-white/3 border-white/5'}`}
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center text-xs font-black text-slate-300 shrink-0">
@@ -164,9 +191,10 @@ const PlayerStats: React.FC<PlayerStatsProps> = ({
                   <StatBadge value={row.shots} color="text-blue-400 bg-blue-500/10" />
                   <StatBadge value={row.hits} color="text-orange-400 bg-orange-500/10" />
                   <StatBadge value={row.penalties} color="text-red-400 bg-red-500/10" />
-                  <StatBadge value={row.faceoffWins > 0 || row.faceoffLosses > 0 ? row.faceoffWins : -1} color="text-green-400 bg-green-500/10" />
-                  <StatBadge value={row.faceoffWins > 0 || row.faceoffLosses > 0 ? row.faceoffLosses : -1} color="text-slate-400 bg-white/5" />
+                  <StatBadge value={row.faceoffWins} color="text-green-400 bg-green-500/10" />
+                  <StatBadge value={row.faceoffLosses} color="text-slate-400 bg-white/5" />
                   <StatBadge value={row.blocks} color="text-cyan-400 bg-cyan-500/10" />
+                  <PlusMinusBadge value={row.plusMinus} />
                 </div>
               ))}
             </div>
@@ -181,6 +209,7 @@ const PlayerStats: React.FC<PlayerStatsProps> = ({
                 { key: 'FW', label: 'Faceoff Wins', color: 'text-green-400' },
                 { key: 'FL', label: 'Faceoff Losses', color: 'text-slate-400' },
                 { key: 'BLK', label: 'Blocks', color: 'text-cyan-400' },
+                { key: '+/-', label: 'Plus/Minus (on-ice for vs. against, all situations)', color: 'text-purple-400' },
               ].map(l => (
                 <span key={l.key} className="flex items-center gap-1.5 text-xs text-slate-500">
                   <span className={`font-black ${l.color}`}>{l.key}</span>
