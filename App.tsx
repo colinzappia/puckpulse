@@ -769,8 +769,12 @@ const App: React.FC = () => {
       return 'NEUTRAL';
     } catch { return 'NEUTRAL'; }
   });
-  const [homeLogo, setHomeLogo] = useState("");
-  const [awayLogo, setAwayLogo] = useState("");
+  const [homeLogo, setHomeLogo] = useState(() => {
+    try { return sessionStorage.getItem('tch_homeLogo') || ''; } catch { return ''; }
+  });
+  const [awayLogo, setAwayLogo] = useState(() => {
+    try { return sessionStorage.getItem('tch_awayLogo') || ''; } catch { return ''; }
+  });
   const [homeRosterUrl, setHomeRosterUrl] = useState("");
   const [awayRosterUrl, setAwayRosterUrl] = useState("");
   const [homeRoster, setHomeRoster] = useState<Player[]>(() => {
@@ -822,6 +826,14 @@ const App: React.FC = () => {
   useEffect(() => {
     try { sessionStorage.setItem('tch_awayRoster', JSON.stringify(awayRoster)); } catch {}
   }, [awayRoster]);
+
+  useEffect(() => {
+    try { sessionStorage.setItem('tch_homeLogo', homeLogo); } catch {}
+  }, [homeLogo]);
+
+  useEffect(() => {
+    try { sessionStorage.setItem('tch_awayLogo', awayLogo); } catch {}
+  }, [awayLogo]);
 
   useEffect(() => {
     try {
@@ -1079,7 +1091,7 @@ const App: React.FC = () => {
     setAwayLogo('');
     setSummaries({ 'total': 'Game tracking active. Generate coaching analysis after logging more events.' });
     localStorage.removeItem('tch_game_state');
-    try { ['tch_homeRoster','tch_awayRoster','tch_homeName','tch_awayName'].forEach(k => sessionStorage.removeItem(k)); } catch {}
+    try { ['tch_homeRoster','tch_awayRoster','tch_homeName','tch_awayName','tch_homeLogo','tch_awayLogo'].forEach(k => sessionStorage.removeItem(k)); } catch {}
     sessionStorage.setItem('tch_launched', 'true');
     setShowNewGameConfirm(false);
   };
@@ -1207,7 +1219,7 @@ const App: React.FC = () => {
     setPendingFaceoff(null);
     setPendingEntry(null);
     setTaggingEvent(null);
-    try { ['tch_homeRoster','tch_awayRoster','tch_homeName','tch_awayName'].forEach(k => sessionStorage.removeItem(k)); } catch {}
+    try { ['tch_homeRoster','tch_awayRoster','tch_homeName','tch_awayName','tch_homeLogo','tch_awayLogo'].forEach(k => sessionStorage.removeItem(k)); } catch {}
     localStorage.removeItem('tch_game_state');
     setShowEndGame(false);
   };
