@@ -790,7 +790,7 @@ const App: React.FC = () => {
   const [pendingGoal, setPendingGoal] = useState<{x: number; y: number; team: Team; playerNumber: string} | null>(null);
   const [pendingFaceoff, setPendingFaceoff] = useState<{x: number; y: number} | null>(null);
   const [pendingEntry, setPendingEntry] = useState<{x: number; y: number} | null>(null);
-  const [taggingEvent, setTaggingEvent] = useState<{ id: string; team: Team } | null>(null);
+  const [taggingEvent, setTaggingEvent] = useState<string | null>(null);
   const [isRosterSwapped, setIsRosterSwapped] = useState(false);
   const [showNewGameConfirm, setShowNewGameConfirm] = useState(false);
 
@@ -1025,17 +1025,33 @@ const App: React.FC = () => {
     setLastEvent({ type: mapPlotType, playerNumber: playerNumber, team: activeTeam });
     // Dot is already plotted — this just offers a quick way to tag/retag
     // who it belongs to, without holding up the plot itself.
-    setTaggingEvent({ id: newEvent.id, team: activeTeam });
+    setTaggingEvent(newEvent.id);
     // Broadcast to session if active
     if (activeSession && user) {
       broadcastEvent(activeSession.id, newEvent, user.id).catch(console.error);
     }
   }, [mapPlotType, activeTeam, playerNumber, currentPeriod, getTeamZone]);
 
-  const confirmPlayerTag = useCallback((eventId: string, num: string) => {
-    setEvents(prev => prev.map(e => e.id === eventId ? { ...e, playerNumber: num } : e));
+  const confirmPlayerTag = useCallback((eventId: string, num: string, playerTeam: Team) => {
+    setEvents(prev => prev.map(e => {
+      if (e.id !== eventId) return e;
+      if (e.team === playerTeam || !e.coordinates) {
+        // Same team as originally plotted — just attach the player.
+        return { ...e, playerNumber: num };
+      }
+      // Tapped a player from the OTHER team than the event was originally
+      // plotted for. The dot's location doesn't move, but zone (and shot
+      // quality, for shots) are relative to which team the event belongs
+      // to — since each team attacks the opposite end — so both need to be
+      // recomputed, not just the player number.
+      const newZone = getTeamZone(playerTeam, e.coordinates.x);
+      const newMetadata = e.type === EventType.SHOT
+        ? { ...e.metadata, shotQuality: getShotQuality(e.coordinates.x, e.coordinates.y, playerTeam) }
+        : e.metadata;
+      return { ...e, playerNumber: num, team: playerTeam, zone: newZone, metadata: newMetadata };
+    }));
     setTaggingEvent(null);
-  }, []);
+  }, [getTeamZone, getShotQuality]);
 
   const handleManageSubscription = async () => {
     const email = currentUser?.primaryEmailAddress?.emailAddress;
@@ -1628,28 +1644,45 @@ const App: React.FC = () => {
               )}
             </div>
 
-            {taggingEvent && events.some(e => e.id === taggingEvent.id) && (
-              <div
-                className="w-full px-3 py-2 flex items-center gap-2 overflow-x-auto scrollbar-none animate-in slide-in-from-top duration-200"
-                style={{
-                  background: taggingEvent.team === Team.HOME ? 'rgba(37,99,235,0.12)' : 'rgba(220,38,38,0.12)',
-                  borderBottom: `1px solid ${taggingEvent.team === Team.HOME ? 'rgba(37,99,235,0.25)' : 'rgba(220,38,38,0.25)'}`
-                }}
-              >
-                <span className={`text-[9px] font-black uppercase tracking-wider shrink-0 ${taggingEvent.team === Team.HOME ? 'text-blue-400' : 'text-red-400'}`}>Tag:</span>
-                <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
-                  {(taggingEvent.team === Team.HOME ? homeRoster : awayRoster).filter(p => p.position?.toUpperCase() !== 'G').map(p => {
-                    const isTagged = events.find(e => e.id === taggingEvent.id)?.playerNumber === p.number;
+            {taggingEvent && events.some(e => e.id === taggingEvent) && (
+              <div className="w-full px-3 py-2.5 flex items-start gap-3 animate-in slide-in-from-top duration-200 bg-black/40 border-b border-white/10">
+                <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 shrink-0 pt-1.5">Tag:</span>
+
+                <div className="flex-1 min-w-0 grid grid-cols-2 gap-2">
+                  {([Team.HOME, Team.AWAY] as const).map(team => {
+                    const roster = team === Team.HOME ? homeRoster : awayRoster;
+                    const taggedNum = events.find(e => e.id === taggingEvent)?.playerNumber;
+                    const isHomeTeam = team === Team.HOME;
                     return (
-                      <button
-                        key={p.number}
-                        onClick={() => confirmPlayerTag(taggingEvent.id, p.number)}
-                        className={`shrink-0 px-2.5 py-1.5 rounded-lg text-[10px] font-black whitespace-nowrap transition-all border ${isTagged ? (taggingEvent.team === Team.HOME ? 'bg-blue-600 text-white border-blue-400' : 'bg-red-600 text-white border-red-400') : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'}`}
-                      >#{p.number} {p.name.split(' ').pop()}</button>
+                      <div
+                        key={team}
+                        className="rounded-lg p-1.5"
+                        style={{
+                          background: isHomeTeam ? 'rgba(37,99,235,0.10)' : 'rgba(220,38,38,0.10)',
+                          border: `1px solid ${isHomeTeam ? 'rgba(37,99,235,0.25)' : 'rgba(220,38,38,0.25)'}`
+                        }}
+                      >
+                        <p className={`text-[8px] font-black uppercase tracking-wider mb-1 px-0.5 ${isHomeTeam ? 'text-blue-400' : 'text-red-400'}`}>
+                          {isHomeTeam ? homeName : awayName}
+                        </p>
+                        <div className="flex flex-wrap gap-1">
+                          {roster.filter(p => p.position?.toUpperCase() !== 'G').map(p => {
+                            const isTagged = taggedNum === p.number;
+                            return (
+                              <button
+                                key={p.number}
+                                onClick={() => confirmPlayerTag(taggingEvent, p.number, team)}
+                                className={`w-9 h-8 rounded-md text-[11px] font-black transition-all border shrink-0 ${isTagged ? (isHomeTeam ? 'bg-blue-600 text-white border-blue-400' : 'bg-red-600 text-white border-red-400') : 'bg-white/5 text-slate-300 border-white/5 hover:bg-white/10'}`}
+                              >{p.number}</button>
+                            );
+                          })}
+                        </div>
+                      </div>
                     );
                   })}
                 </div>
-                <button onClick={() => setTaggingEvent(null)} className="ml-auto shrink-0 text-slate-500 hover:text-white text-sm font-bold px-2">×</button>
+
+                <button onClick={() => setTaggingEvent(null)} className="shrink-0 text-slate-500 hover:text-white text-sm font-bold px-1 pt-1.5">×</button>
               </div>
             )}
 
