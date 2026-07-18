@@ -2,15 +2,6 @@ import React from 'react';
 import ThemedBackground from './ThemedBackground';
 import { usePageMeta } from '../hooks/usePageMeta';
 
-// Edit this list to add, remove, or reorder people on the About page.
-// `email` and `photo` are both optional — leave either out and that
-// team member's card just won't show that line/image.
-const TEAM_MEMBERS: { name: string; title: string; email?: string; photo?: string }[] = [
-  { name: 'Colin Zappia', title: 'Founder & President', email: 'colin@topcheesehockey.com' },
-  { name: 'Add Name', title: 'VP of Sales' },
-  { name: 'Add Name', title: 'VP of Marketing' },
-];
-
 interface AboutPageProps {
   onClose: () => void;
   onContact: () => void;
@@ -130,28 +121,6 @@ const AboutPage: React.FC<AboutPageProps> = ({ onClose, onContact }) => {
             ].map(l => (
               <div key={l.level} className="bg-black/30 backdrop-blur-sm border border-white/5 rounded-2xl p-5 text-center flex items-center justify-center min-h-[64px]">
                 <p className="text-white font-black text-sm">{l.level}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Leadership Team */}
-        <section>
-          <p className="text-xs font-black text-cyan-400 uppercase tracking-[0.3em] mb-3 text-center">The Team</p>
-          <h2 className="text-3xl font-black text-white mb-8 text-center">Leadership.</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {TEAM_MEMBERS.map(member => (
-              <div key={member.name + member.title} className="bg-black/30 backdrop-blur-sm border border-white/5 rounded-2xl p-6 text-center">
-                <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-cyan-600/20 border border-cyan-500/30 flex items-center justify-center text-cyan-300 font-black text-2xl overflow-hidden">
-                  {member.photo ? (
-                    <img src={member.photo} alt={member.name} className="w-full h-full object-cover" />
-                  ) : (
-                    member.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
-                  )}
-                </div>
-                <p className="text-white font-black text-base">{member.name}</p>
-                <p className="text-cyan-400 text-xs font-bold uppercase tracking-wider mt-1">{member.title}</p>
-                {member.email && <p className="text-slate-500 text-xs mt-2">{member.email}</p>}
               </div>
             ))}
           </div>
