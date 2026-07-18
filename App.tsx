@@ -118,9 +118,10 @@ interface GoalLinePopupProps {
   awayRoster: Player[];
   myTeam: Team | 'NEUTRAL';
   onConfirm: (line?: string, playersOnIce?: string[], againstPlayersOnIce?: string[], strength?: GoalStrength) => void;
+  onCancel: () => void;
 }
 
-const GoalLinePopup: React.FC<GoalLinePopupProps> = ({ pendingGoal, homeName, awayName, homeRoster, awayRoster, myTeam, onConfirm }) => {
+const GoalLinePopup: React.FC<GoalLinePopupProps> = ({ pendingGoal, homeName, awayName, homeRoster, awayRoster, myTeam, onConfirm, onCancel }) => {
   const scoringTeam = pendingGoal.team;
   const scoringTeamName = scoringTeam === Team.HOME ? homeName : awayName;
   const isHome = scoringTeam === Team.HOME;
@@ -220,9 +221,15 @@ const GoalLinePopup: React.FC<GoalLinePopupProps> = ({ pendingGoal, homeName, aw
     </div>
   );
 
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onCancel(); };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [onCancel]);
+
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 999999, background: 'rgba(0,0,0,0.88)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-      <div style={{ background: '#0f1620', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '1.25rem', padding: '1.5rem', width: '100%', maxWidth: '380px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 30px 60px rgba(0,0,0,0.9)' }}>
+    <div onClick={onCancel} style={{ position: 'fixed', inset: 0, zIndex: 999999, background: 'rgba(0,0,0,0.88)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#0f1620', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '1.25rem', padding: '1.5rem', width: '100%', maxWidth: '380px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 30px 60px rgba(0,0,0,0.9)' }}>
 
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
@@ -471,9 +478,15 @@ const FaceoffPopup: React.FC<FaceoffPopupProps> = ({ homeName, awayName, homeRos
     </div>
   );
 
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onCancel(); };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [onCancel]);
+
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 999999, background: 'rgba(0,0,0,0.88)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-      <div style={{ background: '#0f1620', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '1.25rem', padding: '1.5rem', width: '100%', maxWidth: '420px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 30px 60px rgba(0,0,0,0.9)' }}>
+    <div onClick={onCancel} style={{ position: 'fixed', inset: 0, zIndex: 999999, background: 'rgba(0,0,0,0.88)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#0f1620', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '1.25rem', padding: '1.5rem', width: '100%', maxWidth: '420px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 30px 60px rgba(0,0,0,0.9)' }}>
 
         <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
           <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#eab308', margin: '0 auto 0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>🏒</div>
@@ -533,9 +546,15 @@ const EntryPopup: React.FC<EntryPopupProps> = ({ onConfirm, onCancel }) => {
 
   const canConfirm = entryType !== null;
 
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onCancel(); };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [onCancel]);
+
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 999999, background: 'rgba(0,0,0,0.88)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-      <div style={{ background: '#0f1620', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '1.25rem', padding: '1.5rem', width: '100%', maxWidth: '380px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 30px 60px rgba(0,0,0,0.9)' }}>
+    <div onClick={onCancel} style={{ position: 'fixed', inset: 0, zIndex: 999999, background: 'rgba(0,0,0,0.88)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#0f1620', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '1.25rem', padding: '1.5rem', width: '100%', maxWidth: '380px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 30px 60px rgba(0,0,0,0.9)' }}>
 
         <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
           <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#4f46e5', margin: '0 auto 0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>⛸</div>
@@ -620,45 +639,51 @@ const PenaltyPopup: React.FC<PenaltyPopupProps> = ({ pendingPenalty, homeName, a
   );
   const finalInfraction = penaltyType === 'OTHER' ? customInfraction.trim() : (penaltyType || '');
 
-  return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 999999, background: 'rgba(0,0,0,0.88)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-      <div style={{ background: '#0f1620', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '1.25rem', padding: '1.5rem', width: '100%', maxWidth: '400px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 30px 60px rgba(0,0,0,0.9)' }}>
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onCancel(); };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [onCancel]);
 
-        <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
-          <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#ef4444', margin: '0 auto 0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>🚨</div>
-          <div style={{ color: 'white', fontWeight: 900, fontSize: '1.25rem' }}>Penalty</div>
-          <div style={{ display: 'inline-block', marginTop: '0.4rem', padding: '0.2rem 0.875rem', borderRadius: '999px', background: accentBg, color: 'white', fontSize: '0.75rem', fontWeight: 900 }}>
+  return (
+    <div onClick={onCancel} style={{ position: 'fixed', inset: 0, zIndex: 999999, background: 'rgba(0,0,0,0.88)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#0f1620', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '1.25rem', padding: '1.25rem', width: '100%', maxWidth: '400px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 30px 60px rgba(0,0,0,0.9)' }}>
+
+        <div style={{ textAlign: 'center', marginBottom: '0.85rem' }}>
+          <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: '#ef4444', margin: '0 auto 0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>🚨</div>
+          <div style={{ color: 'white', fontWeight: 900, fontSize: '1.1rem' }}>Penalty</div>
+          <div style={{ display: 'inline-block', marginTop: '0.3rem', padding: '0.15rem 0.75rem', borderRadius: '999px', background: accentBg, color: 'white', fontSize: '0.7rem', fontWeight: 900 }}>
             {teamName}
           </div>
         </div>
 
-        <div style={{ marginBottom: '1rem' }}>
-          <p style={{ fontSize: '0.7rem', fontWeight: 900, color: accent, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Who took the penalty?</p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+        <div style={{ marginBottom: '0.75rem' }}>
+          <p style={{ fontSize: '0.65rem', fontWeight: 900, color: accent, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem' }}>Who took the penalty?</p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem' }}>
             {roster.map(p => (
               <button key={p.number} onClick={() => setPlayerNumber(p.number)}
-                style={{ padding: '0.4rem 0.7rem', borderRadius: '0.6rem', fontSize: '0.75rem', fontWeight: 900, border: `1px solid ${playerNumber === p.number ? accent : 'rgba(255,255,255,0.08)'}`, background: playerNumber === p.number ? accentBg : 'rgba(255,255,255,0.03)', color: playerNumber === p.number ? '#fff' : '#94a3b8', cursor: 'pointer' }}>
-                #{p.number} {p.name.split(' ').pop()}
+                style={{ width: '2.1rem', height: '2.1rem', borderRadius: '0.5rem', fontSize: '0.75rem', fontWeight: 900, border: `1px solid ${playerNumber === p.number ? accent : 'rgba(255,255,255,0.08)'}`, background: playerNumber === p.number ? accentBg : 'rgba(255,255,255,0.03)', color: playerNumber === p.number ? '#fff' : '#94a3b8', cursor: 'pointer' }}>
+                {p.number}
               </button>
             ))}
             {roster.length === 0 && <span style={{ fontSize: '0.7rem', color: '#475569' }}>No roster loaded</span>}
           </div>
         </div>
 
-        <div style={{ marginBottom: '1rem' }}>
-          <p style={{ fontSize: '0.7rem', fontWeight: 900, color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Infraction</p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem' }}>
+        <div style={{ marginBottom: '0.75rem' }}>
+          <p style={{ fontSize: '0.65rem', fontWeight: 900, color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem' }}>Infraction</p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.3rem' }}>
             {Object.values(PenaltyType).map(pt => {
               const on = penaltyType === pt;
               return (
                 <button key={pt} onClick={() => setPenaltyType(pt)}
-                  style={{ padding: '0.55rem 0.5rem', borderRadius: '0.625rem', fontSize: '0.72rem', fontWeight: 800, border: `1px solid ${on ? '#fbbf24' : 'rgba(255,255,255,0.08)'}`, background: on ? 'rgba(251,191,36,0.25)' : 'rgba(255,255,255,0.03)', color: on ? '#fde68a' : '#94a3b8', cursor: 'pointer', textAlign: 'left' }}>
+                  style={{ padding: '0.4rem 0.35rem', borderRadius: '0.5rem', fontSize: '0.66rem', fontWeight: 800, border: `1px solid ${on ? '#fbbf24' : 'rgba(255,255,255,0.08)'}`, background: on ? 'rgba(251,191,36,0.25)' : 'rgba(255,255,255,0.03)', color: on ? '#fde68a' : '#94a3b8', cursor: 'pointer', textAlign: 'center', lineHeight: 1.15 }}>
                   {pt}
                 </button>
               );
             })}
             <button onClick={() => setPenaltyType('OTHER')}
-              style={{ padding: '0.55rem 0.5rem', borderRadius: '0.625rem', fontSize: '0.72rem', fontWeight: 800, border: `1px solid ${penaltyType === 'OTHER' ? '#fbbf24' : 'rgba(255,255,255,0.08)'}`, background: penaltyType === 'OTHER' ? 'rgba(251,191,36,0.25)' : 'rgba(255,255,255,0.03)', color: penaltyType === 'OTHER' ? '#fde68a' : '#94a3b8', cursor: 'pointer', textAlign: 'left' }}>
+              style={{ padding: '0.4rem 0.35rem', borderRadius: '0.5rem', fontSize: '0.66rem', fontWeight: 800, border: `1px solid ${penaltyType === 'OTHER' ? '#fbbf24' : 'rgba(255,255,255,0.08)'}`, background: penaltyType === 'OTHER' ? 'rgba(251,191,36,0.25)' : 'rgba(255,255,255,0.03)', color: penaltyType === 'OTHER' ? '#fde68a' : '#94a3b8', cursor: 'pointer', textAlign: 'center' }}>
               Other…
             </button>
           </div>
@@ -669,19 +694,19 @@ const PenaltyPopup: React.FC<PenaltyPopupProps> = ({ pendingPenalty, homeName, a
               onChange={e => setCustomInfraction(e.target.value)}
               placeholder="Type the infraction..."
               autoFocus
-              style={{ marginTop: '0.5rem', width: '100%', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(251,191,36,0.3)', borderRadius: '0.625rem', padding: '0.6rem 0.75rem', fontSize: '0.8rem', color: '#fde68a', outline: 'none', boxSizing: 'border-box' }}
+              style={{ marginTop: '0.4rem', width: '100%', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(251,191,36,0.3)', borderRadius: '0.5rem', padding: '0.5rem 0.65rem', fontSize: '0.78rem', color: '#fde68a', outline: 'none', boxSizing: 'border-box' }}
             />
           )}
         </div>
 
-        <div style={{ marginBottom: '1.25rem' }}>
-          <p style={{ fontSize: '0.7rem', fontWeight: 900, color: '#a855f7', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Duration</p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.35rem' }}>
+        <div style={{ marginBottom: '0.9rem' }}>
+          <p style={{ fontSize: '0.65rem', fontWeight: 900, color: '#a855f7', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem' }}>Duration</p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.3rem' }}>
             {PENALTY_DURATIONS.map(({ label, minutes: m }) => {
               const on = minutes === m;
               return (
                 <button key={label} onClick={() => setMinutes(m)}
-                  style={{ padding: '0.5rem 0.25rem', borderRadius: '0.625rem', fontSize: '0.7rem', fontWeight: 900, border: `1px solid ${on ? '#a855f7' : 'rgba(255,255,255,0.08)'}`, background: on ? 'rgba(168,85,247,0.3)' : 'rgba(255,255,255,0.03)', color: on ? '#fff' : '#64748b', cursor: 'pointer' }}>
+                  style={{ padding: '0.4rem 0.2rem', borderRadius: '0.5rem', fontSize: '0.66rem', fontWeight: 900, border: `1px solid ${on ? '#a855f7' : 'rgba(255,255,255,0.08)'}`, background: on ? 'rgba(168,85,247,0.3)' : 'rgba(255,255,255,0.03)', color: on ? '#fff' : '#64748b', cursor: 'pointer' }}>
                   {label}
                 </button>
               );
@@ -2283,7 +2308,7 @@ const App: React.FC = () => {
 
     {/* Goal line popup via portal */}
     {pendingGoal !== null && createPortal(
-      <GoalLinePopup pendingGoal={pendingGoal} homeName={homeName} awayName={awayName} homeRoster={homeRoster} awayRoster={awayRoster} myTeam={myTeam} onConfirm={confirmGoal} />,
+      <GoalLinePopup pendingGoal={pendingGoal} homeName={homeName} awayName={awayName} homeRoster={homeRoster} awayRoster={awayRoster} myTeam={myTeam} onConfirm={confirmGoal} onCancel={() => setPendingGoal(null)} />,
       document.body
     )}
 
