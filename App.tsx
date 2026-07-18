@@ -1001,8 +1001,6 @@ const App: React.FC = () => {
     { type: EventType.SHOT, label: 'SHOT', color: 'bg-cyan-600', dotColor: '#06b6d4' },
     { type: EventType.GOAL, label: 'GOAL', color: 'bg-green-600', dotColor: '#22c55e' },
     { type: EventType.BLOCK, label: 'BLOCK', color: 'bg-slate-600', dotColor: '#94a3b8' },
-    { type: EventType.PP_SHOT_FOR, label: 'PP SHOT', color: 'bg-yellow-500', dotColor: '#eab308' },
-    { type: EventType.PP_SHOT_AGAINST, label: 'PK SHOT', color: 'bg-pink-500', dotColor: '#ec4899' },
     { type: EventType.GIVEAWAY, label: 'GIVE', color: 'bg-orange-600', dotColor: '#f97316' },
     { type: EventType.TAKEAWAY, label: 'TAKE', color: 'bg-teal-600', dotColor: '#14b8a6' },
     { type: EventType.PENALTY, label: 'PIM', color: 'bg-red-600', dotColor: '#ef4444' },
@@ -1251,7 +1249,9 @@ const App: React.FC = () => {
     }
 
     const quality = mapPlotType === EventType.SHOT ? getShotQuality(x, y, activeTeam) : undefined;
-    const metadata = quality ? { shotQuality: quality } : undefined;
+    const metadata = mapPlotType === EventType.SHOT
+      ? { shotQuality: quality, onNet: true, strength: 'ES' as const }
+      : undefined;
     const newEvent: GameEvent = {
       id: Math.random().toString(36).substr(2, 9),
       timestamp: Date.now(),
@@ -1295,6 +1295,13 @@ const App: React.FC = () => {
     }));
     setTaggingEvent(null);
   }, [getTeamZone, getShotQuality]);
+
+  // Quick, non-blocking updates for a shot's result (on net vs. attempt)
+  // and strength (ES/PP/PK) — tapped from the strip alongside the player
+  // tag bar, never holding up the plot itself.
+  const updateShotMeta = useCallback((eventId: string, patch: { onNet?: boolean; strength?: 'ES' | 'PP' | 'PK' }) => {
+    setEvents(prev => prev.map(e => e.id === eventId ? { ...e, metadata: { ...e.metadata, ...patch } } : e));
+  }, []);
 
   const handleManageSubscription = async () => {
     const email = currentUser?.primaryEmailAddress?.emailAddress;
@@ -1894,6 +1901,43 @@ const App: React.FC = () => {
                 </>
               )}
             </div>
+
+            {(() => {
+              const tagged = taggingEvent ? events.find(e => e.id === taggingEvent) : null;
+              if (!tagged || tagged.type !== EventType.SHOT) return null;
+              const onNet = tagged.metadata?.onNet !== false; // default true
+              const shotStrength = tagged.metadata?.strength || 'ES';
+              return (
+                <div className="w-full px-3 py-2 flex items-center gap-3 animate-in slide-in-from-top duration-200 bg-black/30 border-b border-white/5">
+                  <span className="text-[9px] font-black uppercase tracking-wider text-cyan-400 shrink-0">Shot:</span>
+                  <div className="flex items-center gap-1">
+                    {[{ key: true, label: 'On Net' }, { key: false, label: 'Attempt' }].map(({ key, label }) => {
+                      const active = onNet === key;
+                      return (
+                        <button
+                          key={label}
+                          onClick={() => updateShotMeta(taggingEvent!, { onNet: key })}
+                          className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase transition-all border ${active ? 'bg-cyan-600 text-white border-cyan-400' : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'}`}
+                        >{label}</button>
+                      );
+                    })}
+                  </div>
+                  <span className="text-slate-700 shrink-0">·</span>
+                  <div className="flex items-center gap-1">
+                    {(['PP', 'PK'] as const).map(s => {
+                      const active = shotStrength === s;
+                      return (
+                        <button
+                          key={s}
+                          onClick={() => updateShotMeta(taggingEvent!, { strength: active ? 'ES' : s })}
+                          className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase transition-all border ${active ? 'bg-purple-600 text-white border-purple-400' : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'}`}
+                        >{s}</button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
 
             {taggingEvent && events.some(e => e.id === taggingEvent) && (
               <div className="w-full px-3 py-2.5 flex items-start gap-3 animate-in slide-in-from-top duration-200 bg-black/40 border-b border-white/10">
