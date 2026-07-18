@@ -23,6 +23,7 @@ interface PlayerRow {
   faceoffWins: number;
   faceoffLosses: number;
   blocks: number;
+  plusMinus: number;
   total: number;
 }
 
@@ -36,7 +37,7 @@ function buildPlayerStats(events: GameEvent[], roster: Player[], team: Team): Pl
       name: p.name,
       position: p.position,
       goals: 0, shots: 0, assists: 0, hits: 0,
-      penalties: 0, faceoffWins: 0, faceoffLosses: 0, blocks: 0, total: 0
+      penalties: 0, faceoffWins: 0, faceoffLosses: 0, blocks: 0, plusMinus: 0, total: 0
     });
   });
 
@@ -47,7 +48,7 @@ function buildPlayerStats(events: GameEvent[], roster: Player[], team: Team): Pl
       map.set(num, {
         number: num, name: `#${num}`, position: '?',
         goals: 0, shots: 0, assists: 0, hits: 0,
-        penalties: 0, faceoffWins: 0, faceoffLosses: 0, blocks: 0, total: 0
+        penalties: 0, faceoffWins: 0, faceoffLosses: 0, blocks: 0, plusMinus: 0, total: 0
       });
     }
     const row = map.get(num)!;
@@ -63,8 +64,42 @@ function buildPlayerStats(events: GameEvent[], roster: Player[], team: Team): Pl
     row.total = row.goals + row.shots + row.hits + row.faceoffWins + row.blocks;
   });
 
+  // Plus/minus — checked across ALL goals (not just this team's own events),
+  // since a player can be a -1 on a goal that belongs to the OTHER team.
+  // `playersOnIce` holds whichever team's on-ice group was picked as the
+  // "scoring" side in the goal popup (in single-team mode this is always
+  // the tracked team, for or against; in both-team mode it's specifically
+  // the team that scored), and `againstPlayersOnIce` holds the defending
+  // side (only ever populated in both-team mode). Checking both against
+  // this roster's numbers handles either mode correctly without needing
+  // to know which mode the data came from.
+  //
+  // Only even-strength (ES) and shorthanded (SH) goals count toward +/-,
+  // matching standard convention — power play goals never affect +/- for
+  // either side, and empty-net / penalty-shot goals are excluded too since
+  // they're not a reflection of full-strength on-ice play. Goals logged
+  // before strength tracking existed have no `strength` field at all —
+  // those are treated as ES so old games aren't silently zeroed out.
+  events.filter(e => {
+    if (e.type !== EventType.GOAL) return false;
+    const s = e.metadata?.strength;
+    return !s || s === 'ES' || s === 'SH';
+  }).forEach(e => {
+    const onIce: string[] = e.metadata?.playersOnIce || [];
+    const onIceAgainst: string[] = e.metadata?.againstPlayersOnIce || [];
+    roster.forEach(p => {
+      const row = map.get(p.number);
+      if (!row) return;
+      if (onIce.includes(p.number)) {
+        row.plusMinus += e.team === team ? 1 : -1;
+      } else if (onIceAgainst.includes(p.number)) {
+        row.plusMinus -= 1;
+      }
+    });
+  });
+
   return Array.from(map.values())
-    .filter(r => r.total > 0 || r.goals > 0 || r.shots > 0)
+    .filter(r => r.total > 0 || r.goals > 0 || r.shots > 0 || r.plusMinus !== 0)
     .sort((a, b) => b.total - a.total);
 }
 
@@ -73,6 +108,16 @@ const StatBadge = ({ value, color }: { value: number; color: string }) => (
     {value > 0 ? value : '—'}
   </span>
 );
+
+const PlusMinusBadge = ({ value }: { value: number }) => {
+  const color = value > 0 ? 'text-green-400 bg-green-500/10' : value < 0 ? 'text-red-400 bg-red-500/10' : 'text-slate-700 bg-transparent';
+  const label = value > 0 ? `+${value}` : value < 0 ? `${value}` : '—';
+  return (
+    <span className={`inline-flex items-center justify-center w-7 h-7 rounded-lg text-xs font-black ${color}`}>
+      {label}
+    </span>
+  );
+};
 
 const PlayerStats: React.FC<PlayerStatsProps> = ({
   events, homeRoster, awayRoster, homeName, awayName, isOpen, onClose
@@ -126,7 +171,7 @@ const PlayerStats: React.FC<PlayerStatsProps> = ({
         ) : (
           <div className="max-w-4xl mx-auto">
             {/* Column headers */}
-            <div className="grid grid-cols-[2fr_1fr_repeat(7,1fr)] gap-1 mb-2 px-3">
+            <div className="grid grid-cols-[2fr_1fr_repeat(8,1fr)] gap-1 mb-2 px-3">
               <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Player</span>
               <span className="text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Pos</span>
               <span className="text-xs font-bold text-yellow-500 uppercase tracking-wider text-center">G</span>
@@ -136,13 +181,14 @@ const PlayerStats: React.FC<PlayerStatsProps> = ({
               <span className="text-xs font-bold text-green-400 uppercase tracking-wider text-center">FW</span>
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider text-center">FL</span>
               <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider text-center">BLK</span>
+              <span className="text-xs font-bold text-purple-400 uppercase tracking-wider text-center">+/-</span>
             </div>
 
             <div className="space-y-1.5">
               {rows.map((row, i) => (
                 <div
                   key={row.number}
-                  className={`grid grid-cols-[2fr_1fr_repeat(7,1fr)] gap-1 items-center px-3 py-2.5 rounded-xl border ${i === 0 ? 'bg-yellow-500/5 border-yellow-500/20' : 'bg-white/3 border-white/5'}`}
+                  className={`grid grid-cols-[2fr_1fr_repeat(8,1fr)] gap-1 items-center px-3 py-2.5 rounded-xl border ${i === 0 ? 'bg-yellow-500/5 border-yellow-500/20' : 'bg-white/3 border-white/5'}`}
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center text-xs font-black text-slate-300 shrink-0">
@@ -159,6 +205,7 @@ const PlayerStats: React.FC<PlayerStatsProps> = ({
                   <StatBadge value={row.faceoffWins} color="text-green-400 bg-green-500/10" />
                   <StatBadge value={row.faceoffLosses} color="text-slate-400 bg-white/5" />
                   <StatBadge value={row.blocks} color="text-cyan-400 bg-cyan-500/10" />
+                  <PlusMinusBadge value={row.plusMinus} />
                 </div>
               ))}
             </div>
@@ -173,6 +220,7 @@ const PlayerStats: React.FC<PlayerStatsProps> = ({
                 { key: 'FW', label: 'Faceoff Wins', color: 'text-green-400' },
                 { key: 'FL', label: 'Faceoff Losses', color: 'text-slate-400' },
                 { key: 'BLK', label: 'Blocks', color: 'text-cyan-400' },
+                { key: '+/-', label: 'Plus/Minus (even strength & shorthanded only)', color: 'text-purple-400' },
               ].map(l => (
                 <span key={l.key} className="flex items-center gap-1.5 text-xs text-slate-500">
                   <span className={`font-black ${l.color}`}>{l.key}</span>
