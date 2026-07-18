@@ -841,6 +841,17 @@ const App: React.FC = () => {
     return (parseInt(a.number, 10) || 0) - (parseInt(b.number, 10) || 0);
   });
 
+  // Converts "Last, First" (and "Last, First Middle") into "First Last" order.
+  // Backstops the AI prompt for roster imports, and also cleans up names
+  // typed directly in "Last, First" form via the quick-add field.
+  const normalizeName = (raw: string): string => {
+    const name = (raw || '').trim();
+    if (!name.includes(',')) return name;
+    const [last, rest] = name.split(',', 2).map(s => s.trim());
+    if (!last || !rest) return name;
+    return `${rest} ${last}`.replace(/\s+/g, ' ').trim();
+  };
+
   const centers = useMemo(() => ({
     home: homeRoster.filter(p => p.position?.toUpperCase().includes('C')),
     away: awayRoster.filter(p => p.position?.toUpperCase().includes('C'))
@@ -1073,7 +1084,7 @@ const App: React.FC = () => {
       const result = await fetchRosterByAI({ teamName, rosterUrl: '', pasteText });
       if (result.status === 'ERROR') throw new Error(result.reason || 'Could not parse roster');
       const players: Player[] = (result.players || []).map((p: any) => ({
-        number: p.number || '00', name: p.name, position: p.position || 'F',
+        number: p.number || '00', name: normalizeName(p.name), position: p.position || 'F',
         line: p.line || (p.position === 'G' ? 'G1' : p.position === 'D' ? 'P1' : '1'),
       }));
       if (players.length === 0) throw new Error('No players found in pasted text');
@@ -1233,7 +1244,7 @@ const App: React.FC = () => {
     const data = isHome ? manualHome : manualAway;
     if (!data.name || !data.number) return;
     if (roster.some(p => p.number === data.number)) { toast.error(`Player #${data.number} already exists on this roster.`); return; }
-    const p: Player = { number: data.number, name: data.name, position: data.pos || 'F', line: data.line };
+    const p: Player = { number: data.number, name: normalizeName(data.name), position: data.pos || 'F', line: data.line };
     if (isHome) { setHomeRoster(sortByNumber([...homeRoster, p])); setManualHome({ number: '', name: '', pos: 'F', line: '1' }); }
     else { setAwayRoster(sortByNumber([...awayRoster, p])); setManualAway({ number: '', name: '', pos: 'F', line: '1' }); }
   };
@@ -1261,7 +1272,7 @@ const App: React.FC = () => {
     try {
       const response = await fetchRosterByAI({ teamName, rosterUrl: rosterUrl || undefined });
       if (response.status === 'OK' && response.players.length > 0) {
-        setRoster(sortByNumber(response.players));
+        setRoster(sortByNumber(response.players.map((p: any) => ({ ...p, name: normalizeName(p.name) }))));
         if (response.sources) setSources(response.sources);
       } else { alert(`AI Sync Error: ${response.reason || 'Extraction failed'}`); }
     } catch (error: any) { alert(`Sync failed: ${error.message || 'Unknown error occurred.'}`); }
