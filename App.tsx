@@ -583,6 +583,127 @@ const EntryPopup: React.FC<EntryPopupProps> = ({ onConfirm, onCancel }) => {
   );
 };
 
+// ── PENALTY POPUP ────────────────────────────────────────────
+interface PenaltyPopupProps {
+  pendingPenalty: { x: number; y: number; team: Team; playerNumber?: string };
+  homeName: string;
+  awayName: string;
+  homeRoster: Player[];
+  awayRoster: Player[];
+  onConfirm: (playerNumber: string, penaltyType: string, minutes: number) => void;
+  onCancel: () => void;
+}
+
+const PENALTY_DURATIONS: { label: string; minutes: number }[] = [
+  { label: '2 MIN', minutes: 2 },
+  { label: '4 MIN', minutes: 4 },
+  { label: '5 MIN', minutes: 5 },
+  { label: '10 MIN', minutes: 10 },
+  { label: 'GM', minutes: 0 },
+];
+
+const PenaltyPopup: React.FC<PenaltyPopupProps> = ({ pendingPenalty, homeName, awayName, homeRoster, awayRoster, onConfirm, onCancel }) => {
+  const isHome = pendingPenalty.team === Team.HOME;
+  const teamName = isHome ? homeName : awayName;
+  const roster = isHome ? homeRoster : awayRoster;
+  const accent = isHome ? '#60a5fa' : '#f87171';
+  const accentBg = isHome ? '#2563eb' : '#dc2626';
+
+  const [playerNumber, setPlayerNumber] = useState(pendingPenalty.playerNumber || '');
+  const [penaltyType, setPenaltyType] = useState<PenaltyType | 'OTHER' | null>(null);
+  const [customInfraction, setCustomInfraction] = useState('');
+  const [minutes, setMinutes] = useState<number>(2);
+
+  const canConfirm = !!playerNumber && (
+    (penaltyType !== null && penaltyType !== 'OTHER') ||
+    (penaltyType === 'OTHER' && customInfraction.trim() !== '')
+  );
+  const finalInfraction = penaltyType === 'OTHER' ? customInfraction.trim() : (penaltyType || '');
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 999999, background: 'rgba(0,0,0,0.88)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+      <div style={{ background: '#0f1620', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '1.25rem', padding: '1.5rem', width: '100%', maxWidth: '400px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 30px 60px rgba(0,0,0,0.9)' }}>
+
+        <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
+          <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#ef4444', margin: '0 auto 0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>🚨</div>
+          <div style={{ color: 'white', fontWeight: 900, fontSize: '1.25rem' }}>Penalty</div>
+          <div style={{ display: 'inline-block', marginTop: '0.4rem', padding: '0.2rem 0.875rem', borderRadius: '999px', background: accentBg, color: 'white', fontSize: '0.75rem', fontWeight: 900 }}>
+            {teamName}
+          </div>
+        </div>
+
+        <div style={{ marginBottom: '1rem' }}>
+          <p style={{ fontSize: '0.7rem', fontWeight: 900, color: accent, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Who took the penalty?</p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+            {roster.map(p => (
+              <button key={p.number} onClick={() => setPlayerNumber(p.number)}
+                style={{ padding: '0.4rem 0.7rem', borderRadius: '0.6rem', fontSize: '0.75rem', fontWeight: 900, border: `1px solid ${playerNumber === p.number ? accent : 'rgba(255,255,255,0.08)'}`, background: playerNumber === p.number ? accentBg : 'rgba(255,255,255,0.03)', color: playerNumber === p.number ? '#fff' : '#94a3b8', cursor: 'pointer' }}>
+                #{p.number} {p.name.split(' ').pop()}
+              </button>
+            ))}
+            {roster.length === 0 && <span style={{ fontSize: '0.7rem', color: '#475569' }}>No roster loaded</span>}
+          </div>
+        </div>
+
+        <div style={{ marginBottom: '1rem' }}>
+          <p style={{ fontSize: '0.7rem', fontWeight: 900, color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Infraction</p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem' }}>
+            {Object.values(PenaltyType).map(pt => {
+              const on = penaltyType === pt;
+              return (
+                <button key={pt} onClick={() => setPenaltyType(pt)}
+                  style={{ padding: '0.55rem 0.5rem', borderRadius: '0.625rem', fontSize: '0.72rem', fontWeight: 800, border: `1px solid ${on ? '#fbbf24' : 'rgba(255,255,255,0.08)'}`, background: on ? 'rgba(251,191,36,0.25)' : 'rgba(255,255,255,0.03)', color: on ? '#fde68a' : '#94a3b8', cursor: 'pointer', textAlign: 'left' }}>
+                  {pt}
+                </button>
+              );
+            })}
+            <button onClick={() => setPenaltyType('OTHER')}
+              style={{ padding: '0.55rem 0.5rem', borderRadius: '0.625rem', fontSize: '0.72rem', fontWeight: 800, border: `1px solid ${penaltyType === 'OTHER' ? '#fbbf24' : 'rgba(255,255,255,0.08)'}`, background: penaltyType === 'OTHER' ? 'rgba(251,191,36,0.25)' : 'rgba(255,255,255,0.03)', color: penaltyType === 'OTHER' ? '#fde68a' : '#94a3b8', cursor: 'pointer', textAlign: 'left' }}>
+              Other…
+            </button>
+          </div>
+          {penaltyType === 'OTHER' && (
+            <input
+              type="text"
+              value={customInfraction}
+              onChange={e => setCustomInfraction(e.target.value)}
+              placeholder="Type the infraction..."
+              autoFocus
+              style={{ marginTop: '0.5rem', width: '100%', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(251,191,36,0.3)', borderRadius: '0.625rem', padding: '0.6rem 0.75rem', fontSize: '0.8rem', color: '#fde68a', outline: 'none', boxSizing: 'border-box' }}
+            />
+          )}
+        </div>
+
+        <div style={{ marginBottom: '1.25rem' }}>
+          <p style={{ fontSize: '0.7rem', fontWeight: 900, color: '#a855f7', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Duration</p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.35rem' }}>
+            {PENALTY_DURATIONS.map(({ label, minutes: m }) => {
+              const on = minutes === m;
+              return (
+                <button key={label} onClick={() => setMinutes(m)}
+                  style={{ padding: '0.5rem 0.25rem', borderRadius: '0.625rem', fontSize: '0.7rem', fontWeight: 900, border: `1px solid ${on ? '#a855f7' : 'rgba(255,255,255,0.08)'}`, background: on ? 'rgba(168,85,247,0.3)' : 'rgba(255,255,255,0.03)', color: on ? '#fff' : '#64748b', cursor: 'pointer' }}>
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '0.6rem' }}>
+          <button onClick={onCancel}
+            style={{ flex: 1, padding: '0.75rem', borderRadius: '0.75rem', background: 'rgba(255,255,255,0.05)', color: '#94a3b8', fontWeight: 800, fontSize: '0.8rem', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer' }}>
+            Cancel
+          </button>
+          <button disabled={!canConfirm} onClick={() => canConfirm && onConfirm(playerNumber, finalInfraction, minutes)}
+            style={{ flex: 2, padding: '0.75rem', borderRadius: '0.75rem', background: canConfirm ? '#ef4444' : 'rgba(239,68,68,0.2)', color: canConfirm ? '#fff' : '#78716c', fontWeight: 900, fontSize: '0.85rem', border: 'none', cursor: canConfirm ? 'pointer' : 'not-allowed' }}>
+            Log Penalty
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const App: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -871,6 +992,7 @@ const App: React.FC = () => {
   const [pendingGoal, setPendingGoal] = useState<{x: number; y: number; team: Team; playerNumber: string} | null>(null);
   const [pendingFaceoff, setPendingFaceoff] = useState<{x: number; y: number} | null>(null);
   const [pendingEntry, setPendingEntry] = useState<{x: number; y: number} | null>(null);
+  const [pendingPenalty, setPendingPenalty] = useState<{x: number; y: number; team: Team; playerNumber?: string} | null>(null);
   const [taggingEvent, setTaggingEvent] = useState<string | null>(null);
   const [isRosterSwapped, setIsRosterSwapped] = useState(false);
   const [showNewGameConfirm, setShowNewGameConfirm] = useState(false);
@@ -954,7 +1076,7 @@ const App: React.FC = () => {
       shots: teamEvents.filter(e => e.type === EventType.SHOT || e.type === EventType.GOAL || e.type === EventType.PP_SHOT_FOR).length,
       saves: teamEvents.filter(e => e.type === EventType.SAVE).length,
       hits: teamEvents.filter(e => e.type === EventType.HIT).length,
-      pim: teamEvents.filter(e => e.type === EventType.PENALTY).length * 2,
+      pim: teamEvents.filter(e => e.type === EventType.PENALTY).reduce((sum, e) => sum + (typeof e.metadata?.minutes === 'number' ? e.metadata.minutes : 2), 0),
       faceoffWins: teamEvents.filter(e => e.type === EventType.FACEOFF_WIN).length,
       faceoffLosses: teamEvents.filter(e => e.type === EventType.FACEOFF_LOSS).length,
       giveaways: teamEvents.filter(e => e.type === EventType.GIVEAWAY).length,
@@ -1033,6 +1155,27 @@ const App: React.FC = () => {
     setPendingGoal(null);
   }, [pendingGoal, currentPeriod, getTeamZone, activeSession, user]);
 
+  const confirmPenalty = useCallback((playerNum: string, penaltyType: string, minutes: number) => {
+    if (!pendingPenalty) return;
+    const { x, y, team } = pendingPenalty;
+    const newEvent: GameEvent = {
+      id: Math.random().toString(36).substr(2, 9),
+      timestamp: Date.now(),
+      gameTime: '20:00',
+      period: currentPeriod,
+      type: EventType.PENALTY,
+      team,
+      zone: getTeamZone(team, x),
+      playerNumber: playerNum,
+      coordinates: { x, y },
+      metadata: { penaltyType, minutes, isPowerPlay: true }
+    };
+    setEvents(prev => [...prev, newEvent]);
+    if (activeSession && user) broadcastEvent(activeSession.id, newEvent, user.id).catch(console.error);
+    setLastEvent({ type: EventType.PENALTY, playerNumber: playerNum, team });
+    setPendingPenalty(null);
+  }, [pendingPenalty, currentPeriod, getTeamZone, activeSession, user]);
+
   const confirmFaceoff = useCallback((homeCenter: string, awayCenter: string, winner: Team) => {
     if (!pendingFaceoff) return;
     const { x, y } = pendingFaceoff;
@@ -1093,6 +1236,17 @@ const App: React.FC = () => {
 
     if (mapPlotType === EventType.GOAL) {
       setPendingGoal({ x, y, team: activeTeam, playerNumber: playerNumber || '' });
+      return;
+    }
+
+    if (mapPlotType === EventType.PENALTY) {
+      // Same idea as goals/faceoffs/entries — location first, then the
+      // popup asks who took it, the infraction, and the duration. If a
+      // player from this team is already selected in the lineup grid,
+      // pre-fill them (still changeable in the popup).
+      const activeRoster = activeTeam === Team.HOME ? homeRoster : awayRoster;
+      const preselect = playerNumber && activeRoster.some(p => p.number === playerNumber) ? playerNumber : undefined;
+      setPendingPenalty({ x, y, team: activeTeam, playerNumber: preselect });
       return;
     }
 
@@ -1295,6 +1449,7 @@ const App: React.FC = () => {
     setPendingGoal(null);
     setPendingFaceoff(null);
     setPendingEntry(null);
+    setPendingPenalty(null);
     setTaggingEvent(null);
     try { ['tch_homeRoster','tch_awayRoster','tch_homeName','tch_awayName','tch_homeLogo','tch_awayLogo'].forEach(k => sessionStorage.removeItem(k)); } catch {}
     localStorage.removeItem('tch_game_state');
@@ -2093,6 +2248,12 @@ const App: React.FC = () => {
     {/* Zone entry popup via portal */}
     {pendingEntry !== null && createPortal(
       <EntryPopup pendingEntry={pendingEntry} onConfirm={confirmEntry} onCancel={() => setPendingEntry(null)} />,
+      document.body
+    )}
+
+    {/* Penalty popup via portal */}
+    {pendingPenalty !== null && createPortal(
+      <PenaltyPopup pendingPenalty={pendingPenalty} homeName={homeName} awayName={awayName} homeRoster={homeRoster} awayRoster={awayRoster} onConfirm={confirmPenalty} onCancel={() => setPendingPenalty(null)} />,
       document.body
     )}
 
