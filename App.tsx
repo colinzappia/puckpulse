@@ -1099,7 +1099,11 @@ const App: React.FC = () => {
     return {
       name: team === Team.HOME ? homeName : awayName,
       goals: teamEvents.filter(e => e.type === EventType.GOAL).length,
-      shots: teamEvents.filter(e => e.type === EventType.SHOT || e.type === EventType.GOAL || e.type === EventType.PP_SHOT_FOR).length,
+      shots: teamEvents.filter(e =>
+        e.type === EventType.GOAL ||
+        e.type === EventType.PP_SHOT_FOR ||
+        (e.type === EventType.SHOT && e.metadata?.onNet !== false)
+      ).length,
       saves: teamEvents.filter(e => e.type === EventType.SAVE).length,
       hits: teamEvents.filter(e => e.type === EventType.HIT).length,
       pim: teamEvents.filter(e => e.type === EventType.PENALTY).reduce((sum, e) => sum + (typeof e.metadata?.minutes === 'number' ? e.metadata.minutes : 2), 0),
