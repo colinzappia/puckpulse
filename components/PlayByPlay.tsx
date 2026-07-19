@@ -125,24 +125,24 @@ const PlayByPlay: React.FC<PlayByPlayProps> = ({
                   <div className="flex items-center gap-1 shrink-0">
                     <button
                       onClick={() => onAttachClip(event)}
-                      className="opacity-0 group-hover:opacity-100 p-1.5 hover:text-blue-400 transition-all text-slate-600"
+                      className="opacity-60 hover:opacity-100 p-2 hover:text-blue-400 transition-all text-slate-500"
                       title="Attach clip"
                     >
                       🎬
                     </button>
                     <button 
                       onClick={() => setEditingId(isEditing ? null : event.id)}
-                      className={`p-1.5 rounded-lg transition-all ${isEditing ? 'bg-blue-600 text-white' : 'text-slate-600 hover:text-white bg-black/20 opacity-0 group-hover:opacity-100'}`}
+                      className={`p-2 rounded-lg transition-all ${isEditing ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-white bg-black/20 opacity-60 hover:opacity-100'}`}
                     >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                       </svg>
                     </button>
                     <button 
                       onClick={() => onRemoveEvent(event.id)}
-                      className="opacity-0 group-hover:opacity-100 p-1.5 hover:text-red-500 transition-all text-slate-600"
+                      className="opacity-60 hover:opacity-100 p-2 hover:text-red-500 transition-all text-slate-500"
                     >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </button>
