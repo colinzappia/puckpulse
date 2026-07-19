@@ -93,7 +93,11 @@ const sections = [
       },
       {
         title: 'Logging a faceoff',
-        content: 'Tap the 🏒 Faceoffs button in the event toolbar to arm the faceoff tool — the faceoff circles on the rink brighten to show they\'re ready. Tap anywhere inside the circle where the draw took place (the whole circle is clickable, not just the centre dot).\n\nA popup appears: pick each team\'s centre, then choose which team won the draw. If you\'re only tracking one team, the opposing centre is optional — you can leave it blank and still log the draw. Tap "Log Faceoff" and the event is logged instantly for both teams. Tap the Faceoffs button again to disarm it.\n\nSwitch to the Breakdown tab to see live win percentages, zone stats, and head-to-head matchup data between specific centres.'
+        content: 'Tap the 🏒 Faceoffs button in the event toolbar to arm the faceoff tool — the faceoff circles on the rink brighten to show they\'re ready. Tap anywhere inside the circle where the draw took place (the whole circle is clickable, not just the centre dot).\n\nA popup appears: pick each team\'s centre, then choose which team won the draw. If you\'re only tracking one team, the opposing centre is optional — you can leave it blank and still log the draw. Tap "Log Faceoff" and the event is logged instantly for both teams. Tap the Faceoffs button again to disarm it.\n\nThe Faceoff Summary panel next to the rink updates live as you log draws — see "Faceoff Summary panel" below for what it shows.'
+      },
+      {
+        title: 'Faceoff Summary panel',
+        content: 'This panel sits alongside the rink on the tracking screen and updates live as you log draws. It has two views:\n\n• By Player — every centre\'s win percentage, broken down by zone (D-Zone / Neutral / O-Zone) and by which circle they took the draw in (left / right).\n\n• C vs C — real head-to-head results between specific centre matchups, e.g. "#9 Smith vs #14 Jones: 3W-1L." Matchups are built automatically by pairing each team\'s faceoff events that happened within moments of each other, so no extra setup is needed — just keep logging draws.'
       },
       {
         title: 'Logging a zone entry',
@@ -105,7 +109,7 @@ const sections = [
       },
       {
         title: 'Undoing an event',
-        content: 'Made a mistake? Tap the last event in the Tactical Feed and select "Delete" to remove it from the log and the rink map.'
+        content: 'Made a mistake? Hover over (or long-press on mobile) any event in the Tactical Feed — a row of small icons appears on the right, including a trash icon. Tap it to remove that event from both the log and the rink map.'
       }
     ]
   },
