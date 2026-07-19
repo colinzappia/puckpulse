@@ -19,7 +19,11 @@ const sections = [
       },
       {
         title: 'Paste Roster Import',
-        content: 'The fastest and most reliable way to load a roster. Go to any league website (Pointstreak, HockeyDB, your league site, etc.), select the roster table with your finger or mouse, and copy it. Then in Roster Setup, paste the text into the paste area and tap Import Roster. The AI reads the raw text and builds your lineup in seconds. Works on any device, any league, any website.\n\nAfter importing, you\'ll be prompted to save the roster to your Team Library for quick reuse in future games.'
+        content: 'The fastest and most reliable way to load a roster. Go to any league website (Pointstreak, HockeyDB, your league site, etc.), select the roster table with your finger or mouse, and copy it. Then in Roster Setup, paste the text into the paste area and tap Import Roster. The AI reads the raw text and builds your lineup in seconds. Works on any device, any league, any website.\n\nNames are automatically normalized to "First Last" order even if the source listed them as "Last, First" — you never need to manually fix that.\n\nAfter importing, you\'ll be prompted to save the roster to your Team Library for quick reuse in future games.'
+      },
+      {
+        title: 'Importing from a roster link (including PDF lineup sheets)',
+        content: 'Instead of pasting text, you can paste a direct link to a team\'s roster page or a game lineup sheet PDF (like the ones many leagues publish before each game). The AI reads the actual document — including jersey numbers, positions, and names — and builds the lineup automatically. Works well for official league lineup PDFs specifically, since it reads the real jersey number column rather than confusing it with a row/listing order.'
       },
       {
         title: 'Manual roster entry',
@@ -60,12 +64,20 @@ const sections = [
     title: 'Tracking Events',
     subsections: [
       {
-        title: 'Logging a shot or goal',
-        content: '1. Select the active team using the Home / Away toggle.\n2. Tap a player from the lineup grid — their name will highlight to confirm selection.\n3. Select the event type from the toolbar: SHOT, GOAL, SAVE, MISS, etc.\n4. Tap the location on the rink diagram where the event occurred. The event dot appears instantly.'
+        title: 'Logging a shot, hit, block, giveaway, or takeaway',
+        content: 'These all work the same fast way:\n\n1. Select the event type from the toolbar — SHOT, HIT, BLOCK, GIVE, or TAKE.\n2. Tap the location on the rink diagram. The dot appears instantly — nothing holds it up.\n3. A small bar slides in showing both team\'s rosters as number chips. Tap a number to attribute the event to that player, or just ignore it and keep tracking — attribution is always optional and can be added later from the Tactical Feed.\n\nYou don\'t need to pre-select a player or team before tapping the ice. The Home/Away toggle above the rink still sets which team a new event defaults to, but tapping any player\'s number in the bar afterward — even from the other team — will correctly move the event to that team if needed.'
+      },
+      {
+        title: 'Shot detail — On Net, Attempt, PP, PK',
+        content: 'Every shot also gets its own quick-select strip alongside the player bar, letting you mark:\n\n• Result — On Net or Attempt (missed/blocked). Defaults to On Net.\n• Strength — PP (power play) or PK (penalty kill). Leave both off for even strength.\n\nEach shot dot on the rink shows this at a glance: dot color is cyan for even strength, gold for PP, pink for PK, and a small checkmark (✓) or X (✕) inside the dot shows whether it reached the net. None of this blocks logging the next shot — tap the ice again any time and the strip updates for the new shot.'
       },
       {
         title: 'Goal popup — logging who was on ice',
-        content: 'When a goal is logged, a popup appears asking which line was on ice. The popup adapts based on your tracking mode:\n\n• Home or Away mode — only your team\'s roster appears, whether it\'s a goal for or against. Pick the line that was on ice for your team.\n\n• Neutral mode — first select which line from the scoring team scored, then select which players from the defending team were on ice against.\n\nAfter selecting a line, you\'ll see which players are assigned to it. Tap "Override players on ice" to swap in specific players if the actual lineup on ice differed from the preset lines — useful for double shifts, injuries, or special teams mix-ups. Tap "Skip" to log the goal without line tracking.'
+        content: 'Tapping GOAL and then the rink opens a popup for that goal:\n\n1. Strength — pick ES, PP, SH, EN, or PS at the top. Defaults to ES.\n2. On-ice group — pick a forward line and/or a defense pair; both combine into one 5-player group (e.g. "Line 1 + Pair 2"). You don\'t have to pick both — just a line, just a pair, or both.\n3. Tap "Override players on ice" any time to hand-pick the exact players instead of using the preset line, useful for double shifts or a line change mid-shift. This works whether you\'re tracking one team or both.\n4. If tracking both teams, you\'ll also pick which defending players were on ice against, after the scoring team\'s group is confirmed.\n\nTap "Skip" on the first screen to log the goal with no line detail at all.'
+      },
+      {
+        title: 'Canceling a popup',
+        content: 'Tapped the wrong button, or want to back out of a Goal, Faceoff, Zone Entry, or Penalty popup entirely? Press Escape on a keyboard, or tap anywhere outside the popup (on the dark background) on a phone or tablet. Nothing gets logged — it\'s a clean cancel.'
       },
       {
         title: 'Moving an event dot',
@@ -73,15 +85,15 @@ const sections = [
       },
       {
         title: 'Quick logging tips',
-        content: 'The app is designed for speed during live games:\n\n• Your selected player stays active between events — no need to re-tap after each log\n• Your selected event type (SHOT, GOAL, etc.) also stays selected\n• Watch for the green flash on the rink — it confirms your event was logged\n• The event toolbar scrolls horizontally — swipe to reveal all event types\n• The active player badge in the toolbar shows who is currently selected\n• Goals, faceoffs, and zone entries all work the same way: tap the location on the rink first, then fill in the details (scorer, centres, entry type) in the popup that appears'
+        content: 'The app is designed for speed during live games:\n\n• Shots, hits, blocks, giveaways, and takeaways log the instant you tap the ice — player attribution is a fast optional follow-up, never a requirement\n• Your selected event type stays selected between taps, so you can log the same thing repeatedly without re-selecting it\n• The event toolbar scrolls horizontally — swipe to reveal all event types\n• Goals, faceoffs, zone entries, and penalties each open a popup for their extra detail — tap the ice first, fill in the popup after'
       },
       {
         title: 'Logging a penalty',
-        content: 'Select the penalized player, tap PENALTY from the event toolbar, then tap the location on ice. You\'ll be prompted to select the infraction type and duration.'
+        content: 'Tap PENALTY, then tap the location on the rink — a popup opens with three quick picks:\n\n1. Who took it — tap their number. If you already had a player selected in the lineup grid, they\'re pre-filled.\n2. Infraction — tap one of the 10 standard infractions, or tap "Other…" to type in a custom one.\n3. Duration — 2, 4, 5, or 10 minutes, or GM for a game misconduct.\n\nTap "Log Penalty" to confirm. Penalty minutes shown in team stats now reflect the actual duration you picked, not a flat assumption.'
       },
       {
         title: 'Logging a faceoff',
-        content: 'Tap the 🏒 Faceoffs button in the event toolbar to arm the faceoff tool — the faceoff circles on the rink brighten to show they\'re ready. Tap anywhere inside the circle where the draw took place (the whole circle is clickable, not just the centre dot).\n\nA popup appears: pick each team\'s centre, then choose which team won the draw. Tap "Log Faceoff" and the event is logged instantly for both teams. Tap the Faceoffs button again to disarm it.\n\nSwitch to the Breakdown tab to see live win percentages, zone stats, and head-to-head matchup data between specific centres.'
+        content: 'Tap the 🏒 Faceoffs button in the event toolbar to arm the faceoff tool — the faceoff circles on the rink brighten to show they\'re ready. Tap anywhere inside the circle where the draw took place (the whole circle is clickable, not just the centre dot).\n\nA popup appears: pick each team\'s centre, then choose which team won the draw. If you\'re only tracking one team, the opposing centre is optional — you can leave it blank and still log the draw. Tap "Log Faceoff" and the event is logged instantly for both teams. Tap the Faceoffs button again to disarm it.\n\nSwitch to the Breakdown tab to see live win percentages, zone stats, and head-to-head matchup data between specific centres.'
       },
       {
         title: 'Logging a zone entry',
@@ -123,16 +135,12 @@ const sections = [
     subsections: [
       {
         title: 'Reading the rink map',
-        content: 'Each event appears as a color-coded dot on the rink: red for home team events, blue for away. Goals are shown as larger filled circles. Hover over or tap any dot to see the player name, event type, and time.'
+        content: 'Each event is a color-coded dot. Away-team events get a white ring around the dot so you can tell teams apart at a glance even when colors overlap. A few event types have their own shape instead of a plain circle: zone entries show as ▲ carry-in, ■ dump-in, ◆ pass, or ✕ denied. Shot dots show a small ✓ (on net) or ✕ (missed/blocked) inside them, and their color tells you the strength — cyan for even strength, gold for power play, pink for penalty kill.'
       },
       {
         title: 'Using filters',
-        content: 'The filter bar below the rink lets you show or hide specific event types. Toggle SHOTS, GOALS, SAVES, MISSES, and PENALTIES independently. Use "Isolate" to show only one event type at a time — great for spotting shot location patterns.'
+        content: 'The filter bar below the rink lets you show or hide each event type independently. Tap "Isolate" to hide everything at once, then tap individual event types back on one at a time — or "Show All" to bring everything back.\n\nThe SHOT filter has an extra ▾ next to it — tap it to slide out two more rows: Result (On Net / Attempt) and Strength (PP / PK). These combine, so you can isolate something specific like "PP shots that missed" by tapping both at once. Tapping SHOT itself always resets both back to showing every shot.'
       },
-      {
-        title: 'Switching rink view',
-        content: 'Tap the rink orientation button to flip between full rink, home zone, and away zone views depending on what you\'re analyzing.'
-      }
     ]
   },
   {
@@ -146,7 +154,7 @@ const sections = [
       },
       {
         title: 'Showing rosters during the game',
-        content: 'Tap "Show Rosters" to reveal the full lineup grid on screen. This is useful when you need to quickly select players without opening the full roster panel. Tap again to collapse it and free up screen space.'
+        content: 'Look for the small tab sitting right on the seam between the roster panels and the rink — it reads "▲ Hide Rosters" or "▼ Show Rosters" depending on the current state. Tap it to collapse the lineup grid and free up screen space, or bring it back when you need to select a player.'
       },
       {
         title: 'Team nickname display',
@@ -165,7 +173,7 @@ const sections = [
       },
       {
         title: 'Player Stats',
-        content: 'Tap the 📊 Player Stats button (below the rink on mobile, floating on tablet/desktop) at any time to see a per-player breakdown for both teams. Stats include goals, shots, hits, penalties, faceoff wins/losses, and blocks. The top performer is highlighted with a ⭐.'
+        content: 'Tap the 📊 Player Stats button (below the rink on mobile, floating on tablet/desktop) at any time to see a per-player breakdown for both teams. Columns include goals, shots broken out by SOG (on net), MISS (missed/blocked attempts), PP and PK shots, hits, penalties, faceoff wins/losses, blocks, and +/-.\n\n+/- only counts even-strength and shorthanded goals — power play, empty-net, and penalty-shot goals never affect it, matching standard convention. The table is wider now with all these columns, so swipe sideways on a phone to see everything. The top performer on each team (by combined activity) is highlighted with a ⭐.'
       },
       {
         title: 'Starting a new game',
