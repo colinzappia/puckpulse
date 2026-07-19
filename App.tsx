@@ -673,7 +673,7 @@ const PenaltyPopup: React.FC<PenaltyPopupProps> = ({ pendingPenalty, homeName, a
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem' }}>
             {roster.map(p => (
               <button key={p.number} onClick={() => setPlayerNumber(p.number)}
-                style={{ width: '2.1rem', height: '2.1rem', borderRadius: '0.5rem', fontSize: '0.75rem', fontWeight: 900, border: `1px solid ${playerNumber === p.number ? accent : 'rgba(255,255,255,0.08)'}`, background: playerNumber === p.number ? accentBg : 'rgba(255,255,255,0.03)', color: playerNumber === p.number ? '#fff' : '#94a3b8', cursor: 'pointer' }}>
+                style={{ width: '2.5rem', height: '2.5rem', borderRadius: '0.5rem', fontSize: '0.75rem', fontWeight: 900, border: `1px solid ${playerNumber === p.number ? accent : 'rgba(255,255,255,0.08)'}`, background: playerNumber === p.number ? accentBg : 'rgba(255,255,255,0.03)', color: playerNumber === p.number ? '#fff' : '#94a3b8', cursor: 'pointer' }}>
                 {p.number}
               </button>
             ))}
@@ -717,7 +717,7 @@ const PenaltyPopup: React.FC<PenaltyPopupProps> = ({ pendingPenalty, homeName, a
               const on = minutes === m;
               return (
                 <button key={label} onClick={() => setMinutes(m)}
-                  style={{ padding: '0.4rem 0.2rem', borderRadius: '0.5rem', fontSize: '0.66rem', fontWeight: 900, border: `1px solid ${on ? '#a855f7' : 'rgba(255,255,255,0.08)'}`, background: on ? 'rgba(168,85,247,0.3)' : 'rgba(255,255,255,0.03)', color: on ? '#fff' : '#64748b', cursor: 'pointer' }}>
+                  style={{ padding: '0.65rem 0.2rem', borderRadius: '0.5rem', fontSize: '0.66rem', fontWeight: 900, border: `1px solid ${on ? '#a855f7' : 'rgba(255,255,255,0.08)'}`, background: on ? 'rgba(168,85,247,0.3)' : 'rgba(255,255,255,0.03)', color: on ? '#fff' : '#64748b', cursor: 'pointer' }}>
                   {label}
                 </button>
               );
@@ -2020,7 +2020,7 @@ const App: React.FC = () => {
                               <button
                                 key={p.number}
                                 onClick={() => confirmPlayerTag(taggingEvent, p.number, team)}
-                                className={`w-9 h-8 rounded-md text-[11px] font-black transition-all border shrink-0 ${isTagged ? (isHomeTeam ? 'bg-blue-600 text-white border-blue-400' : 'bg-red-600 text-white border-red-400') : 'bg-white/5 text-slate-300 border-white/5 hover:bg-white/10'}`}
+                                className={`w-10 h-9 rounded-md text-[11px] font-black transition-all border shrink-0 ${isTagged ? (isHomeTeam ? 'bg-blue-600 text-white border-blue-400' : 'bg-red-600 text-white border-red-400') : 'bg-white/5 text-slate-300 border-white/5 hover:bg-white/10'}`}
                               >{p.number}</button>
                             );
                           })}
@@ -2383,7 +2383,7 @@ const App: React.FC = () => {
                             <option value="P1">P1</option><option value="P2">P2</option><option value="P3">P3</option>
                             <option value="G1">G1</option><option value="G2">G2</option>
                           </select>
-                          <button onClick={() => isHome ? setHomeRoster(prev => prev.filter((_, i) => i !== idx)) : setAwayRoster(prev => prev.filter((_, i) => i !== idx))} className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-600 hover:text-white hover:bg-red-600 transition-all opacity-40 group-hover:opacity-100 font-black text-sm shrink-0">
+                          <button onClick={() => isHome ? setHomeRoster(prev => prev.filter((_, i) => i !== idx)) : setAwayRoster(prev => prev.filter((_, i) => i !== idx))} className="w-9 h-9 flex items-center justify-center rounded-lg text-slate-500 hover:text-white hover:bg-red-600 transition-all opacity-70 hover:opacity-100 font-black text-sm shrink-0">
                             ✕
                           </button>
                         </div>
