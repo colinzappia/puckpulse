@@ -438,11 +438,12 @@ interface FaceoffPopupProps {
   awayName: string;
   homeRoster: Player[];
   awayRoster: Player[];
+  myTeam: Team | 'NEUTRAL';
   onConfirm: (homeCenter: string, awayCenter: string, winner: Team) => void;
   onCancel: () => void;
 }
 
-const FaceoffPopup: React.FC<FaceoffPopupProps> = ({ homeName, awayName, homeRoster, awayRoster, onConfirm, onCancel }) => {
+const FaceoffPopup: React.FC<FaceoffPopupProps> = ({ homeName, awayName, homeRoster, awayRoster, myTeam, onConfirm, onCancel }) => {
   const [homeCenter, setHomeCenter] = useState('');
   const [awayCenter, setAwayCenter] = useState('');
   const [winner, setWinner] = useState<Team | null>(null);
@@ -451,14 +452,24 @@ const FaceoffPopup: React.FC<FaceoffPopupProps> = ({ homeName, awayName, homeRos
   const awayCentres = awayRoster.filter(p => p.position?.toUpperCase() === 'C');
   const homeOthers = homeRoster.filter(p => p.position?.toUpperCase() !== 'C' && p.position?.toUpperCase() !== 'G');
   const awayOthers = awayRoster.filter(p => p.position?.toUpperCase() !== 'C' && p.position?.toUpperCase() !== 'G');
-  const canConfirm = !!homeCenter && !!awayCenter && winner !== null;
+
+  // In single-team mode, only the tracked team's centre is required — the
+  // opposing centre is optional (you often don't have their roster loaded,
+  // or just don't care to track it), so it can't block logging the draw.
+  const isSingleTeam = myTeam !== 'NEUTRAL';
+  const canConfirm = isSingleTeam
+    ? (myTeam === Team.HOME ? !!homeCenter : !!awayCenter) && winner !== null
+    : !!homeCenter && !!awayCenter && winner !== null;
 
   const renderCentreGroup = (
     label: string, accent: string, accentBg: string,
-    centres: Player[], others: Player[], selected: string, onSelect: (num: string) => void
+    centres: Player[], others: Player[], selected: string, onSelect: (num: string) => void,
+    optional?: boolean
   ) => (
     <div style={{ marginBottom: '1rem' }}>
-      <p style={{ fontSize: '0.7rem', fontWeight: 900, color: accent, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>{label} Centre</p>
+      <p style={{ fontSize: '0.7rem', fontWeight: 900, color: accent, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
+        {label} Centre{optional && <span style={{ color: '#64748b', fontWeight: 600, textTransform: 'none', letterSpacing: 'normal' }}> (optional)</span>}
+      </p>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
         {centres.map(p => (
           <button key={p.number} onClick={() => onSelect(p.number)}
@@ -494,8 +505,8 @@ const FaceoffPopup: React.FC<FaceoffPopupProps> = ({ homeName, awayName, homeRos
           <div style={{ color: '#64748b', fontSize: '0.75rem', marginTop: '0.2rem' }}>Who's taking this draw?</div>
         </div>
 
-        {renderCentreGroup(homeName, '#60a5fa', '#2563eb', homeCentres, homeOthers, homeCenter, setHomeCenter)}
-        {renderCentreGroup(awayName, '#f87171', '#dc2626', awayCentres, awayOthers, awayCenter, setAwayCenter)}
+        {renderCentreGroup(homeName, '#60a5fa', '#2563eb', homeCentres, homeOthers, homeCenter, setHomeCenter, isSingleTeam && myTeam !== Team.HOME)}
+        {renderCentreGroup(awayName, '#f87171', '#dc2626', awayCentres, awayOthers, awayCenter, setAwayCenter, isSingleTeam && myTeam !== Team.AWAY)}
 
         <div style={{ marginBottom: '1.25rem' }}>
           <p style={{ fontSize: '0.7rem', fontWeight: 900, color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem', textAlign: 'center' }}>Who won the draw?</p>
@@ -2417,7 +2428,7 @@ const App: React.FC = () => {
 
     {/* Faceoff popup via portal */}
     {pendingFaceoff !== null && createPortal(
-      <FaceoffPopup pendingFaceoff={pendingFaceoff} homeName={homeName} awayName={awayName} homeRoster={homeRoster} awayRoster={awayRoster} onConfirm={confirmFaceoff} onCancel={() => setPendingFaceoff(null)} />,
+      <FaceoffPopup pendingFaceoff={pendingFaceoff} homeName={homeName} awayName={awayName} homeRoster={homeRoster} awayRoster={awayRoster} myTeam={myTeam} onConfirm={confirmFaceoff} onCancel={() => setPendingFaceoff(null)} />,
       document.body
     )}
 
