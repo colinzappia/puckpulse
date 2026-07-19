@@ -1040,6 +1040,11 @@ const App: React.FC = () => {
     if (!visibleTypes.includes(mapPlotType)) setVisibleTypes(prev => [...prev, mapPlotType]);
   }, [mapPlotType]);
 
+  useEffect(() => {
+    setTaggingEvent(null);
+    setPlayerTagDismissed(false);
+  }, [mapPlotType]);
+
   // Keep breakdown filter in sync with current period
   useEffect(() => {
     setBreakdownFilter(currentPeriod);
