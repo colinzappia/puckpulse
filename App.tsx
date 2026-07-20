@@ -1036,6 +1036,16 @@ const App: React.FC = () => {
   const [startingGoalieAway, setStartingGoalieAway] = useState(() => {
     try { return sessionStorage.getItem('tch_startingGoalieAway') || ''; } catch { return ''; }
   });
+  // Tracks every goalie who's been "in net" and when each stint started,
+  // using the same real timestamp every event already gets — not the game
+  // clock. This is what lets saves split correctly between two goalies
+  // after a mid-game swap, without asking the user to enter a time.
+  const [goalieHistoryHome, setGoalieHistoryHome] = useState<{ number: string; since: number }[]>(() => {
+    try { const v = sessionStorage.getItem('tch_goalieHistoryHome'); return v ? JSON.parse(v) : []; } catch { return []; }
+  });
+  const [goalieHistoryAway, setGoalieHistoryAway] = useState<{ number: string; since: number }[]>(() => {
+    try { const v = sessionStorage.getItem('tch_goalieHistoryAway'); return v ? JSON.parse(v) : []; } catch { return []; }
+  });
   const [homeRosterUrl, setHomeRosterUrl] = useState("");
   const [awayRosterUrl, setAwayRosterUrl] = useState("");
   const [homeRoster, setHomeRoster] = useState<Player[]>(() => {
@@ -1108,6 +1118,14 @@ const App: React.FC = () => {
   useEffect(() => {
     try { sessionStorage.setItem('tch_startingGoalieAway', startingGoalieAway); } catch {}
   }, [startingGoalieAway]);
+
+  useEffect(() => {
+    try { sessionStorage.setItem('tch_goalieHistoryHome', JSON.stringify(goalieHistoryHome)); } catch {}
+  }, [goalieHistoryHome]);
+
+  useEffect(() => {
+    try { sessionStorage.setItem('tch_goalieHistoryAway', JSON.stringify(goalieHistoryAway)); } catch {}
+  }, [goalieHistoryAway]);
 
   useEffect(() => {
     try {
@@ -1358,6 +1376,18 @@ const App: React.FC = () => {
     }
   }, [mapPlotType, activeTeam, playerNumber, currentPeriod, getTeamZone]);
 
+  // Sets which goalie is currently "in net" for a team, recording exactly
+  // when using the same real timestamp every event gets. Used both for the
+  // initial pre-game star toggle and for a mid-game swap — this history is
+  // what lets saves split correctly between two goalies after a pull,
+  // without needing the user to enter a game-clock time anywhere.
+  const assignGoalie = useCallback((team: Team, number: string) => {
+    const setHistory = team === Team.HOME ? setGoalieHistoryHome : setGoalieHistoryAway;
+    const setStarting = team === Team.HOME ? setStartingGoalieHome : setStartingGoalieAway;
+    setStarting(number);
+    if (number) setHistory(prev => [...prev, { number, since: Date.now() }]);
+  }, []);
+
   const confirmPlayerTag = useCallback((eventId: string, num: string, playerTeam: Team) => {
     setEvents(prev => prev.map(e => {
       if (e.id !== eventId) return e;
@@ -1412,9 +1442,11 @@ const App: React.FC = () => {
     setAwayLogo('');
     setStartingGoalieHome('');
     setStartingGoalieAway('');
+    setGoalieHistoryHome([]);
+    setGoalieHistoryAway([]);
     setSummaries({ 'total': 'Game tracking active. Generate coaching analysis after logging more events.' });
     localStorage.removeItem('tch_game_state');
-    try { ['tch_homeRoster','tch_awayRoster','tch_homeName','tch_awayName','tch_homeLogo','tch_awayLogo','tch_startingGoalieHome','tch_startingGoalieAway'].forEach(k => sessionStorage.removeItem(k)); } catch {}
+    try { ['tch_homeRoster','tch_awayRoster','tch_homeName','tch_awayName','tch_homeLogo','tch_awayLogo','tch_startingGoalieHome','tch_startingGoalieAway','tch_goalieHistoryHome','tch_goalieHistoryAway'].forEach(k => sessionStorage.removeItem(k)); } catch {}
     sessionStorage.setItem('tch_launched', 'true');
     setShowNewGameConfirm(false);
   };
@@ -1538,6 +1570,8 @@ const App: React.FC = () => {
     setAwayLogo('');
     setStartingGoalieHome('');
     setStartingGoalieAway('');
+    setGoalieHistoryHome([]);
+    setGoalieHistoryAway([]);
     setSummaries({ 'total': 'Game tracking active. Generate coaching analysis after logging more events.' });
     setLastEvent(null);
     setPendingGoal(null);
@@ -1546,7 +1580,7 @@ const App: React.FC = () => {
     setPendingPenalty(null);
     setTaggingEvent(null);
     setPlayerTagDismissed(false);
-    try { ['tch_homeRoster','tch_awayRoster','tch_homeName','tch_awayName','tch_homeLogo','tch_awayLogo','tch_startingGoalieHome','tch_startingGoalieAway'].forEach(k => sessionStorage.removeItem(k)); } catch {}
+    try { ['tch_homeRoster','tch_awayRoster','tch_homeName','tch_awayName','tch_homeLogo','tch_awayLogo','tch_startingGoalieHome','tch_startingGoalieAway','tch_goalieHistoryHome','tch_goalieHistoryAway'].forEach(k => sessionStorage.removeItem(k)); } catch {}
     localStorage.removeItem('tch_game_state');
     setShowEndGame(false);
   };
@@ -1897,19 +1931,55 @@ const App: React.FC = () => {
                       </div>
                     </div>
                   ))}
-                  {/* Goalies */}
+                  {/* Goalies — only the active (starting) goalie shows here
+                      once one is designated, to avoid mixing up who's
+                      actually in net. Use the 🔄 to swap goalies mid-game
+                      (e.g. a pull) — this records exactly when, so Saves
+                      in Player Stats split correctly between the two. */}
                   <div>
                     <div className="flex items-center gap-0.5 mb-0.5">
                       <span className={`text-[6px] font-black w-3 shrink-0 ${isHome ? 'text-blue-600' : 'text-red-600'}`}>G</span>
                       <div className="flex-1 h-px bg-white/5" />
                     </div>
-                    <div className="grid grid-cols-2 gap-0.5">
-                      {['G1','G2'].map(goalieNum => (
-                        <DroppableSlot key={goalieNum} id={`line-${team}-${goalieNum}-G`} label={goalieNum === 'G1' ? 'S' : 'B'}>
-                          {roster.filter(p => p.line === goalieNum).map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} isHome={isHome} isSelected={playerNumber === p.number && activeTeam === team} onSelect={selectPlayer} />)}
-                        </DroppableSlot>
-                      ))}
-                    </div>
+                    {(() => {
+                      const activeGoalieNum = isHome ? startingGoalieHome : startingGoalieAway;
+                      const allGoalies = roster.filter(p => p.position?.toUpperCase() === 'G');
+                      const activeGoalie = allGoalies.find(p => p.number === activeGoalieNum);
+                      if (activeGoalie) {
+                        const activeIdx = allGoalies.findIndex(p => p.number === activeGoalieNum);
+                        const nextGoalie = allGoalies.length > 1 ? allGoalies[(activeIdx + 1) % allGoalies.length] : null;
+                        return (
+                          <div className="flex items-center gap-1">
+                            <div className="flex-1">
+                              <DroppableSlot id={`line-${team}-active-goalie-G`} label="NET">
+                                <DraggablePlayer p={activeGoalie} team={team} isHome={isHome} isSelected={playerNumber === activeGoalie.number && activeTeam === team} onSelect={selectPlayer} />
+                              </DroppableSlot>
+                            </div>
+                            {nextGoalie && (
+                              <button
+                                onClick={() => assignGoalie(team, nextGoalie.number)}
+                                title={`Swap in #${nextGoalie.number}`}
+                                className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 hover:bg-yellow-500/20 text-slate-500 hover:text-yellow-400 transition-all text-sm"
+                              >
+                                🔄
+                              </button>
+                            )}
+                          </div>
+                        );
+                      }
+                      if (allGoalies.length > 0) {
+                        return <p className="text-[7px] text-slate-600 italic px-1 py-1">Set a ★ starting goalie in Roster Setup</p>;
+                      }
+                      return (
+                        <div className="grid grid-cols-2 gap-0.5">
+                          {['G1','G2'].map(goalieNum => (
+                            <DroppableSlot key={goalieNum} id={`line-${team}-${goalieNum}-G`} label={goalieNum === 'G1' ? 'S' : 'B'}>
+                              {roster.filter(p => p.line === goalieNum).map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} isHome={isHome} isSelected={playerNumber === p.number && activeTeam === team} onSelect={selectPlayer} />)}
+                            </DroppableSlot>
+                          ))}
+                        </div>
+                      );
+                    })()}
                   </div>
                   {/* Unassigned */}
                   {roster.filter(p => !['1','2','3','4','P1','P2','P3','G1','G2'].includes(p.line || '')).length > 0 && (
@@ -2421,11 +2491,7 @@ const App: React.FC = () => {
                           </select>
                           {p.position?.toUpperCase() === 'G' && (
                             <button
-                              onClick={() => {
-                                const setter = isHome ? setStartingGoalieHome : setStartingGoalieAway;
-                                const current = isHome ? startingGoalieHome : startingGoalieAway;
-                                setter(current === p.number ? '' : p.number);
-                              }}
+                              onClick={() => assignGoalie(team, (isHome ? startingGoalieHome : startingGoalieAway) === p.number ? '' : p.number)}
                               title="Starting goalie"
                               className={`w-9 h-9 flex items-center justify-center rounded-lg transition-all font-black text-sm shrink-0 border ${(isHome ? startingGoalieHome : startingGoalieAway) === p.number ? 'bg-yellow-500 text-black border-yellow-300' : 'bg-white/5 text-slate-500 border-white/5 opacity-70 hover:opacity-100 hover:text-yellow-400'}`}
                             >
@@ -2508,7 +2574,7 @@ const App: React.FC = () => {
       </div>
     )}
 
-    <PlayerStats isOpen={showPlayerStats} onClose={() => setShowPlayerStats(false)} events={events} homeRoster={homeRoster} awayRoster={awayRoster} homeName={homeName} awayName={awayName} startingGoalieHome={startingGoalieHome} startingGoalieAway={startingGoalieAway} />
+    <PlayerStats isOpen={showPlayerStats} onClose={() => setShowPlayerStats(false)} events={events} homeRoster={homeRoster} awayRoster={awayRoster} homeName={homeName} awayName={awayName} goalieHistoryHome={goalieHistoryHome} goalieHistoryAway={goalieHistoryAway} />
 
     {/* End Game modal */}
     {showEndGame && (
