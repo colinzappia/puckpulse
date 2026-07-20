@@ -117,7 +117,7 @@ interface GoalLinePopupProps {
   homeRoster: Player[];
   awayRoster: Player[];
   myTeam: Team | 'NEUTRAL';
-  onConfirm: (line?: string, playersOnIce?: string[], againstPlayersOnIce?: string[], strength?: GoalStrength) => void;
+  onConfirm: (line?: string, playersOnIce?: string[], againstPlayersOnIce?: string[], strength?: GoalStrength, assists?: string[]) => void;
   onCancel: () => void;
 }
 
@@ -146,6 +146,8 @@ const GoalLinePopup: React.FC<GoalLinePopupProps> = ({ pendingGoal, homeName, aw
   const [againstPlayers, setAgainstPlayers] = useState<string[]>([]);
   const [step, setStep] = useState<'line' | 'confirm' | 'override' | 'against'>('line');
   const [strength, setStrength] = useState<GoalStrength>('ES');
+  const [assists, setAssists] = useState<string[]>([]);
+  const toggleAssist = (num: string) => setAssists(prev => prev.includes(num) ? prev.filter(n => n !== num) : prev.length < 2 ? [...prev, num] : prev);
 
   // Forward line and defense pair are picked independently so a full 5-man
   // group (3 forwards + 2 D) can be built from one screen, instead of being
@@ -180,7 +182,7 @@ const GoalLinePopup: React.FC<GoalLinePopupProps> = ({ pendingGoal, homeName, aw
   // is done at this point.
   const proceedAfterScoringSelection = () => {
     if (isNeutral) setStep('against');
-    else onConfirm(selectedLine || undefined, selectedPlayers, undefined, strength);
+    else onConfirm(selectedLine || undefined, selectedPlayers, undefined, strength, assists);
   };
 
   const lineGroups = [
@@ -331,6 +333,22 @@ const GoalLinePopup: React.FC<GoalLinePopupProps> = ({ pendingGoal, homeName, aw
                 Next: select {defendingTeamName} players on ice against
               </div>
             )}
+            <div style={{ marginBottom: '0.75rem' }}>
+              <p style={{ fontSize: '0.65rem', fontWeight: 900, color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem' }}>
+                Assists <span style={{ color: '#64748b', fontWeight: 600, textTransform: 'none' }}>(optional, up to 2)</span>
+              </p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                {scoringSideRoster.filter(p => p.number !== pendingGoal.playerNumber && p.position?.toUpperCase() !== 'G').map(p => {
+                  const on = assists.includes(p.number);
+                  return (
+                    <button key={p.number} onClick={() => toggleAssist(p.number)}
+                      style={{ padding: '0.4rem 0.65rem', borderRadius: '0.5rem', fontSize: '0.7rem', fontWeight: 800, border: `1px solid ${on ? '#38bdf8' : 'rgba(255,255,255,0.08)'}`, background: on ? 'rgba(56,189,248,0.2)' : 'rgba(255,255,255,0.03)', color: on ? '#7dd3fc' : '#94a3b8', cursor: 'pointer' }}>
+                      #{p.number} {p.name.split(' ').pop()}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
             <button onClick={() => setStep('override')}
               style={{ width: '100%', padding: '0.75rem', background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.3)', color: '#fbbf24', fontWeight: 700, borderRadius: '0.875rem', fontSize: '0.8rem', cursor: 'pointer', marginBottom: '0.5rem' }}>
               Override players on ice
@@ -414,7 +432,7 @@ const GoalLinePopup: React.FC<GoalLinePopupProps> = ({ pendingGoal, homeName, aw
                 </div>
                 {renderPlayerList(defendingRoster, againstPlayers, 'defending')}
                 <div style={{ fontSize: '0.7rem', color: '#64748b', textAlign: 'center', marginBottom: '0.625rem' }}>{againstPlayers.length} defender{againstPlayers.length !== 1 ? 's' : ''} selected</div>
-                <button onClick={() => onConfirm(selectedLine, selectedPlayers, againstPlayers, strength)}
+                <button onClick={() => onConfirm(selectedLine, selectedPlayers, againstPlayers, strength, assists)}
                   style={{ width: '100%', padding: '0.875rem', background: 'rgba(34,197,94,0.2)', border: '1px solid rgba(34,197,94,0.4)', color: '#22c55e', fontWeight: 900, borderRadius: '0.875rem', fontSize: '0.875rem', cursor: 'pointer', marginBottom: '0.5rem' }}>
                   Confirm
                 </button>
@@ -1012,6 +1030,12 @@ const App: React.FC = () => {
   const [awayLogo, setAwayLogo] = useState(() => {
     try { return sessionStorage.getItem('tch_awayLogo') || ''; } catch { return ''; }
   });
+  const [startingGoalieHome, setStartingGoalieHome] = useState(() => {
+    try { return sessionStorage.getItem('tch_startingGoalieHome') || ''; } catch { return ''; }
+  });
+  const [startingGoalieAway, setStartingGoalieAway] = useState(() => {
+    try { return sessionStorage.getItem('tch_startingGoalieAway') || ''; } catch { return ''; }
+  });
   const [homeRosterUrl, setHomeRosterUrl] = useState("");
   const [awayRosterUrl, setAwayRosterUrl] = useState("");
   const [homeRoster, setHomeRoster] = useState<Player[]>(() => {
@@ -1076,6 +1100,14 @@ const App: React.FC = () => {
   useEffect(() => {
     try { sessionStorage.setItem('tch_awayLogo', awayLogo); } catch {}
   }, [awayLogo]);
+
+  useEffect(() => {
+    try { sessionStorage.setItem('tch_startingGoalieHome', startingGoalieHome); } catch {}
+  }, [startingGoalieHome]);
+
+  useEffect(() => {
+    try { sessionStorage.setItem('tch_startingGoalieAway', startingGoalieAway); } catch {}
+  }, [startingGoalieAway]);
 
   useEffect(() => {
     try {
@@ -1180,7 +1212,7 @@ const App: React.FC = () => {
     return 'low';
   };
 
-  const confirmGoal = useCallback((lineOnIce?: string, playersOnIce?: string[], againstPlayersOnIce?: string[], strength?: 'ES' | 'PP' | 'SH' | 'EN' | 'PS') => {
+  const confirmGoal = useCallback((lineOnIce?: string, playersOnIce?: string[], againstPlayersOnIce?: string[], strength?: 'ES' | 'PP' | 'SH' | 'EN' | 'PS', assists?: string[]) => {
     if (!pendingGoal) return;
     const { x, y, team, playerNumber: pNum } = pendingGoal;
     const quality = getShotQuality(x, y, team);
@@ -1194,7 +1226,7 @@ const App: React.FC = () => {
       zone: getTeamZone(team, x),
       playerNumber: pNum || undefined,
       coordinates: { x, y },
-      metadata: { shotQuality: quality, lineOnIce, playersOnIce, againstPlayersOnIce, strength: strength || 'ES' }
+      metadata: { shotQuality: quality, lineOnIce, playersOnIce, againstPlayersOnIce, strength: strength || 'ES', assists: assists && assists.length > 0 ? assists : undefined }
     };
     setEvents(prev => [...prev, newEvent]);
     if (activeSession && user) broadcastEvent(activeSession.id, newEvent, user.id).catch(console.error);
@@ -1378,9 +1410,11 @@ const App: React.FC = () => {
     setAwayRosterUrl('');
     setHomeLogo('');
     setAwayLogo('');
+    setStartingGoalieHome('');
+    setStartingGoalieAway('');
     setSummaries({ 'total': 'Game tracking active. Generate coaching analysis after logging more events.' });
     localStorage.removeItem('tch_game_state');
-    try { ['tch_homeRoster','tch_awayRoster','tch_homeName','tch_awayName','tch_homeLogo','tch_awayLogo'].forEach(k => sessionStorage.removeItem(k)); } catch {}
+    try { ['tch_homeRoster','tch_awayRoster','tch_homeName','tch_awayName','tch_homeLogo','tch_awayLogo','tch_startingGoalieHome','tch_startingGoalieAway'].forEach(k => sessionStorage.removeItem(k)); } catch {}
     sessionStorage.setItem('tch_launched', 'true');
     setShowNewGameConfirm(false);
   };
@@ -1502,6 +1536,8 @@ const App: React.FC = () => {
     setAwayRoster([]);
     setHomeLogo('');
     setAwayLogo('');
+    setStartingGoalieHome('');
+    setStartingGoalieAway('');
     setSummaries({ 'total': 'Game tracking active. Generate coaching analysis after logging more events.' });
     setLastEvent(null);
     setPendingGoal(null);
@@ -1510,7 +1546,7 @@ const App: React.FC = () => {
     setPendingPenalty(null);
     setTaggingEvent(null);
     setPlayerTagDismissed(false);
-    try { ['tch_homeRoster','tch_awayRoster','tch_homeName','tch_awayName','tch_homeLogo','tch_awayLogo'].forEach(k => sessionStorage.removeItem(k)); } catch {}
+    try { ['tch_homeRoster','tch_awayRoster','tch_homeName','tch_awayName','tch_homeLogo','tch_awayLogo','tch_startingGoalieHome','tch_startingGoalieAway'].forEach(k => sessionStorage.removeItem(k)); } catch {}
     localStorage.removeItem('tch_game_state');
     setShowEndGame(false);
   };
@@ -1795,7 +1831,7 @@ const App: React.FC = () => {
         
         <main className="flex flex-col pb-20">
         {/* LIVE ROSTER LOGGING PANELS */}
-        <div className={`flex w-full gap-px bg-white/5 border-b border-white/10 shrink-0 transition-all duration-500 ${showLineups ? 'h-[420px] sm:h-[460px] md:h-[520px] opacity-100' : 'h-0 opacity-0 border-none overflow-hidden'}`}>
+        <div className={`flex w-full gap-px bg-white/5 border-b border-white/10 shrink-0 transition-all duration-500 ${showLineups ? 'h-[420px] sm:h-[460px] md:h-[520px] landscape:h-[220px] landscape:sm:h-[260px] opacity-100' : 'h-0 opacity-0 border-none overflow-hidden'}`}>
           {orderedTeams.map(team => {
             const isHome = team === Team.HOME;
             const roster = isHome ? homeRoster : awayRoster;
@@ -1925,7 +1961,7 @@ const App: React.FC = () => {
             </div>
           </div>
 
-          <div className="relative flex flex-col items-center justify-center p-3 sm:p-10 h-full gap-3">
+          <div className="relative flex flex-col items-center justify-center p-3 sm:p-10 landscape:p-2 landscape:sm:p-4 h-full gap-3 landscape:gap-1.5">
 
             {/* Event toolbar — centred above the rink */}
             <div className="w-full max-w-6xl flex items-center justify-center gap-2 overflow-x-auto scrollbar-none">
@@ -2060,7 +2096,7 @@ const App: React.FC = () => {
         </div>
 
         {/* MAP FILTERS */}
-        <div className="w-full px-4 py-3 bg-black/40 border-b border-white/5 flex items-center justify-center gap-2 overflow-x-auto scrollbar-none shadow-inner">
+        <div className="w-full px-4 py-3 landscape:py-1.5 bg-black/40 border-b border-white/5 flex items-center justify-center gap-2 overflow-x-auto scrollbar-none shadow-inner">
           <button onClick={toggleAllFilters} className="shrink-0 px-4 py-2 rounded-xl bg-white/10 text-[9px] font-black uppercase text-slate-300 border border-white/10 active:scale-95 transition-all">
             {toolbarButtons.every(t => visibleTypes.includes(t.type)) ? 'Isolate' : 'Show All'}
           </button>
@@ -2383,6 +2419,19 @@ const App: React.FC = () => {
                             <option value="P1">P1</option><option value="P2">P2</option><option value="P3">P3</option>
                             <option value="G1">G1</option><option value="G2">G2</option>
                           </select>
+                          {p.position?.toUpperCase() === 'G' && (
+                            <button
+                              onClick={() => {
+                                const setter = isHome ? setStartingGoalieHome : setStartingGoalieAway;
+                                const current = isHome ? startingGoalieHome : startingGoalieAway;
+                                setter(current === p.number ? '' : p.number);
+                              }}
+                              title="Starting goalie"
+                              className={`w-9 h-9 flex items-center justify-center rounded-lg transition-all font-black text-sm shrink-0 border ${(isHome ? startingGoalieHome : startingGoalieAway) === p.number ? 'bg-yellow-500 text-black border-yellow-300' : 'bg-white/5 text-slate-500 border-white/5 opacity-70 hover:opacity-100 hover:text-yellow-400'}`}
+                            >
+                              ★
+                            </button>
+                          )}
                           <button onClick={() => isHome ? setHomeRoster(prev => prev.filter((_, i) => i !== idx)) : setAwayRoster(prev => prev.filter((_, i) => i !== idx))} className="w-9 h-9 flex items-center justify-center rounded-lg text-slate-500 hover:text-white hover:bg-red-600 transition-all opacity-70 hover:opacity-100 font-black text-sm shrink-0">
                             ✕
                           </button>
@@ -2459,7 +2508,7 @@ const App: React.FC = () => {
       </div>
     )}
 
-    <PlayerStats isOpen={showPlayerStats} onClose={() => setShowPlayerStats(false)} events={events} homeRoster={homeRoster} awayRoster={awayRoster} homeName={homeName} awayName={awayName} />
+    <PlayerStats isOpen={showPlayerStats} onClose={() => setShowPlayerStats(false)} events={events} homeRoster={homeRoster} awayRoster={awayRoster} homeName={homeName} awayName={awayName} startingGoalieHome={startingGoalieHome} startingGoalieAway={startingGoalieAway} />
 
     {/* End Game modal */}
     {showEndGame && (
