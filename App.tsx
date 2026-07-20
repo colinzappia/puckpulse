@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -663,10 +662,7 @@ const PenaltyPopup: React.FC<PenaltyPopupProps> = ({ pendingPenalty, homeName, a
   const [customInfraction, setCustomInfraction] = useState('');
   const [minutes, setMinutes] = useState<number>(2);
 
-  const canConfirm = !!playerNumber && (
-    (penaltyType !== null && penaltyType !== 'OTHER') ||
-    (penaltyType === 'OTHER' && customInfraction.trim() !== '')
-  );
+  const canConfirm = penaltyType !== null && (penaltyType !== 'OTHER' || customInfraction.trim() !== '');
   const finalInfraction = penaltyType === 'OTHER' ? customInfraction.trim() : (penaltyType || '');
 
   useEffect(() => {
@@ -688,7 +684,7 @@ const PenaltyPopup: React.FC<PenaltyPopupProps> = ({ pendingPenalty, homeName, a
         </div>
 
         <div style={{ marginBottom: '0.75rem' }}>
-          <p style={{ fontSize: '0.65rem', fontWeight: 900, color: accent, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem' }}>Who took the penalty?</p>
+          <p style={{ fontSize: '0.65rem', fontWeight: 900, color: accent, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem' }}>Who took the penalty? <span style={{ color: '#64748b', fontWeight: 600, textTransform: 'none' }}>(optional)</span></p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem' }}>
             {roster.map(p => (
               <button key={p.number} onClick={() => setPlayerNumber(p.number)}
@@ -1264,7 +1260,7 @@ const App: React.FC = () => {
       type: EventType.PENALTY,
       team,
       zone: getTeamZone(team, x),
-      playerNumber: playerNum,
+      playerNumber: playerNum || undefined,
       coordinates: { x, y },
       metadata: { penaltyType, minutes, isPowerPlay: true }
     };
