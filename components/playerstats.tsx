@@ -7,8 +7,8 @@ interface PlayerStatsProps {
   awayRoster: Player[];
   homeName: string;
   awayName: string;
-  startingGoalieHome?: string;
-  startingGoalieAway?: string;
+  goalieHistoryHome?: { number: string; since: number }[];
+  goalieHistoryAway?: { number: string; since: number }[];
   isOpen: boolean;
   onClose: () => void;
 }
@@ -128,15 +128,28 @@ function buildPlayerStats(events: GameEvent[], roster: Player[], team: Team): Pl
 // goals against. No separate "SAVE" event needed; this just reads the
 // same shot/goal data already being tracked, from the opposing team's
 // perspective.
-function computeGoalieStats(events: GameEvent[], goalieNumber: string, goalieTeam: Team, roster: Player[]) {
-  const goalie = roster.find(p => p.number === goalieNumber);
-  if (!goalie) return null;
+function computeGoalieStats(events: GameEvent[], history: { number: string; since: number }[], goalieTeam: Team, roster: Player[]) {
+  if (history.length === 0) return [];
   const opposingTeam = goalieTeam === Team.HOME ? Team.AWAY : Team.HOME;
-  const shotsAgainst = events.filter(e => e.team === opposingTeam && e.type === EventType.SHOT && e.metadata?.onNet !== false).length;
-  const goalsAgainst = events.filter(e => e.team === opposingTeam && e.type === EventType.GOAL).length;
-  const saves = Math.max(0, shotsAgainst - goalsAgainst);
-  const savePct = shotsAgainst > 0 ? (saves / shotsAgainst) : null;
-  return { name: goalie.name, number: goalie.number, shotsAgainst, goalsAgainst, saves, savePct };
+  const relevantEvents = events.filter(e => e.team === opposingTeam && (e.type === EventType.SHOT || e.type === EventType.GOAL));
+
+  // Each goalie's stint runs from when they were assigned until the next
+  // assignment (or the end of the game). Splitting by real timestamp this
+  // way means a mid-game swap (e.g. a pull) attributes shots/goals against
+  // to whichever goalie was actually in net at that moment — no manual
+  // game-clock entry needed anywhere.
+  const sorted = [...history].sort((a, b) => a.since - b.since);
+  return sorted.map((stint, i) => {
+    const windowStart = stint.since;
+    const windowEnd = i < sorted.length - 1 ? sorted[i + 1].since : Infinity;
+    const stintEvents = relevantEvents.filter(e => e.timestamp >= windowStart && e.timestamp < windowEnd);
+    const shotsAgainst = stintEvents.filter(e => e.type === EventType.SHOT && e.metadata?.onNet !== false).length;
+    const goalsAgainst = stintEvents.filter(e => e.type === EventType.GOAL).length;
+    const saves = Math.max(0, shotsAgainst - goalsAgainst);
+    const savePct = shotsAgainst > 0 ? (saves / shotsAgainst) : null;
+    const player = roster.find(p => p.number === stint.number);
+    return { name: player?.name || `#${stint.number}`, number: stint.number, shotsAgainst, goalsAgainst, saves, savePct };
+  });
 }
 
 const StatBadge = ({ value, color }: { value: number; color: string }) => (
@@ -156,7 +169,7 @@ const PlusMinusBadge = ({ value }: { value: number }) => {
 };
 
 const PlayerStats: React.FC<PlayerStatsProps> = ({
-  events, homeRoster, awayRoster, homeName, awayName, startingGoalieHome, startingGoalieAway, isOpen, onClose
+  events, homeRoster, awayRoster, homeName, awayName, goalieHistoryHome, goalieHistoryAway, isOpen, onClose
 }) => {
   const [activeTeam, setActiveTeam] = useState<'home' | 'away'>('home');
 
@@ -167,10 +180,10 @@ const PlayerStats: React.FC<PlayerStatsProps> = ({
   const rows = activeTeam === 'home' ? homeStats : awayStats;
   const teamName = activeTeam === 'home' ? homeName : awayName;
 
-  const activeGoalieNumber = activeTeam === 'home' ? startingGoalieHome : startingGoalieAway;
   const activeGoalieTeam = activeTeam === 'home' ? Team.HOME : Team.AWAY;
   const activeRoster = activeTeam === 'home' ? homeRoster : awayRoster;
-  const goalieStats = activeGoalieNumber ? computeGoalieStats(events, activeGoalieNumber, activeGoalieTeam, activeRoster) : null;
+  const activeHistory = (activeTeam === 'home' ? goalieHistoryHome : goalieHistoryAway) || [];
+  const goalieStints = computeGoalieStats(events, activeHistory, activeGoalieTeam, activeRoster);
 
   const totalEvents = events.filter(e => e.team === (activeTeam === 'home' ? Team.HOME : Team.AWAY)).length;
 
@@ -203,18 +216,27 @@ const PlayerStats: React.FC<PlayerStatsProps> = ({
 
       {/* Stats table */}
       <div className="flex-1 overflow-auto px-4 py-4">
-        {goalieStats && (
-          <div className="max-w-5xl mx-auto mb-4 bg-yellow-500/5 border border-yellow-500/20 rounded-2xl px-5 py-3 flex items-center gap-4 flex-wrap">
-            <span className="text-lg">🥅</span>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-black text-white truncate">#{goalieStats.number} {goalieStats.name} <span className="text-yellow-400 text-[10px] font-black uppercase tracking-wider ml-1">Starting Goalie</span></p>
-            </div>
-            <div className="flex items-center gap-4 text-center shrink-0">
-              <div><p className="text-lg font-black text-white">{goalieStats.saves}</p><p className="text-[9px] font-bold text-slate-500 uppercase">Saves</p></div>
-              <div><p className="text-lg font-black text-white">{goalieStats.goalsAgainst}</p><p className="text-[9px] font-bold text-slate-500 uppercase">GA</p></div>
-              <div><p className="text-lg font-black text-white">{goalieStats.shotsAgainst}</p><p className="text-[9px] font-bold text-slate-500 uppercase">SA</p></div>
-              <div><p className="text-lg font-black text-yellow-400">{goalieStats.savePct !== null ? `.${Math.round(goalieStats.savePct * 1000)}` : '—'}</p><p className="text-[9px] font-bold text-slate-500 uppercase">SV%</p></div>
-            </div>
+        {goalieStints.length > 0 && (
+          <div className="max-w-5xl mx-auto mb-4 space-y-2">
+            {goalieStints.map((g, i) => (
+              <div key={`${g.number}-${i}`} className="bg-yellow-500/5 border border-yellow-500/20 rounded-2xl px-5 py-3 flex items-center gap-4 flex-wrap">
+                <span className="text-lg">🥅</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-black text-white truncate">
+                    #{g.number} {g.name}
+                    <span className="text-yellow-400 text-[10px] font-black uppercase tracking-wider ml-1">
+                      {goalieStints.length > 1 ? (i === 0 ? 'Started' : `In at swap #${i}`) : 'Starting Goalie'}
+                    </span>
+                  </p>
+                </div>
+                <div className="flex items-center gap-4 text-center shrink-0">
+                  <div><p className="text-lg font-black text-white">{g.saves}</p><p className="text-[9px] font-bold text-slate-500 uppercase">Saves</p></div>
+                  <div><p className="text-lg font-black text-white">{g.goalsAgainst}</p><p className="text-[9px] font-bold text-slate-500 uppercase">GA</p></div>
+                  <div><p className="text-lg font-black text-white">{g.shotsAgainst}</p><p className="text-[9px] font-bold text-slate-500 uppercase">SA</p></div>
+                  <div><p className="text-lg font-black text-yellow-400">{g.savePct !== null ? `.${Math.round(g.savePct * 1000)}` : '—'}</p><p className="text-[9px] font-bold text-slate-500 uppercase">SV%</p></div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
         {rows.length === 0 ? (
