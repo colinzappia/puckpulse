@@ -137,7 +137,7 @@ const RinkChart: React.FC<RinkChartProps> = ({
   onMoveEvent,
   activeEventType
 }) => {
-  const draggingRef = React.useRef<{ id: string } | null>(null);
+  const draggingRef = React.useRef<{ id: string; startX: number; startY: number; moved: boolean } | null>(null);
   const getSVGCoords = (e: React.PointerEvent<SVGSVGElement>) => {
     const svg = e.currentTarget as SVGSVGElement;
     const pt = svg.createSVGPoint();
@@ -154,9 +154,13 @@ const RinkChart: React.FC<RinkChartProps> = ({
     if (!coords) return;
     const { x, y } = coords;
 
-    // Check if clicking near an existing event dot — if so, start dragging it
+    // Check if clicking near an existing event dot — if so, arm a possible
+    // drag (confirmed only once real movement happens — see
+    // handlePointerMove). Threshold kept tight so a click meant to plot a
+    // new nearby event doesn't get mistaken for grabbing an old one,
+    // especially in busy areas like the neutral zone.
     if (onMoveEvent) {
-      const DRAG_THRESHOLD = 8;
+      const DRAG_THRESHOLD = 4;
       const hit = events.find(ev => {
         if (!ev.coordinates) return false;
         const dx = ev.coordinates.x - x;
@@ -164,7 +168,7 @@ const RinkChart: React.FC<RinkChartProps> = ({
         return Math.sqrt(dx * dx + dy * dy) < DRAG_THRESHOLD;
       });
       if (hit) {
-        draggingRef.current = { id: hit.id };
+        draggingRef.current = { id: hit.id, startX: x, startY: y, moved: false };
         e.currentTarget.setPointerCapture(e.pointerId);
         return;
       }
@@ -210,10 +214,18 @@ const RinkChart: React.FC<RinkChartProps> = ({
     if (!draggingRef.current || !onMoveEvent) return;
     const coords = getSVGCoords(e);
     if (!coords) return;
+    const drag = draggingRef.current;
+    if (!drag.moved) {
+      const MIN_DRAG_DISTANCE = 1.5; // unit space — filters out incidental click jitter
+      const dx = coords.x - drag.startX;
+      const dy = coords.y - drag.startY;
+      if (Math.sqrt(dx * dx + dy * dy) < MIN_DRAG_DISTANCE) return;
+      drag.moved = true;
+    }
     // Clamp to rink bounds
     const x = Math.max(2, Math.min(198, coords.x));
     const y = Math.max(2, Math.min(83, coords.y));
-    onMoveEvent(draggingRef.current.id, x, y);
+    onMoveEvent(drag.id, x, y);
   };
 
   const handlePointerUp = (e: React.PointerEvent<SVGSVGElement>) => {
