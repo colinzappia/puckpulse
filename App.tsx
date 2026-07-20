@@ -1831,7 +1831,7 @@ const App: React.FC = () => {
         
         <main className="flex flex-col pb-20">
         {/* LIVE ROSTER LOGGING PANELS */}
-        <div className={`flex w-full gap-px bg-white/5 border-b border-white/10 shrink-0 transition-all duration-500 ${showLineups ? 'h-[420px] sm:h-[460px] md:h-[520px] landscape:h-[220px] landscape:sm:h-[260px] opacity-100' : 'h-0 opacity-0 border-none overflow-hidden'}`}>
+        <div className={`flex w-full gap-px bg-white/5 border-b border-white/10 shrink-0 transition-all duration-500 ${showLineups ? 'h-[420px] sm:h-[460px] md:h-[520px] opacity-100' : 'h-0 opacity-0 border-none overflow-hidden'}`}>
           {orderedTeams.map(team => {
             const isHome = team === Team.HOME;
             const roster = isHome ? homeRoster : awayRoster;
