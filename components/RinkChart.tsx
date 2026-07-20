@@ -149,34 +149,8 @@ const RinkChart: React.FC<RinkChartProps> = ({
     return { x: cursor.x / 5, y: cursor.y / 5 };
   };
 
-  const handlePointerDown = (e: React.PointerEvent<SVGSVGElement>) => {
-    const coords = getSVGCoords(e);
-    if (!coords) return;
-    const { x, y } = coords;
-
-    // Check if clicking near an existing event dot — if so, arm a possible
-    // drag (confirmed only once real movement happens — see
-    // handlePointerMove). Threshold kept tight so a click meant to plot a
-    // new nearby event doesn't get mistaken for grabbing an old one,
-    // especially in busy areas like the neutral zone.
-    if (onMoveEvent) {
-      const DRAG_THRESHOLD = 4;
-      const hit = events.find(ev => {
-        if (!ev.coordinates) return false;
-        const dx = ev.coordinates.x - x;
-        const dy = ev.coordinates.y - y;
-        return Math.sqrt(dx * dx + dy * dy) < DRAG_THRESHOLD;
-      });
-      if (hit) {
-        draggingRef.current = { id: hit.id, startX: x, startY: y, moved: false };
-        e.currentTarget.setPointerCapture(e.pointerId);
-        return;
-      }
-    }
-
-    // Otherwise plot a new event
+  const plotNewEvent = (x: number, y: number) => {
     if (!onPlot) return;
-
     let px = x;
     let py = y;
 
@@ -210,6 +184,36 @@ const RinkChart: React.FC<RinkChartProps> = ({
     onPlot(px, py);
   };
 
+  const handlePointerDown = (e: React.PointerEvent<SVGSVGElement>) => {
+    const coords = getSVGCoords(e);
+    if (!coords) return;
+    const { x, y } = coords;
+
+    // Check if clicking near an existing event dot. Don't decide yet
+    // whether this is a drag or a new (possibly overlapping) plot — that's
+    // decided at release, based on whether real movement actually
+    // happened (see handlePointerMove/handlePointerUp). This lets a plain
+    // click land a new dot right on top of an existing one, while a real
+    // drag still repositions it.
+    if (onMoveEvent) {
+      const DRAG_THRESHOLD = 4;
+      const hit = events.find(ev => {
+        if (!ev.coordinates) return false;
+        const dx = ev.coordinates.x - x;
+        const dy = ev.coordinates.y - y;
+        return Math.sqrt(dx * dx + dy * dy) < DRAG_THRESHOLD;
+      });
+      if (hit) {
+        draggingRef.current = { id: hit.id, startX: x, startY: y, moved: false };
+        e.currentTarget.setPointerCapture(e.pointerId);
+        return;
+      }
+    }
+
+    // Not near an existing dot — plots immediately, same as always.
+    plotNewEvent(x, y);
+  };
+
   const handlePointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
     if (!draggingRef.current || !onMoveEvent) return;
     const coords = getSVGCoords(e);
@@ -229,9 +233,17 @@ const RinkChart: React.FC<RinkChartProps> = ({
   };
 
   const handlePointerUp = (e: React.PointerEvent<SVGSVGElement>) => {
+    const drag = draggingRef.current;
     draggingRef.current = null;
     if (e.currentTarget.hasPointerCapture(e.pointerId)) {
       e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+    if (drag && !drag.moved) {
+      // Was near an existing dot at pointer-down, but never actually
+      // dragged — treat it as a plain click and plot a new event right
+      // there. Overlapping dots are allowed; only a genuine drag (real
+      // movement) repositions an existing one.
+      plotNewEvent(drag.startX, drag.startY);
     }
   };
 
