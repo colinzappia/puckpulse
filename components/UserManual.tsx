@@ -30,6 +30,10 @@ const sections = [
         content: 'You can also add players one at a time. Tap "Add Player", enter their jersey number, full name, and position. Assign them to a line or pairing (1–4 for forwards, P1–P3 for defense, G1–G2 for goalies).'
       },
       {
+        title: 'Setting the starting goalie',
+        content: 'In the roster list, any player set to position G shows a ★ button next to them. Tap it to mark that goalie as the starting goalie for the game — the star fills in yellow to confirm. This unlocks a live Saves stat for that goalie in Player Stats (see "Player Stats" under Ending the Game). Tap the star again to unmark it, or tap a different goalie\'s star to switch who\'s starting.'
+      },
+      {
         title: 'Loading from Team Library',
         content: 'Tap "📚 Load from Library" in either team\'s roster header to browse previously saved rosters. Choose from My Teams (your private rosters) or Shared (rosters saved by anyone on your plan). Tap "Load this roster" to instantly populate the lineup — no re-entry needed.'
       }
@@ -74,6 +78,10 @@ const sections = [
       {
         title: 'Goal popup — logging who was on ice',
         content: 'Tapping GOAL and then the rink opens a popup for that goal:\n\n1. Strength — pick ES, PP, SH, EN, or PS at the top. Defaults to ES.\n2. On-ice group — pick a forward line and/or a defense pair; both combine into one 5-player group (e.g. "Line 1 + Pair 2"). You don\'t have to pick both — just a line, just a pair, or both.\n3. Tap "Override players on ice" any time to hand-pick the exact players instead of using the preset line, useful for double shifts or a line change mid-shift. This works whether you\'re tracking one team or both.\n4. If tracking both teams, you\'ll also pick which defending players were on ice against, after the scoring team\'s group is confirmed.\n\nTap "Skip" on the first screen to log the goal with no line detail at all.'
+      },
+      {
+        title: 'Adding assists',
+        content: 'On the same confirm screen where you pick the on-ice group, an "Assists" row lets you tap up to 2 players from the scoring team (goalies excluded) who assisted. This is entirely optional — leave it blank if you don\'t want to track it. Assists show up as their own column in Player Stats.'
       },
       {
         title: 'Canceling a popup',
@@ -177,7 +185,7 @@ const sections = [
       },
       {
         title: 'Player Stats',
-        content: 'Tap the 📊 Player Stats button (below the rink on mobile, floating on tablet/desktop) at any time to see a per-player breakdown for both teams. Columns include goals, shots broken out by SOG (on net), MISS (missed/blocked attempts), PP and PK shots, hits, penalties, faceoff wins/losses, blocks, and +/-.\n\n+/- only counts even-strength and shorthanded goals — power play, empty-net, and penalty-shot goals never affect it, matching standard convention. The table is wider now with all these columns, so swipe sideways on a phone to see everything. The top performer on each team (by combined activity) is highlighted with a ⭐.'
+        content: 'Tap the 📊 Player Stats button (below the rink on mobile, floating on tablet/desktop) at any time to see a per-player breakdown for both teams. Columns include goals, assists, shots broken out by SOG (on net), MISS (missed/blocked attempts), PP and PK shots, hits, penalties, faceoff wins/losses, blocks, and +/-.\n\n+/- only counts even-strength and shorthanded goals — power play, empty-net, and penalty-shot goals never affect it, matching standard convention. The table is wide with all these columns, so swipe sideways on a phone to see everything. The top performer on each team (by combined activity) is highlighted with a ⭐.\n\nIf you\'ve set a starting goalie for that team (see "Setting the starting goalie" under Getting Set Up), a Saves card appears above the table showing Saves, Goals Against, Shots Against, and SV%. Saves aren\'t logged directly — they\'re calculated automatically from shots on net against minus goals against.'
       },
       {
         title: 'Starting a new game',
