@@ -1961,7 +1961,7 @@ const App: React.FC = () => {
             </div>
           </div>
 
-          <div className="relative flex flex-col items-center justify-center p-3 sm:p-10 landscape:p-2 landscape:sm:p-4 h-full gap-3 landscape:gap-1.5">
+          <div className="relative flex flex-col items-center justify-center p-3 sm:p-10 max-md:landscape:p-2 h-full gap-3 max-md:landscape:gap-1.5">
 
             {/* Event toolbar — centred above the rink */}
             <div className="w-full max-w-6xl flex items-center justify-center gap-2 overflow-x-auto scrollbar-none">
@@ -2070,7 +2070,7 @@ const App: React.FC = () => {
               </div>
             )}
 
-            <div className={`w-full max-w-6xl aspect-[200/85] transition-all duration-700 rounded-[5rem] sm:rounded-[8.5rem] p-2 shadow-2xl`}>
+            <div className="w-full max-w-6xl aspect-[200/85] rounded-[5rem] sm:rounded-[8.5rem] p-2 shadow-2xl">
               <RinkChart events={events.filter(e => {
                 if (e.period !== currentPeriod || !visibleTypes.includes(e.type)) return false;
                 if (e.type === EventType.SHOT) {
@@ -2096,7 +2096,7 @@ const App: React.FC = () => {
         </div>
 
         {/* MAP FILTERS */}
-        <div className="w-full px-4 py-3 landscape:py-1.5 bg-black/40 border-b border-white/5 flex items-center justify-center gap-2 overflow-x-auto scrollbar-none shadow-inner">
+        <div className="w-full px-4 py-3 max-md:landscape:py-1.5 bg-black/40 border-b border-white/5 flex items-center justify-center gap-2 overflow-x-auto scrollbar-none shadow-inner">
           <button onClick={toggleAllFilters} className="shrink-0 px-4 py-2 rounded-xl bg-white/10 text-[9px] font-black uppercase text-slate-300 border border-white/10 active:scale-95 transition-all">
             {toolbarButtons.every(t => visibleTypes.includes(t.type)) ? 'Isolate' : 'Show All'}
           </button>
