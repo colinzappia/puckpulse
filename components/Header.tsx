@@ -107,7 +107,7 @@ const Header: React.FC<HeaderProps> = ({
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.05] to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 pointer-events-none"></div>
 
             {/* Top Names Bar */}
-            <div className="flex justify-between items-center px-4 sm:px-12 md:px-24 py-1.5 sm:py-3 md:py-4 border-b border-white/5 bg-black/20">
+            <div className="flex justify-between items-center px-4 sm:px-12 md:px-24 py-1.5 sm:py-3 md:py-4 landscape:py-1 border-b border-white/5 bg-black/20">
               <div className="flex items-center gap-2 sm:gap-4 flex-1">
                 <span className="text-[9px] sm:text-xs md:text-xl font-black text-blue-400 uppercase tracking-widest sm:tracking-[0.3em] truncate max-w-[100px] sm:max-w-none">
                   {leftTeam.name || 'HOME'}
@@ -136,7 +136,7 @@ const Header: React.FC<HeaderProps> = ({
             </div>
 
             {/* Main Scoreboard Row */}
-            <div className="flex items-center px-2 sm:px-8 md:px-16 py-2 sm:py-4 md:py-8 w-full max-w-7xl mx-auto">
+            <div className="flex items-center px-2 sm:px-8 md:px-16 py-2 sm:py-4 md:py-8 landscape:py-1.5 w-full max-w-7xl mx-auto">
               <div className="flex-[2] flex justify-center min-w-0">
                 <TeamScore team={leftTeam} align="left" />
               </div>
@@ -172,7 +172,7 @@ const Header: React.FC<HeaderProps> = ({
             </div>
 
             {/* Game Controls Bar — always-visible dedicated buttons */}
-            <div className="flex items-center justify-center gap-2 sm:gap-3 px-3 sm:px-6 py-2 sm:py-3 border-t border-white/5 bg-black/30">
+            <div className="flex items-center justify-center gap-2 sm:gap-3 px-3 sm:px-6 py-2 sm:py-3 landscape:py-1 border-t border-white/5 bg-black/30">
               <button
                 onClick={onOpenSetup}
                 className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl border font-black text-[9px] sm:text-[11px] uppercase tracking-wide transition-all active:scale-95 shadow-md bg-blue-600/15 border-blue-500/30 text-blue-300 hover:bg-blue-600/25 hover:border-blue-400/40"
