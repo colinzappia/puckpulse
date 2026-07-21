@@ -457,14 +457,14 @@ interface FaceoffPopupProps {
   homeRoster: Player[];
   awayRoster: Player[];
   myTeam: Team | 'NEUTRAL';
-  onConfirm: (homeCenter: string, awayCenter: string, winner: Team) => void;
+  onConfirm: (homeCenter: string, awayCenter: string, winner: Team | 'TIE') => void;
   onCancel: () => void;
 }
 
 const FaceoffPopup: React.FC<FaceoffPopupProps> = ({ homeName, awayName, homeRoster, awayRoster, myTeam, onConfirm, onCancel }) => {
   const [homeCenter, setHomeCenter] = useState('');
   const [awayCenter, setAwayCenter] = useState('');
-  const [winner, setWinner] = useState<Team | null>(null);
+  const [winner, setWinner] = useState<Team | 'TIE' | null>(null);
 
   const homeCentres = homeRoster.filter(p => p.position?.toUpperCase() === 'C');
   const awayCentres = awayRoster.filter(p => p.position?.toUpperCase() === 'C');
@@ -528,7 +528,7 @@ const FaceoffPopup: React.FC<FaceoffPopupProps> = ({ homeName, awayName, homeRos
 
         <div style={{ marginBottom: '1.25rem' }}>
           <p style={{ fontSize: '0.7rem', fontWeight: 900, color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem', textAlign: 'center' }}>Who won the draw?</p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', marginBottom: '0.6rem' }}>
             <button onClick={() => setWinner(Team.HOME)}
               style={{ padding: '0.9rem', borderRadius: '0.75rem', fontWeight: 900, fontSize: '0.85rem', border: `2px solid ${winner === Team.HOME ? '#60a5fa' : 'rgba(255,255,255,0.08)'}`, background: winner === Team.HOME ? 'rgba(37,99,235,0.35)' : 'rgba(255,255,255,0.03)', color: winner === Team.HOME ? '#fff' : '#94a3b8', cursor: 'pointer' }}>
               ✓ {homeName}
@@ -538,6 +538,10 @@ const FaceoffPopup: React.FC<FaceoffPopupProps> = ({ homeName, awayName, homeRos
               ✓ {awayName}
             </button>
           </div>
+          <button onClick={() => setWinner('TIE')}
+            style={{ width: '100%', padding: '0.65rem', borderRadius: '0.75rem', fontWeight: 900, fontSize: '0.78rem', border: `2px solid ${winner === 'TIE' ? '#a3a3a3' : 'rgba(255,255,255,0.08)'}`, background: winner === 'TIE' ? 'rgba(163,163,163,0.25)' : 'rgba(255,255,255,0.03)', color: winner === 'TIE' ? '#fff' : '#94a3b8', cursor: 'pointer' }}>
+            🤝 50/50 — No Clear Winner
+          </button>
         </div>
 
         <div style={{ display: 'flex', gap: '0.6rem' }}>
@@ -558,13 +562,14 @@ const FaceoffPopup: React.FC<FaceoffPopupProps> = ({ homeName, awayName, homeRos
 // ── ZONE ENTRY POPUP ─────────────────────────────────────────
 interface EntryPopupProps {
   pendingEntry: { x: number; y: number };
-  onConfirm: (entryType: EventType, dumpSubtype?: DumpInSubtype) => void;
+  onConfirm: (entryType: EventType, dumpSubtype?: DumpInSubtype, retrieval?: 'FOR' | 'AGAINST') => void;
   onCancel: () => void;
 }
 
 const EntryPopup: React.FC<EntryPopupProps> = ({ onConfirm, onCancel }) => {
   const [entryType, setEntryType] = useState<EventType | null>(null);
   const [dumpSubtype, setDumpSubtype] = useState<DumpInSubtype | ''>('');
+  const [retrieval, setRetrieval] = useState<'FOR' | 'AGAINST' | ''>('');
 
   const typeOptions: { type: EventType; label: string; icon: string; color: string; bg: string }[] = [
     { type: EventType.ZONE_ENTRY_CARRY, label: 'Carry-in', icon: '▲', color: '#818cf8', bg: 'rgba(79,70,229,0.35)' },
@@ -605,13 +610,26 @@ const EntryPopup: React.FC<EntryPopupProps> = ({ onConfirm, onCancel }) => {
             <p style={{ fontSize: '0.65rem', fontWeight: 900, color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between' }}>
               <span>Dump-in type</span><span style={{ color: '#64748b', fontWeight: 600, textTransform: 'none' }}>optional</span>
             </p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem', marginBottom: '0.75rem' }}>
               {Object.values(DumpInSubtype).map(subtype => (
                 <button key={subtype} onClick={() => setDumpSubtype(prev => prev === subtype ? '' : subtype)}
                   style={{ padding: '0.4rem 0.4rem', borderRadius: '0.5rem', fontSize: '0.68rem', fontWeight: 700, border: `1px solid ${dumpSubtype === subtype ? 'rgba(217,119,6,0.6)' : 'rgba(255,255,255,0.06)'}`, background: dumpSubtype === subtype ? 'rgba(217,119,6,0.3)' : 'rgba(255,255,255,0.03)', color: dumpSubtype === subtype ? '#fed7aa' : '#94a3b8', cursor: 'pointer' }}>
                   {subtype}
                 </button>
               ))}
+            </div>
+            <p style={{ fontSize: '0.65rem', fontWeight: 900, color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between' }}>
+              <span>Who retrieved it?</span><span style={{ color: '#64748b', fontWeight: 600, textTransform: 'none' }}>optional</span>
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem' }}>
+              <button onClick={() => setRetrieval(prev => prev === 'FOR' ? '' : 'FOR')}
+                style={{ padding: '0.5rem 0.4rem', borderRadius: '0.5rem', fontSize: '0.72rem', fontWeight: 800, border: `1px solid ${retrieval === 'FOR' ? '#22c55e' : 'rgba(255,255,255,0.06)'}`, background: retrieval === 'FOR' ? 'rgba(34,197,94,0.25)' : 'rgba(255,255,255,0.03)', color: retrieval === 'FOR' ? '#86efac' : '#94a3b8', cursor: 'pointer' }}>
+                ✓ For (kept it)
+              </button>
+              <button onClick={() => setRetrieval(prev => prev === 'AGAINST' ? '' : 'AGAINST')}
+                style={{ padding: '0.5rem 0.4rem', borderRadius: '0.5rem', fontSize: '0.72rem', fontWeight: 800, border: `1px solid ${retrieval === 'AGAINST' ? '#ef4444' : 'rgba(255,255,255,0.06)'}`, background: retrieval === 'AGAINST' ? 'rgba(239,68,68,0.25)' : 'rgba(255,255,255,0.03)', color: retrieval === 'AGAINST' ? '#fca5a5' : '#94a3b8', cursor: 'pointer' }}>
+                ✕ Against (lost it)
+              </button>
             </div>
           </div>
         )}
@@ -621,7 +639,7 @@ const EntryPopup: React.FC<EntryPopupProps> = ({ onConfirm, onCancel }) => {
             style={{ flex: 1, padding: '0.75rem', borderRadius: '0.75rem', background: 'rgba(255,255,255,0.05)', color: '#94a3b8', fontWeight: 800, fontSize: '0.8rem', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer' }}>
             Cancel
           </button>
-          <button disabled={!canConfirm} onClick={() => canConfirm && onConfirm(entryType!, dumpSubtype || undefined)}
+          <button disabled={!canConfirm} onClick={() => canConfirm && onConfirm(entryType!, dumpSubtype || undefined, retrieval || undefined)}
             style={{ flex: 2, padding: '0.75rem', borderRadius: '0.75rem', background: canConfirm ? '#4f46e5' : 'rgba(79,70,229,0.2)', color: canConfirm ? '#fff' : '#78716c', fontWeight: 900, fontSize: '0.85rem', border: 'none', cursor: canConfirm ? 'pointer' : 'not-allowed' }}>
             Log Entry
           </button>
@@ -1171,8 +1189,8 @@ const App: React.FC = () => {
       saves: teamEvents.filter(e => e.type === EventType.SAVE).length,
       hits: teamEvents.filter(e => e.type === EventType.HIT).length,
       pim: teamEvents.filter(e => e.type === EventType.PENALTY).reduce((sum, e) => sum + (typeof e.metadata?.minutes === 'number' ? e.metadata.minutes : 2), 0),
-      faceoffWins: teamEvents.filter(e => e.type === EventType.FACEOFF_WIN).length,
-      faceoffLosses: teamEvents.filter(e => e.type === EventType.FACEOFF_LOSS).length,
+      faceoffWins: teamEvents.filter(e => e.type === EventType.FACEOFF_WIN && !e.metadata?.tie).length,
+      faceoffLosses: teamEvents.filter(e => e.type === EventType.FACEOFF_LOSS && !e.metadata?.tie).length,
       giveaways: teamEvents.filter(e => e.type === EventType.GIVEAWAY).length,
       takeaways: teamEvents.filter(e => e.type === EventType.TAKEAWAY).length,
       entriesCarry: teamEvents.filter(e => e.type === EventType.ZONE_ENTRY_CARRY).length,
@@ -1270,26 +1288,32 @@ const App: React.FC = () => {
     setPendingPenalty(null);
   }, [pendingPenalty, currentPeriod, getTeamZone, activeSession, user]);
 
-  const confirmFaceoff = useCallback((homeCenter: string, awayCenter: string, winner: Team) => {
+  const confirmFaceoff = useCallback((homeCenter: string, awayCenter: string, winner: Team | 'TIE') => {
     if (!pendingFaceoff) return;
     const { x, y } = pendingFaceoff;
+    const isTie = winner === 'TIE';
     const homeWins = winner === Team.HOME;
+    // A 50/50 draw still needs a WIN/LOSS type each (the rest of the app —
+    // dot rendering, filters — assumes that pairing exists), but the tie
+    // flag tells every stats consumer to leave it out of win/loss tallies
+    // while still counting it toward total draws and zone/circle volume.
+    const tieMeta = isTie ? { tie: true } : undefined;
     const newFaceoffEvents: GameEvent[] = [
-      { id: Math.random().toString(36).substr(2, 9), timestamp: Date.now(), gameTime: '20:00', period: currentPeriod, type: homeWins ? EventType.FACEOFF_WIN : EventType.FACEOFF_LOSS, team: Team.HOME, zone: getTeamZone(Team.HOME, x), playerNumber: homeCenter, coordinates: { x, y } },
-      { id: Math.random().toString(36).substr(2, 9), timestamp: Date.now() + 1, gameTime: '20:00', period: currentPeriod, type: homeWins ? EventType.FACEOFF_LOSS : EventType.FACEOFF_WIN, team: Team.AWAY, zone: getTeamZone(Team.AWAY, x), playerNumber: awayCenter, coordinates: { x, y } }
+      { id: Math.random().toString(36).substr(2, 9), timestamp: Date.now(), gameTime: '20:00', period: currentPeriod, type: homeWins ? EventType.FACEOFF_WIN : EventType.FACEOFF_LOSS, team: Team.HOME, zone: getTeamZone(Team.HOME, x), playerNumber: homeCenter, coordinates: { x, y }, metadata: tieMeta },
+      { id: Math.random().toString(36).substr(2, 9), timestamp: Date.now() + 1, gameTime: '20:00', period: currentPeriod, type: homeWins ? EventType.FACEOFF_LOSS : EventType.FACEOFF_WIN, team: Team.AWAY, zone: getTeamZone(Team.AWAY, x), playerNumber: awayCenter, coordinates: { x, y }, metadata: tieMeta }
     ];
     setEvents(prev => [...prev, ...newFaceoffEvents]);
     if (activeSession && user) {
       newFaceoffEvents.forEach(ev => broadcastEvent(activeSession.id, ev, user.id).catch(console.error));
     }
-    setLastEvent({ type: winner === Team.HOME ? EventType.FACEOFF_WIN : EventType.FACEOFF_LOSS, playerNumber: homeCenter, team: Team.HOME });
+    setLastEvent({ type: homeWins ? EventType.FACEOFF_WIN : EventType.FACEOFF_LOSS, playerNumber: homeCenter, team: Team.HOME });
     setPendingFaceoff(null);
   }, [pendingFaceoff, currentPeriod, getTeamZone, activeSession, user]);
 
-  const confirmEntry = useCallback((entryType: EventType, dumpSubtype?: DumpInSubtype) => {
+  const confirmEntry = useCallback((entryType: EventType, dumpSubtype?: DumpInSubtype, retrieval?: 'FOR' | 'AGAINST') => {
     if (!pendingEntry) return;
     const { x, y } = pendingEntry;
-    const metadata = (entryType === EventType.ZONE_ENTRY_DUMP && dumpSubtype) ? { dumpSubtype } : undefined;
+    const metadata = (entryType === EventType.ZONE_ENTRY_DUMP && (dumpSubtype || retrieval)) ? { dumpSubtype, retrieval } : undefined;
     const newEvent: GameEvent = {
       id: Math.random().toString(36).substr(2, 9),
       timestamp: Date.now(),
@@ -1348,6 +1372,8 @@ const App: React.FC = () => {
     const quality = mapPlotType === EventType.SHOT ? getShotQuality(x, y, activeTeam) : undefined;
     const metadata = mapPlotType === EventType.SHOT
       ? { shotQuality: quality, onNet: true, strength: 'ES' as const }
+      : mapPlotType === EventType.BREAKOUT
+      ? { breakoutResult: 'CONTROLLED' as const }
       : undefined;
     const newEvent: GameEvent = {
       id: Math.random().toString(36).substr(2, 9),
@@ -1411,6 +1437,10 @@ const App: React.FC = () => {
   // tag bar, never holding up the plot itself.
   const updateShotMeta = useCallback((eventId: string, patch: { onNet?: boolean; strength?: 'ES' | 'PP' | 'PK' }) => {
     setEvents(prev => prev.map(e => e.id === eventId ? { ...e, metadata: { ...e.metadata, ...patch } } : e));
+  }, []);
+
+  const updateBreakoutMeta = useCallback((eventId: string, result: 'CONTROLLED' | 'FAILED') => {
+    setEvents(prev => prev.map(e => e.id === eventId ? { ...e, metadata: { ...e.metadata, breakoutResult: result } } : e));
   }, []);
 
   const handleManageSubscription = async () => {
@@ -1594,7 +1624,7 @@ const App: React.FC = () => {
   };
 
   const getPlayerFOStats = (num: string) => {
-    const playerEvents = events.filter(e => e.playerNumber === num && (e.type === EventType.FACEOFF_WIN || e.type === EventType.FACEOFF_LOSS));
+    const playerEvents = events.filter(e => e.playerNumber === num && (e.type === EventType.FACEOFF_WIN || e.type === EventType.FACEOFF_LOSS) && !e.metadata?.tie);
     const wins = playerEvents.filter(e => e.type === EventType.FACEOFF_WIN).length;
     const total = playerEvents.length;
     return total > 0 ? Math.round((wins / total) * 100) : 0;
@@ -1613,7 +1643,7 @@ const App: React.FC = () => {
   const selectPlayer = (num: string, team: Team) => { setActiveTeam(team); setPlayerNumber(num === playerNumber && activeTeam === team ? '' : num); };
   const toggleVisibleType = (type: EventType) => setVisibleTypes(prev => prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]);
   const toggleAllFilters = () => {
-    const allTrackedTypes = [...toolbarButtons.map(b => b.type), EventType.FACEOFF_WIN, EventType.ZONE_ENTRY_CARRY, EventType.ZONE_ENTRY_DUMP, EventType.ZONE_ENTRY_PASS, EventType.ZONE_ENTRY_DENIED];
+    const allTrackedTypes = [...toolbarButtons.map(b => b.type), EventType.FACEOFF_WIN, EventType.ZONE_ENTRY_CARRY, EventType.ZONE_ENTRY_DUMP, EventType.ZONE_ENTRY_PASS, EventType.ZONE_ENTRY_DENIED, EventType.BREAKOUT];
     const showingAll = allTrackedTypes.every(t => visibleTypes.includes(t));
     if (showingAll) setVisibleTypes(prev => prev.filter(t => !allTrackedTypes.includes(t)));
     else setVisibleTypes(prev => Array.from(new Set([...prev, ...allTrackedTypes])));
@@ -2044,6 +2074,7 @@ const App: React.FC = () => {
                     ))}
                     <button onClick={() => setMapPlotType(mapPlotType === EventType.FACEOFF_WIN || mapPlotType === EventType.FACEOFF_LOSS ? EventType.SHOT : EventType.FACEOFF_WIN)} className={`px-3 py-2 rounded-xl text-[10px] font-black uppercase transition-all flex items-center justify-center shadow-lg active:scale-90 border shrink-0 ${mapPlotType === EventType.FACEOFF_WIN || mapPlotType === EventType.FACEOFF_LOSS ? 'bg-yellow-500 text-black border-yellow-300 ring-2 ring-yellow-300/40' : 'bg-yellow-600/20 text-yellow-400 border-yellow-500/30 hover:bg-yellow-600/40'}`}>🏒 Faceoffs</button>
                     <button onClick={() => { const zoneEntryTypes = [EventType.ZONE_ENTRY_CARRY, EventType.ZONE_ENTRY_DUMP, EventType.ZONE_ENTRY_PASS, EventType.ZONE_ENTRY_DENIED]; setMapPlotType(zoneEntryTypes.includes(mapPlotType) ? EventType.SHOT : EventType.ZONE_ENTRY_CARRY); }} className={`px-3 py-2 rounded-xl text-[10px] font-black uppercase transition-all flex items-center justify-center shadow-lg active:scale-90 border shrink-0 ${[EventType.ZONE_ENTRY_CARRY, EventType.ZONE_ENTRY_DUMP, EventType.ZONE_ENTRY_PASS, EventType.ZONE_ENTRY_DENIED].includes(mapPlotType) ? 'bg-indigo-500 text-white border-indigo-300 ring-2 ring-indigo-300/40' : 'bg-indigo-600/20 text-indigo-400 border-indigo-500/30 hover:bg-indigo-600/40'}`}>⛸ Zone Entries</button>
+                    <button onClick={() => setMapPlotType(mapPlotType === EventType.BREAKOUT ? EventType.SHOT : EventType.BREAKOUT)} className={`px-3 py-2 rounded-xl text-[10px] font-black uppercase transition-all flex items-center justify-center shadow-lg active:scale-90 border shrink-0 ${mapPlotType === EventType.BREAKOUT ? 'text-white ring-2' : ''}`} style={mapPlotType === EventType.BREAKOUT ? { background: '#65a30d', borderColor: '#a3e635', boxShadow: '0 4px 14px rgba(132,204,22,0.3)' } : { background: 'rgba(132,204,22,0.15)', color: '#a3e635', borderColor: 'rgba(132,204,22,0.35)' }}>🚀 Breakouts</button>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     {playerNumber && (
@@ -2088,6 +2119,30 @@ const App: React.FC = () => {
                           onClick={() => updateShotMeta(taggingEvent!, { strength: active ? 'ES' : s })}
                           className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase transition-all border ${active ? activeClass : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'}`}
                         >{s}</button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {(() => {
+              const tagged = taggingEvent ? events.find(e => e.id === taggingEvent) : null;
+              if (!tagged || tagged.type !== EventType.BREAKOUT) return null;
+              const controlled = tagged.metadata?.breakoutResult !== 'FAILED';
+              return (
+                <div className="w-full px-3 py-2 flex items-center gap-3 animate-in slide-in-from-top duration-200 bg-black/30 border-b border-white/5">
+                  <span className="text-[9px] font-black uppercase tracking-wider" style={{ color: '#84cc16' }}>Breakout:</span>
+                  <div className="flex items-center gap-1">
+                    {[{ key: true, label: 'Controlled' }, { key: false, label: 'Failed' }].map(({ key, label }) => {
+                      const active = controlled === key;
+                      return (
+                        <button
+                          key={label}
+                          onClick={() => updateBreakoutMeta(taggingEvent!, key ? 'CONTROLLED' : 'FAILED')}
+                          className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase transition-all border ${active ? 'text-white' : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'}`}
+                          style={active ? { background: '#65a30d', borderColor: '#a3e635' } : undefined}
+                        >{label}</button>
                       );
                     })}
                   </div>
