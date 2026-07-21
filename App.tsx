@@ -1773,6 +1773,7 @@ const App: React.FC = () => {
     'macopelo17@gmail.com',
     'marcodinardo24@gmail.com',
     'mmcnamee12@hotmail.com',
+    'codycaron@cunet.carleton.ca',
   ];
   const userEmail = currentUser?.primaryEmailAddress?.emailAddress?.toLowerCase() || user?.primaryEmailAddress?.emailAddress?.toLowerCase() || '';
   const isAdmin = ADMIN_EMAILS.includes(userEmail);
