@@ -171,7 +171,7 @@ const RinkChart: React.FC<RinkChartProps> = ({
       px = closestDot.x; py = closestDot.y; // snap to the dot's centre
     }
 
-    const isZoneEntry = ZONE_ENTRY_TYPES.includes(activeEventType as EventType);
+    const isZoneEntry = ZONE_ENTRY_TYPES.includes(activeEventType as EventType) || activeEventType === EventType.BREAKOUT;
     if (isZoneEntry) {
       // Snap only the x-axis to whichever blue line is nearer — entries
       // don't happen at fixed spots like faceoffs, so we don't snap y.
@@ -271,6 +271,8 @@ const RinkChart: React.FC<RinkChartProps> = ({
         const color = strength === 'PP' ? PP_FOR_GOLD : strength === 'PK' ? PP_AGAINST_PINK : SHOT_CYAN;
         return { color, size: 7, opacity: 1 };
       }
+      case EventType.BREAKOUT:
+        return { color: '#84cc16', size: 7, opacity: 1 };
       case EventType.BLOCK:
         return { color: BLOCK_SLATE, size: 6, opacity: 0.8 };
       case EventType.PP_SHOT_FOR:
@@ -478,13 +480,13 @@ const RinkChart: React.FC<RinkChartProps> = ({
                   />
                 </>
               )}
-              {e.type === EventType.SHOT ? (
+              {e.type === EventType.SHOT || e.type === EventType.BREAKOUT ? (
                 <ShotMarker
                   cx={cx} cy={cy}
                   size={style.size}
                   color={style.color}
                   isAway={isAway}
-                  onNet={e.metadata?.onNet !== false}
+                  onNet={e.type === EventType.SHOT ? e.metadata?.onNet !== false : e.metadata?.breakoutResult !== 'FAILED'}
                 />
               ) : entryShape ? (
                 <EntryMarker 
