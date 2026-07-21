@@ -1,4 +1,4 @@
- 
+
 export enum EventType {
   GOAL = 'GOAL',
   SHOT = 'SHOT',
@@ -16,16 +16,17 @@ export enum EventType {
   ZONE_ENTRY_CARRY = 'ZONE_ENTRY_CARRY',
   ZONE_ENTRY_DUMP = 'ZONE_ENTRY_DUMP',
   ZONE_ENTRY_PASS = 'ZONE_ENTRY_PASS',
-  ZONE_ENTRY_DENIED = 'ZONE_ENTRY_DENIED'
+  ZONE_ENTRY_DENIED = 'ZONE_ENTRY_DENIED',
+  BREAKOUT = 'BREAKOUT'
 }
- 
+
 export enum DumpInSubtype {
   CROSS_CORNER = 'Cross-corner',
   SOFT_CHIP = 'Soft chip',
   HIGH_ON_GLASS = 'High on glass',
   RIM_AROUND_BOARDS = 'Rim around boards'
 }
- 
+
 export enum PenaltyType {
   TRIPPING = 'Tripping',
   SLASHING = 'Slashing',
@@ -38,25 +39,25 @@ export enum PenaltyType {
   SLEW_FOOTING = 'Slew-footing',
   FIGHTING = 'Fighting'
 }
- 
+
 export enum Team {
   HOME = 'HOME',
   AWAY = 'AWAY'
 }
- 
+
 export enum Zone {
   DEFENSIVE = 'DEFENSIVE',
   NEUTRAL = 'NEUTRAL',
   OFFENSIVE = 'OFFENSIVE'
 }
- 
+
 export interface Player {
   number: string;
   name: string;
   position: 'LW' | 'RW' | 'C' | 'LD' | 'RD' | 'D' | 'G' | string;
   line?: string; // e.g., '1', '2', '3', '4', 'P1', 'P2', 'P3', 'G1', 'G2'
 }
- 
+
 export interface GameEvent {
   id: string;
   timestamp: number;
@@ -71,10 +72,12 @@ export interface GameEvent {
     penaltyType?: PenaltyType | string;
     isPowerPlay?: boolean;
     dumpSubtype?: DumpInSubtype;
+    retrieval?: 'FOR' | 'AGAINST';
+    breakoutResult?: 'CONTROLLED' | 'FAILED';
     [key: string]: any;
   };
 }
- 
+
 export interface TeamStats {
   name: string;
   goals: number;
@@ -86,7 +89,7 @@ export interface TeamStats {
   blocks: number;
   roster: Player[];
 }
- 
+
 export interface PeriodSummary {
   period: number;
   homeStats: Partial<TeamStats>;
