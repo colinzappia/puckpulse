@@ -34,6 +34,7 @@ const PlayByPlay: React.FC<PlayByPlayProps> = ({
       case EventType.ZONE_ENTRY_DUMP: return '■';
       case EventType.ZONE_ENTRY_PASS: return '◆';
       case EventType.ZONE_ENTRY_DENIED: return '✕';
+      case EventType.BREAKOUT: return '🚀';
       default: return '📍';
     }
   };
@@ -104,6 +105,22 @@ const PlayByPlay: React.FC<PlayByPlayProps> = ({
                           }`}>
                             {event.metadata?.strength === 'PP' ? 'PP' : event.metadata?.strength === 'PK' ? 'PK' : 'ES'}
                             {event.metadata?.onNet === false ? ' ✕' : ' ✓'}
+                          </span>
+                        )}
+
+                        {event.type === EventType.ZONE_ENTRY_DUMP && event.metadata?.retrieval && (
+                          <span className={`inline-flex items-center gap-0.5 text-[8px] font-black px-1.5 py-0.5 rounded shrink-0 ${
+                            event.metadata.retrieval === 'FOR' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                          }`}>
+                            RETR {event.metadata.retrieval === 'FOR' ? '✓' : '✕'}
+                          </span>
+                        )}
+
+                        {event.type === EventType.BREAKOUT && (
+                          <span className={`inline-flex items-center gap-0.5 text-[8px] font-black px-1.5 py-0.5 rounded shrink-0 ${
+                            event.metadata?.breakoutResult === 'FAILED' ? 'bg-red-500/20 text-red-400' : 'bg-lime-500/20 text-lime-400'
+                          }`}>
+                            {event.metadata?.breakoutResult === 'FAILED' ? 'FAILED ✕' : 'CONTROLLED ✓'}
                           </span>
                         )}
                         
