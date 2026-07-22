@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { GameEvent, EventType, Team, Player } from '../types';
 
@@ -153,6 +152,32 @@ function computeGoalieStats(events: GameEvent[], history: { number: string; sinc
   });
 }
 
+function computeZonePlayStats(events: GameEvent[], team: Team) {
+  const teamEvents = events.filter(e => e.team === team);
+
+  const carry = teamEvents.filter(e => e.type === EventType.ZONE_ENTRY_CARRY).length;
+  const dump = teamEvents.filter(e => e.type === EventType.ZONE_ENTRY_DUMP).length;
+  const pass = teamEvents.filter(e => e.type === EventType.ZONE_ENTRY_PASS).length;
+  const denied = teamEvents.filter(e => e.type === EventType.ZONE_ENTRY_DENIED).length;
+  const totalEntries = carry + dump + pass + denied;
+
+  const dumpEvents = teamEvents.filter(e => e.type === EventType.ZONE_ENTRY_DUMP);
+  const retrievedFor = dumpEvents.filter(e => e.metadata?.retrieval === 'FOR').length;
+  const retrievedAgainst = dumpEvents.filter(e => e.metadata?.retrieval === 'AGAINST').length;
+  const retrievalTracked = retrievedFor + retrievedAgainst;
+  const retrievalPct = retrievalTracked > 0 ? retrievedFor / retrievalTracked : null;
+
+  const breakoutEvents = teamEvents.filter(e => e.type === EventType.BREAKOUT);
+  const controlled = breakoutEvents.filter(e => e.metadata?.breakoutResult !== 'FAILED').length;
+  const failed = breakoutEvents.filter(e => e.metadata?.breakoutResult === 'FAILED').length;
+  const totalBreakouts = controlled + failed;
+  const breakoutPct = totalBreakouts > 0 ? controlled / totalBreakouts : null;
+
+  if (totalEntries === 0 && totalBreakouts === 0) return null;
+
+  return { carry, dump, pass, denied, totalEntries, retrievedFor, retrievedAgainst, retrievalPct, controlled, failed, totalBreakouts, breakoutPct };
+}
+
 const StatBadge = ({ value, color }: { value: number; color: string }) => (
   <span className={`inline-flex items-center justify-center w-7 h-7 rounded-lg text-xs font-black ${value > 0 ? color : 'text-slate-700 bg-transparent'}`}>
     {value > 0 ? value : '—'}
@@ -185,6 +210,7 @@ const PlayerStats: React.FC<PlayerStatsProps> = ({
   const activeRoster = activeTeam === 'home' ? homeRoster : awayRoster;
   const activeHistory = (activeTeam === 'home' ? goalieHistoryHome : goalieHistoryAway) || [];
   const goalieStints = computeGoalieStats(events, activeHistory, activeGoalieTeam, activeRoster);
+  const zonePlay = computeZonePlayStats(events, activeGoalieTeam);
 
   const totalEvents = events.filter(e => e.team === (activeTeam === 'home' ? Team.HOME : Team.AWAY)).length;
 
@@ -238,6 +264,37 @@ const PlayerStats: React.FC<PlayerStatsProps> = ({
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {zonePlay && (
+          <div className="max-w-5xl mx-auto mb-4 bg-orange-500/5 border border-orange-500/20 rounded-2xl px-5 py-3 flex flex-wrap items-center gap-x-6 gap-y-3">
+            {zonePlay.totalEntries > 0 && (
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="text-[10px] font-black uppercase tracking-wider text-orange-400 shrink-0">Zone Entries</span>
+                <div className="flex items-center gap-3 text-center">
+                  <div><p className="text-base font-black text-white">{zonePlay.carry}</p><p className="text-[8px] font-bold text-slate-500 uppercase">Carry</p></div>
+                  <div><p className="text-base font-black text-white">{zonePlay.dump}</p><p className="text-[8px] font-bold text-slate-500 uppercase">Dump</p></div>
+                  <div><p className="text-base font-black text-white">{zonePlay.pass}</p><p className="text-[8px] font-bold text-slate-500 uppercase">Pass</p></div>
+                  <div><p className="text-base font-black text-white">{zonePlay.denied}</p><p className="text-[8px] font-bold text-slate-500 uppercase">Denied</p></div>
+                  {zonePlay.retrievalPct !== null && (
+                    <div><p className="text-base font-black text-green-400">{Math.round(zonePlay.retrievalPct * 100)}%</p><p className="text-[8px] font-bold text-slate-500 uppercase">Retrieval</p></div>
+                  )}
+                </div>
+              </div>
+            )}
+            {zonePlay.totalBreakouts > 0 && (
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="text-[10px] font-black uppercase tracking-wider text-lime-400 shrink-0">Breakouts</span>
+                <div className="flex items-center gap-3 text-center">
+                  <div><p className="text-base font-black text-white">{zonePlay.controlled}</p><p className="text-[8px] font-bold text-slate-500 uppercase">Controlled</p></div>
+                  <div><p className="text-base font-black text-white">{zonePlay.failed}</p><p className="text-[8px] font-bold text-slate-500 uppercase">Failed</p></div>
+                  {zonePlay.breakoutPct !== null && (
+                    <div><p className="text-base font-black text-lime-400">{Math.round(zonePlay.breakoutPct * 100)}%</p><p className="text-[8px] font-bold text-slate-500 uppercase">Success</p></div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
         {rows.length === 0 ? (
