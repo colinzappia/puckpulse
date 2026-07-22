@@ -840,7 +840,9 @@ const App: React.FC = () => {
     setSavingReport(true);
     try {
       await saveGameReport(user.id, {
-        homeName, awayName, homeScore, awayScore,
+        homeName, awayName,
+        homeScore: getStatsForRange(Team.HOME, 'total').goals,
+        awayScore: getStatsForRange(Team.AWAY, 'total').goals,
         homeLogo, awayLogo,
         periods: currentPeriod,
         events, homeRoster, awayRoster, isShared,
@@ -854,10 +856,21 @@ const App: React.FC = () => {
   };
 
   const handleDownloadFromHistory = (report: SavedGameReport, format: 'pdf' | 'excel' | 'html') => {
-    // Restore report data temporarily and trigger download
-    if (format === 'pdf') downloadPDFReport(report.events, report.homeRoster, report.awayRoster, report.homeName, report.awayName, report.homeScore, report.awayScore, null);
-    else if (format === 'excel') downloadExcelReport(report.events, report.homeRoster, report.awayRoster, report.homeName, report.awayName);
-    else if (format === 'html') downloadHTMLExport(report.events, report.homeRoster, report.awayRoster, report.homeName, report.awayName, report.homeScore, report.awayScore);
+    const maxPeriod = Math.max(...report.events.map(e => e.period), report.periods);
+    const data = {
+      homeName: report.homeName, awayName: report.awayName,
+      homeLogo: report.homeLogo, awayLogo: report.awayLogo,
+      events: report.events,
+      stats: {
+        home: getStatsForRange(Team.HOME, 'total', { events: report.events, homeName: report.homeName, awayName: report.awayName, homeRoster: report.homeRoster, awayRoster: report.awayRoster }),
+        away: getStatsForRange(Team.AWAY, 'total', { events: report.events, homeName: report.homeName, awayName: report.awayName, homeRoster: report.homeRoster, awayRoster: report.awayRoster }),
+      },
+      summaries: { total: 'Game imported from history.' },
+      maxPeriod,
+    };
+    if (format === 'pdf') downloadPDFReport(data);
+    else if (format === 'excel') downloadExcelReport(data);
+    else if (format === 'html') downloadHTMLExport(data);
   };
   const [attachmentEvent, setAttachmentEvent] = useState<GameEvent | null>(null);
   const [showTeamLibrary, setShowTeamLibrary] = useState(false);
@@ -1022,6 +1035,10 @@ const App: React.FC = () => {
   const [shotResultFilter, setShotResultFilter] = useState<'ALL' | 'onNet' | 'attempt'>('ALL');
   const [shotStrengthFilter, setShotStrengthFilter] = useState<'ALL' | 'pp' | 'pk'>('ALL');
   const [shotFilterExpanded, setShotFilterExpanded] = useState(false);
+  const [entryRetrievalFilter, setEntryRetrievalFilter] = useState<'ALL' | 'FOR' | 'AGAINST'>('ALL');
+  const [entryFilterExpanded, setEntryFilterExpanded] = useState(false);
+  const [breakoutResultFilter, setBreakoutResultFilter] = useState<'ALL' | 'CONTROLLED' | 'FAILED'>('ALL');
+  const [breakoutFilterExpanded, setBreakoutFilterExpanded] = useState(false);
   const [homeName, setHomeName] = useState(() => {
     try { return sessionStorage.getItem('tch_homeName') || 'HOME'; } catch { return 'HOME'; }
   });
@@ -1097,7 +1114,19 @@ const App: React.FC = () => {
   ], []);
 
   useEffect(() => {
-    if (!visibleTypes.includes(mapPlotType)) setVisibleTypes(prev => [...prev, mapPlotType]);
+    const zoneEntryFamily = [EventType.ZONE_ENTRY_CARRY, EventType.ZONE_ENTRY_DUMP, EventType.ZONE_ENTRY_PASS, EventType.ZONE_ENTRY_DENIED];
+    if (zoneEntryFamily.includes(mapPlotType)) {
+      // Zone entries share one toolbar pill but the actual sub-type
+      // (Carry/Dump/Pass/Denied) is only chosen after tapping the ice, in
+      // the popup — so arming the tool needs to mark all four visible up
+      // front, not just whichever one happens to be the default armed
+      // type. Otherwise anything logged as Dump/Pass/Denied gets created
+      // fine (shows in the feed) but is invisible on the rink because its
+      // specific type was never added to the filter.
+      setVisibleTypes(prev => Array.from(new Set([...prev, ...zoneEntryFamily])));
+    } else if (!visibleTypes.includes(mapPlotType)) {
+      setVisibleTypes(prev => [...prev, mapPlotType]);
+    }
   }, [mapPlotType]);
 
   useEffect(() => {
@@ -1176,10 +1205,19 @@ const App: React.FC = () => {
     away: awayRoster.filter(p => p.position?.toUpperCase().includes('C'))
   }), [homeRoster, awayRoster]);
 
-  const getStatsForRange = useCallback((team: Team, periodFilter?: number | 'total'): TeamStats & { giveaways: number, takeaways: number, faceoffLosses: number, penaltiesCount: number, entriesCarry: number, entriesDump: number, entriesPass: number, entriesDenied: number } => {
-    const teamEvents = events.filter(e => e.team === team && (periodFilter === 'total' || periodFilter === undefined || e.period === periodFilter));
+  const getStatsForRange = useCallback((
+    team: Team,
+    periodFilter?: number | 'total',
+    overrides?: { events?: GameEvent[]; homeName?: string; awayName?: string; homeRoster?: Player[]; awayRoster?: Player[] }
+  ): TeamStats & { giveaways: number, takeaways: number, faceoffLosses: number, penaltiesCount: number, entriesCarry: number, entriesDump: number, entriesPass: number, entriesDenied: number } => {
+    const srcEvents = overrides?.events ?? events;
+    const srcHomeName = overrides?.homeName ?? homeName;
+    const srcAwayName = overrides?.awayName ?? awayName;
+    const srcHomeRoster = overrides?.homeRoster ?? homeRoster;
+    const srcAwayRoster = overrides?.awayRoster ?? awayRoster;
+    const teamEvents = srcEvents.filter(e => e.team === team && (periodFilter === 'total' || periodFilter === undefined || e.period === periodFilter));
     return {
-      name: team === Team.HOME ? homeName : awayName,
+      name: team === Team.HOME ? srcHomeName : srcAwayName,
       goals: teamEvents.filter(e => e.type === EventType.GOAL).length,
       shots: teamEvents.filter(e =>
         e.type === EventType.GOAL ||
@@ -1199,7 +1237,7 @@ const App: React.FC = () => {
       entriesDenied: teamEvents.filter(e => e.type === EventType.ZONE_ENTRY_DENIED).length,
       blocks: teamEvents.filter(e => e.type === EventType.BLOCK).length,
       penaltiesCount: teamEvents.filter(e => e.type === EventType.PENALTY).length,
-      roster: team === Team.HOME ? homeRoster : awayRoster
+      roster: team === Team.HOME ? srcHomeRoster : srcAwayRoster
     };
   }, [events, homeName, awayName, homeRoster, awayRoster]);
 
@@ -2202,6 +2240,12 @@ const App: React.FC = () => {
                   if (shotStrengthFilter === 'pp' && e.metadata?.strength !== 'PP') return false;
                   if (shotStrengthFilter === 'pk' && e.metadata?.strength !== 'PK') return false;
                 }
+                if (e.type === EventType.ZONE_ENTRY_DUMP && entryRetrievalFilter !== 'ALL' && e.metadata?.retrieval !== entryRetrievalFilter) return false;
+                if (e.type === EventType.BREAKOUT) {
+                  const isFailed = e.metadata?.breakoutResult === 'FAILED';
+                  if (breakoutResultFilter === 'CONTROLLED' && isFailed) return false;
+                  if (breakoutResultFilter === 'FAILED' && !isFailed) return false;
+                }
                 return true;
               })} leftLogo={leftTeamDisplay.logo} rightLogo={rightTeamDisplay.logo} onPlot={handlePlot} onMoveEvent={handleMoveEvent} activeEventType={mapPlotType} />
             </div>
@@ -2260,6 +2304,66 @@ const App: React.FC = () => {
                 </div>
               );
             })}
+
+            {(() => {
+              const zoneEntryTypes = [EventType.ZONE_ENTRY_CARRY, EventType.ZONE_ENTRY_DUMP, EventType.ZONE_ENTRY_PASS, EventType.ZONE_ENTRY_DENIED];
+              const isActive = zoneEntryTypes.some(t => visibleTypes.includes(t));
+              return (
+                <div className="relative shrink-0 flex items-center">
+                  <button
+                    onClick={() => {
+                      const allOn = zoneEntryTypes.every(t => visibleTypes.includes(t));
+                      setVisibleTypes(prev => allOn ? prev.filter(t => !zoneEntryTypes.includes(t)) : Array.from(new Set([...prev, ...zoneEntryTypes])));
+                      setEntryRetrievalFilter('ALL');
+                    }}
+                    className={`pr-2 rounded-r-none px-4 py-2.5 rounded-xl text-[9px] font-black uppercase transition-all flex items-center gap-2 border shadow-sm ${isActive ? 'bg-white/10 text-white border-white/20' : 'opacity-20 border-transparent bg-transparent'}`}
+                  >
+                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#fb923c' }} />
+                    <span>Zone Entries</span>
+                    {entryRetrievalFilter !== 'ALL' && (
+                      <span className="text-[7px] font-black px-1 py-0.5 rounded bg-orange-500/30 text-orange-300">
+                        {entryRetrievalFilter === 'FOR' ? 'RETR+' : 'RETR-'}
+                      </span>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setEntryFilterExpanded(!entryFilterExpanded)}
+                    className={`px-1.5 py-2.5 rounded-xl rounded-l-none border border-l-0 shadow-sm transition-all ${isActive ? 'bg-white/10 text-white border-white/20' : 'opacity-20 border-transparent bg-transparent'}`}
+                  >
+                    <span className={`inline-block transition-transform text-[10px] ${entryFilterExpanded ? 'rotate-180' : ''}`}>▾</span>
+                  </button>
+                </div>
+              );
+            })()}
+
+            {(() => {
+              const isActive = visibleTypes.includes(EventType.BREAKOUT);
+              return (
+                <div className="relative shrink-0 flex items-center">
+                  <button
+                    onClick={() => {
+                      toggleVisibleType(EventType.BREAKOUT);
+                      setBreakoutResultFilter('ALL');
+                    }}
+                    className={`pr-2 rounded-r-none px-4 py-2.5 rounded-xl text-[9px] font-black uppercase transition-all flex items-center gap-2 border shadow-sm ${isActive ? 'bg-white/10 text-white border-white/20' : 'opacity-20 border-transparent bg-transparent'}`}
+                  >
+                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#84cc16' }} />
+                    <span>Breakouts</span>
+                    {breakoutResultFilter !== 'ALL' && (
+                      <span className="text-[7px] font-black px-1 py-0.5 rounded bg-lime-500/30 text-lime-300">
+                        {breakoutResultFilter === 'CONTROLLED' ? 'CTRL' : 'FAIL'}
+                      </span>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setBreakoutFilterExpanded(!breakoutFilterExpanded)}
+                    className={`px-1.5 py-2.5 rounded-xl rounded-l-none border border-l-0 shadow-sm transition-all ${isActive ? 'bg-white/10 text-white border-white/20' : 'opacity-20 border-transparent bg-transparent'}`}
+                  >
+                    <span className={`inline-block transition-transform text-[10px] ${breakoutFilterExpanded ? 'rotate-180' : ''}`}>▾</span>
+                  </button>
+                </div>
+              );
+            })()}
           </div>
         </div>
 
@@ -2314,6 +2418,88 @@ const App: React.FC = () => {
                 );
               })}
             </div>
+          </div>
+        )}
+
+        {entryFilterExpanded && (
+          <div className="w-full px-4 py-2.5 bg-black/30 border-b border-white/5 flex items-center justify-center gap-3 overflow-x-auto scrollbar-none animate-in slide-in-from-top duration-200">
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className="text-[8px] font-black uppercase tracking-wider text-slate-500 shrink-0">Type:</span>
+              {([
+                { type: EventType.ZONE_ENTRY_CARRY, label: 'Carry', color: '#fb923c' },
+                { type: EventType.ZONE_ENTRY_DUMP, label: 'Dump', color: '#fbbf24' },
+                { type: EventType.ZONE_ENTRY_PASS, label: 'Pass', color: '#f472b6' },
+                { type: EventType.ZONE_ENTRY_DENIED, label: 'Denied', color: '#ef4444' },
+              ] as const).map(({ type, label, color }) => {
+                const on = visibleTypes.includes(type);
+                return (
+                  <button
+                    key={type}
+                    onClick={() => toggleVisibleType(type)}
+                    className="shrink-0 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all border"
+                    style={{
+                      background: on ? `${color}33` : 'rgba(255,255,255,0.03)',
+                      borderColor: on ? color : 'rgba(255,255,255,0.08)',
+                      color: on ? color : '#64748b'
+                    }}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+
+            <span className="text-slate-700 shrink-0">·</span>
+
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className="text-[8px] font-black uppercase tracking-wider text-slate-500 shrink-0">Retrieval (dump-ins):</span>
+              {([
+                { key: 'FOR', label: 'For', color: '#22c55e' },
+                { key: 'AGAINST', label: 'Against', color: '#ef4444' },
+              ] as const).map(({ key, label, color }) => {
+                const on = entryRetrievalFilter === key;
+                return (
+                  <button
+                    key={key}
+                    onClick={() => setEntryRetrievalFilter(on ? 'ALL' : key)}
+                    className="shrink-0 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all border"
+                    style={{
+                      background: on ? `${color}33` : 'rgba(255,255,255,0.03)',
+                      borderColor: on ? color : 'rgba(255,255,255,0.08)',
+                      color: on ? color : '#64748b'
+                    }}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {breakoutFilterExpanded && (
+          <div className="w-full px-4 py-2.5 bg-black/30 border-b border-white/5 flex items-center justify-center gap-3 overflow-x-auto scrollbar-none animate-in slide-in-from-top duration-200">
+            <span className="text-[8px] font-black uppercase tracking-wider text-slate-500 shrink-0">Result:</span>
+            {([
+              { key: 'CONTROLLED', label: 'Controlled', color: '#84cc16' },
+              { key: 'FAILED', label: 'Failed', color: '#ef4444' },
+            ] as const).map(({ key, label, color }) => {
+              const on = breakoutResultFilter === key;
+              return (
+                <button
+                  key={key}
+                  onClick={() => setBreakoutResultFilter(on ? 'ALL' : key)}
+                  className="shrink-0 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all border"
+                  style={{
+                    background: on ? `${color}33` : 'rgba(255,255,255,0.03)',
+                    borderColor: on ? color : 'rgba(255,255,255,0.08)',
+                    color: on ? color : '#64748b'
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            })}
           </div>
         )}
 
@@ -2580,8 +2766,6 @@ const App: React.FC = () => {
       <button onClick={() => navigate('/contact')} className="text-xs font-bold text-white bg-cyan-600 hover:bg-cyan-500 transition-colors px-4 py-1.5 rounded-full">✉ Contact Us</button>
       <span className="text-slate-600">·</span>
       <button onClick={() => navigate('/about')} className="text-xs text-slate-500 hover:text-slate-300 transition-colors">About</button>
-      <span className="text-slate-600">·</span>
-      <button onClick={() => navigate('/advertise')} className="text-xs font-bold text-yellow-400 hover:text-yellow-300 transition-colors">📢 Advertise</button>
       <span className="text-slate-600">·</span>
       {!isAdmin && (
         <button onClick={handleManageSubscription} className="text-xs font-bold text-slate-400 hover:text-white transition-colors px-4 py-1.5 rounded-full border border-white/10 hover:border-white/20">⚙ Manage Subscription</button>
