@@ -68,8 +68,13 @@ const EntryMarker: React.FC<{
   shape: 'triangle' | 'square' | 'diamond' | 'x';
   cx: number; cy: number; size: number; color: string; isAway: boolean; pointRight: boolean;
 }> = ({ shape, cx, cy, size, color, isAway, pointRight }) => {
-  const stroke = isAway ? '#ffffff' : 'none';
-  const strokeWidth = isAway ? 1.5 : 0;
+  // Every shape gets a white outline now — not just away-team ones. These
+  // sit directly on top of the thick blue line by design, and a flat fill
+  // with no outline at all (the old home-team behavior) was very hard to
+  // see there. Away team keeps a thicker outline so home/away is still
+  // distinguishable at a glance.
+  const stroke = '#ffffff';
+  const strokeWidth = isAway ? 2.5 : 1.25;
 
   if (shape === 'triangle') {
     // Points toward the attacking zone (away from centre ice) so entry
@@ -91,8 +96,14 @@ const EntryMarker: React.FC<{
   }
   // 'x' — denied entry
   const s = size * 1.1;
+  const haloWidth = isAway ? 6 : 5;
   return (
     <g>
+      {/* White halo drawn first so the colored X on top reads clearly
+          against the blue line, matching the outline treatment the other
+          three shapes get. */}
+      <line x1={cx - s} y1={cy - s} x2={cx + s} y2={cy + s} stroke="#ffffff" strokeWidth={haloWidth} strokeLinecap="round" />
+      <line x1={cx - s} y1={cy + s} x2={cx + s} y2={cy - s} stroke="#ffffff" strokeWidth={haloWidth} strokeLinecap="round" />
       <line x1={cx - s} y1={cy - s} x2={cx + s} y2={cy + s} stroke={color} strokeWidth={3} strokeLinecap="round" />
       <line x1={cx - s} y1={cy + s} x2={cx + s} y2={cy - s} stroke={color} strokeWidth={3} strokeLinecap="round" />
       {isAway && <circle cx={cx} cy={cy} r={s + 3} fill="none" stroke="#ffffff" strokeWidth={1.5} opacity={0.7} />}
@@ -258,10 +269,10 @@ const RinkChart: React.FC<RinkChartProps> = ({
     const BLOCK_SLATE = '#94a3b8';
     const PP_FOR_GOLD = '#eab308';
     const PP_AGAINST_PINK = '#ec4899';
-    const ENTRY_CARRY_INDIGO = '#4f46e5';
-    const ENTRY_DUMP_AMBER = '#d97706';
-    const ENTRY_PASS_SKY = '#0ea5e9';
-    const ENTRY_DENIED_ROSE = '#e11d48';
+    const ENTRY_CARRY_ORANGE = '#fb923c';
+    const ENTRY_DUMP_AMBER = '#fbbf24';
+    const ENTRY_PASS_PINK = '#f472b6';
+    const ENTRY_DENIED_RED = '#ef4444';
 
     switch (event.type) {
       case EventType.GOAL: 
@@ -272,7 +283,7 @@ const RinkChart: React.FC<RinkChartProps> = ({
         return { color, size: 7, opacity: 1 };
       }
       case EventType.BREAKOUT:
-        return { color: '#84cc16', size: 7, opacity: 1 };
+        return { color: event.metadata?.breakoutResult === 'FAILED' ? '#ef4444' : '#84cc16', size: 7, opacity: 1 };
       case EventType.BLOCK:
         return { color: BLOCK_SLATE, size: 6, opacity: 0.8 };
       case EventType.PP_SHOT_FOR:
@@ -292,13 +303,13 @@ const RinkChart: React.FC<RinkChartProps> = ({
       case EventType.HIT: 
         return { color: HIT_GRAY, size: 5, opacity: 0.85, shape: 'diamond' };
       case EventType.ZONE_ENTRY_CARRY:
-        return { color: ENTRY_CARRY_INDIGO, size: 6, opacity: 1 };
+        return { color: ENTRY_CARRY_ORANGE, size: 6, opacity: 1 };
       case EventType.ZONE_ENTRY_DUMP:
-        return { color: ENTRY_DUMP_AMBER, size: 6, opacity: 0.9 };
+        return { color: ENTRY_DUMP_AMBER, size: 6, opacity: 1 };
       case EventType.ZONE_ENTRY_PASS:
-        return { color: ENTRY_PASS_SKY, size: 6, opacity: 1 };
+        return { color: ENTRY_PASS_PINK, size: 6, opacity: 1 };
       case EventType.ZONE_ENTRY_DENIED:
-        return { color: ENTRY_DENIED_ROSE, size: 5, opacity: 0.85 };
+        return { color: ENTRY_DENIED_RED, size: 5, opacity: 1 };
       default: 
         return { color: '#ffffff', size: 5, opacity: 0.8 };
     }
