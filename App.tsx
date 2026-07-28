@@ -2228,16 +2228,12 @@ const App: React.FC = () => {
               })} leftLogo={leftTeamDisplay.logo} rightLogo={rightTeamDisplay.logo} onPlot={handlePlot} onMoveEvent={handleMoveEvent} activeEventType={mapPlotType} />
             </div>
           </div>
-          {/* Player Stats — below rink on mobile, avoids overlap */}
-          <div className="flex justify-end px-3 pb-2 sm:hidden">
+          {/* Player Stats — sits below the rink on every screen size, never overlaps the ice */}
+          <div className="flex justify-end px-3 pb-2">
             <button onClick={() => setShowPlayerStats(true)} className="flex items-center gap-2 bg-blue-600/90 hover:bg-blue-500 text-white text-xs font-black uppercase tracking-wider px-4 py-2.5 rounded-full shadow-xl border border-blue-400/30 transition-all active:scale-95">
               <span>📊</span><span>Player Stats</span>
             </button>
           </div>
-          {/* Player Stats — floating on larger screens */}
-          <button onClick={() => setShowPlayerStats(true)} className="hidden sm:flex absolute bottom-12 right-12 items-center gap-2 bg-blue-600/90 hover:bg-blue-500 text-white text-xs font-black uppercase tracking-wider px-4 py-2.5 rounded-full shadow-xl border border-blue-400/30 transition-all active:scale-95 backdrop-blur-sm">
-            <span>📊</span><span>Player Stats</span>
-          </button>
         </div>
 
         {/* MAP FILTERS */}
