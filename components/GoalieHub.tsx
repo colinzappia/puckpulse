@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Team, Player } from '../types';
 
@@ -50,7 +49,7 @@ const NetGrid: React.FC = () => {
           width={CELL_W}
           height={CELL_H}
           fill="none"
-          stroke="rgba(255,255,255,0.15)"
+          stroke="rgba(255,255,255,0.25)"
           strokeWidth={1}
         />
       );
@@ -93,12 +92,24 @@ const NetDiagram: React.FC<{
   return (
     <svg
       viewBox="0 0 300 200"
+      xmlns="http://www.w3.org/2000/svg"
+      xmlnsXlink="http://www.w3.org/1999/xlink"
       onClick={handleClick}
       className="w-full rounded-xl cursor-crosshair touch-none"
       style={{ background: '#0a1628' }}
     >
-      <rect x={NET_X} y={NET_Y} width={NET_W} height={NET_H} fill="none" stroke="#2563eb" strokeWidth={6} rx={4} />
-      <image href="/goalie-silhouette.png" x={GOALIE_X} y={GOALIE_Y} width={GOALIE_W} height={GOALIE_H} opacity={0.55} />
+      <defs>
+        <pattern id="netMesh" width="9" height="9" patternUnits="userSpaceOnUse">
+          <path d="M0,9 L9,0" stroke="rgba(200,205,215,0.35)" strokeWidth={0.6} />
+          <path d="M-2.25,2.25 L2.25,-2.25" stroke="rgba(200,205,215,0.35)" strokeWidth={0.6} />
+          <path d="M6.75,11.25 L11.25,6.75" stroke="rgba(200,205,215,0.35)" strokeWidth={0.6} />
+        </pattern>
+      </defs>
+      {/* Netting mesh, clipped to the frame's interior */}
+      <rect x={NET_X + 3} y={NET_Y + 3} width={NET_W - 6} height={NET_H - 6} fill="url(#netMesh)" rx={NET_Y} />
+      {/* Red net frame — arched top corners like a real net, straight sides */}
+      <rect x={NET_X} y={NET_Y} width={NET_W} height={NET_H} fill="none" stroke="#dc2626" strokeWidth={7} strokeLinejoin="round" rx={NET_Y} />
+      <image href="/goalie-silhouette.png" xlinkHref="/goalie-silhouette.png" x={GOALIE_X} y={GOALIE_Y} width={GOALIE_W} height={GOALIE_H} opacity={0.85} />
       <NetGrid />
       {marks.map((m, i) => {
         const color = m.outcome === 'save' ? '#22c55e' : '#ef4444';
