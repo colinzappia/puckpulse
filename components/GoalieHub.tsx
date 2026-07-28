@@ -210,7 +210,7 @@ const GoalieHub: React.FC<GoalieHubProps> = ({
 
       <div className="flex-1 overflow-auto px-4 py-4">
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:divide-x md:divide-white/10">
-          <div>
+          <div className="w-full max-w-md mx-auto">
             <NetPanel
               title="Shots against"
               subtitle={startingGoalie ? `Tracking #${startingGoalie} ${goalie?.name || teamName}` : `No starting goalie set for ${teamName} — set one with the ★ in Roster Setup`}
@@ -228,7 +228,7 @@ const GoalieHub: React.FC<GoalieHubProps> = ({
             />
           </div>
 
-          <div className="md:pl-8">
+          <div className="w-full max-w-md mx-auto md:pl-8">
             <NetPanel
               title="Shots for"
               subtitle={`${teamName}'s own shots on the opposing net`}
