@@ -979,8 +979,6 @@ const App: React.FC = () => {
   const [breakdownFilter, setBreakdownFilter] = useState<number | 'total'>(1);
   const [summaries, setSummaries] = useState<Record<string, string>>({ 'total': "Game tracking active. Generate coaching analysis after logging more events." });
   const [isGeneratingInsights, setIsGeneratingInsights] = useState(false);
-  const [isSyncingHome, setIsSyncingHome] = useState(false);
-  const [isSyncingAway, setIsSyncingAway] = useState(false);
   const [syncMessage, setSyncMessage] = useState('');
   const [pasteRosterHome, setPasteRosterHome] = useState('');
   const [pasteRosterAway, setPasteRosterAway] = useState('');
@@ -1078,8 +1076,7 @@ const App: React.FC = () => {
   const [goalieHistoryAway, setGoalieHistoryAway] = useState<{ number: string; since: number }[]>(() => {
     try { const v = sessionStorage.getItem('tch_goalieHistoryAway'); return v ? JSON.parse(v) : []; } catch { return []; }
   });
-  const [homeRosterUrl, setHomeRosterUrl] = useState("");
-  const [awayRosterUrl, setAwayRosterUrl] = useState("");
+
   const [homeRoster, setHomeRoster] = useState<Player[]>(() => {
     try { const s = sessionStorage.getItem('tch_homeRoster'); return s ? JSON.parse(s) : []; } catch { return []; }
   });
@@ -1501,8 +1498,6 @@ const App: React.FC = () => {
     setAwayName('AWAY');
     setHomeRoster([]);
     setAwayRoster([]);
-    setHomeRosterUrl('');
-    setAwayRosterUrl('');
     setHomeLogo('');
     setAwayLogo('');
     setStartingGoalieHome('');
@@ -1712,25 +1707,6 @@ const App: React.FC = () => {
       else setAwayLogo(result);
     };
     reader.readAsDataURL(file);
-  };
-
-  const handleAISync = async (team: Team) => {
-    const isHome = team === Team.HOME;
-    const teamName = isHome ? homeName : awayName;
-    const rosterUrl = isHome ? homeRosterUrl : awayRosterUrl;
-    const setSyncing = isHome ? setIsSyncingHome : setIsSyncingAway;
-    const setRoster = isHome ? setHomeRoster : setAwayRoster;
-    const setSources = isHome ? setHomeSources : setAwaySources;
-    if (!teamName || teamName === "HOME" || teamName === "AWAY") { alert("Please enter a valid team name before syncing."); return; }
-    setSyncing(true);
-    try {
-      const response = await fetchRosterByAI({ teamName, rosterUrl: rosterUrl || undefined });
-      if (response.status === 'OK' && response.players.length > 0) {
-        setRoster(sortByNumber(response.players.map((p: any) => ({ ...p, name: normalizeName(p.name) }))));
-        if (response.sources) setSources(response.sources);
-      } else { alert(`AI Sync Error: ${response.reason || 'Extraction failed'}`); }
-    } catch (error: any) { alert(`Sync failed: ${error.message || 'Unknown error occurred.'}`); }
-    finally { setSyncing(false); }
   };
 
   const orderedTeams = useMemo(() => isCurrentlySwapped ? [Team.AWAY, Team.HOME] : [Team.HOME, Team.AWAY], [isCurrentlySwapped]);
@@ -2635,8 +2611,6 @@ const App: React.FC = () => {
             const sources = isHome ? homeSources : awaySources;
             const name = isHome ? homeName : awayName;
             const logo = isHome ? homeLogo : awayLogo;
-            const url = isHome ? homeRosterUrl : awayRosterUrl;
-            const isSyncing = isHome ? isSyncingHome : isSyncingAway;
             const manualData = isHome ? manualHome : manualAway;
             const setManualData = isHome ? setManualHome : setManualAway;
             return (
@@ -2649,8 +2623,8 @@ const App: React.FC = () => {
                   <div className="flex items-center gap-3">
                     <button onClick={() => handleLoadFromLibrary(isHome ? 'home' : 'away')} className="text-[9px] font-black text-cyan-500 hover:text-cyan-300 uppercase transition-colors">📚 Load from Library</button>
                     <button onClick={() => {
-                      if (isHome) { setHomeRoster([]); setHomeRosterUrl(''); setHomeSources([]); setPasteRosterHome(''); setHomeName(''); setHomeLogo(''); }
-                      else { setAwayRoster([]); setAwayRosterUrl(''); setAwaySources([]); setPasteRosterAway(''); setAwayName(''); setAwayLogo(''); }
+                      if (isHome) { setHomeRoster([]); setHomeSources([]); setPasteRosterHome(''); setHomeName(''); setHomeLogo(''); }
+                      else { setAwayRoster([]); setAwaySources([]); setPasteRosterAway(''); setAwayName(''); setAwayLogo(''); }
                     }} className="text-[9px] font-black text-slate-700 hover:text-red-500 uppercase transition-colors">Clear Roster</button>
                   </div>
                 </div>
