@@ -22,14 +22,9 @@ interface GoalieHubProps {
   onClearMarks: (team: Team) => void;
 }
 
-// Image dimensions and zone boundaries, measured directly from the actual
-// goalie-net.png — its red gridlines aren't perfectly even, so these
-// bounds match wherever the lines really are in the image, rather than
-// assuming equal thirds.
+// Image's natural dimensions, so the viewBox maps 1:1 to its pixels.
 const IMG_W = 800;
 const IMG_H = 573;
-const COL_BOUNDS = [37.9, 244.1, 552.4, 765.5]; // left edge, 2 gridlines, right edge
-const ROW_BOUNDS = [24.1, 173.1, 336.6, 541.4]; // top edge, 2 gridlines, bottom edge
 
 const NetDiagram: React.FC<{
   marks: NetMark[];
@@ -43,16 +38,11 @@ const NetDiagram: React.FC<{
     pt.y = e.clientY;
     const loc = pt.matrixTransform(svg.getScreenCTM()!.inverse());
 
-    // Snap to whichever of the 9 zones (as bounded by the image's own
-    // gridlines) was tapped, using its actual centre — not an assumed
-    // equal-thirds centre.
-    let col = 0;
-    while (col < 2 && loc.x >= COL_BOUNDS[col + 1]) col++;
-    let row = 0;
-    while (row < 2 && loc.y >= ROW_BOUNDS[row + 1]) row++;
-    const cx = (COL_BOUNDS[col] + COL_BOUNDS[col + 1]) / 2;
-    const cy = (ROW_BOUNDS[row] + ROW_BOUNDS[row + 1]) / 2;
-    onTap(cx, cy);
+    // Freeform placement, same as the rink diagram — lands exactly where
+    // tapped rather than snapping to a zone centre. The gridlines baked
+    // into the image are still there as a visual reference for the coach,
+    // just no longer constraining where a mark can actually go.
+    onTap(loc.x, loc.y);
   };
 
   return (
