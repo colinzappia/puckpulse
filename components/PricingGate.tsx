@@ -125,6 +125,7 @@ const PricingGate: React.FC<PricingGateProps> = ({ onSubscribed }) => {
             <p className="text-3xl font-black text-white mb-1">
               {plan.price} <span className="text-base font-normal text-slate-400">{plan.period}</span>
             </p>
+            <p className="text-[11px] text-slate-500 mb-3 -mt-1">CAD, plus applicable sales tax</p>
             <p className="text-slate-400 text-sm mb-4 pb-4 border-b border-white/10">{plan.desc}</p>
             <ul className="flex flex-col gap-2 mb-6 flex-1">
               {plan.features.map(f => (
