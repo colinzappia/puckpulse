@@ -26,6 +26,8 @@ export default async function handler(req, res) {
       subscription_data: subscriptionData,
       metadata: { userId, planName },
       allow_promotion_codes: false,
+      automatic_tax: { enabled: true },
+      billing_address_collection: 'required',
       ...(email ? { customer_email: email } : {}),
       success_url: `${process.env.VITE_APP_URL || 'https://topcheesehockey.com'}?subscribed=true`,
       cancel_url: `${process.env.VITE_APP_URL || 'https://topcheesehockey.com'}?cancelled=true`,
