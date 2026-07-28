@@ -236,6 +236,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onContact, onAdvert
               )}
               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">{p.name}</p>
               <p className="text-4xl font-black mb-1">{p.price} <span className="text-base font-normal text-slate-400">{p.period}</span></p>
+              <p className="text-[11px] text-slate-500 mb-4 -mt-1">CAD, plus applicable sales tax</p>
               <p className="text-slate-400 text-sm mb-5 pb-5 border-b border-white/10">{p.desc}</p>
               <ul className="flex flex-col gap-2 mb-8 flex-1">
                 {p.features.map(f => <li key={f} className="text-sm flex gap-2"><span className="text-yellow-400 font-bold">✓</span>{f}</li>)}
