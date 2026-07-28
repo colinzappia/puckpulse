@@ -10,6 +10,7 @@ import UserManual from './components/UserManual';
 import LandingPage from './components/LandingPage';
 import AdBanner from './components/AdBanner';
 import PlayerStats from './components/playerstats';
+import GoalieHub from './components/GoalieHub';
 import AuthGate from './components/AuthGate';
 import PricingGate from './components/PricingGate';
 import LegalPages from './components/LegalPages';
@@ -784,6 +785,7 @@ const App: React.FC = () => {
   const [checkingSubscription, setCheckingSubscription] = useState(false);
   const [legalPage, setLegalPage] = useState<'terms' | 'privacy' | null>(null);
   const [showPlayerStats, setShowPlayerStats] = useState(false);
+  const [showGoalieHub, setShowGoalieHub] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   useEffect(() => {
@@ -1076,6 +1078,15 @@ const App: React.FC = () => {
   const [goalieHistoryAway, setGoalieHistoryAway] = useState<{ number: string; since: number }[]>(() => {
     try { const v = sessionStorage.getItem('tch_goalieHistoryAway'); return v ? JSON.parse(v) : []; } catch { return []; }
   });
+  // Goalie Hub net-placement marks — purely visual, per-team, reset whenever
+  // that team's goalie changes (initial pick or a mid-game swap), since a
+  // new goalie shouldn't inherit the outgoing goalie's shot chart.
+  const [netMarksHome, setNetMarksHome] = useState<{ x: number; y: number; outcome: 'save' | 'goal' }[]>(() => {
+    try { const v = sessionStorage.getItem('tch_netMarksHome'); return v ? JSON.parse(v) : []; } catch { return []; }
+  });
+  const [netMarksAway, setNetMarksAway] = useState<{ x: number; y: number; outcome: 'save' | 'goal' }[]>(() => {
+    try { const v = sessionStorage.getItem('tch_netMarksAway'); return v ? JSON.parse(v) : []; } catch { return []; }
+  });
 
   const [homeRoster, setHomeRoster] = useState<Player[]>(() => {
     try { const s = sessionStorage.getItem('tch_homeRoster'); return s ? JSON.parse(s) : []; } catch { return []; }
@@ -1167,6 +1178,14 @@ const App: React.FC = () => {
   useEffect(() => {
     try { sessionStorage.setItem('tch_goalieHistoryAway', JSON.stringify(goalieHistoryAway)); } catch {}
   }, [goalieHistoryAway]);
+
+  useEffect(() => {
+    try { sessionStorage.setItem('tch_netMarksHome', JSON.stringify(netMarksHome)); } catch {}
+  }, [netMarksHome]);
+
+  useEffect(() => {
+    try { sessionStorage.setItem('tch_netMarksAway', JSON.stringify(netMarksAway)); } catch {}
+  }, [netMarksAway]);
 
   useEffect(() => {
     try {
@@ -1442,8 +1461,21 @@ const App: React.FC = () => {
   const assignGoalie = useCallback((team: Team, number: string) => {
     const setHistory = team === Team.HOME ? setGoalieHistoryHome : setGoalieHistoryAway;
     const setStarting = team === Team.HOME ? setStartingGoalieHome : setStartingGoalieAway;
+    const setMarks = team === Team.HOME ? setNetMarksHome : setNetMarksAway;
     setStarting(number);
     if (number) setHistory(prev => [...prev, { number, since: Date.now() }]);
+    // A new goalie shouldn't inherit the outgoing goalie's net chart.
+    setMarks([]);
+  }, []);
+
+  const addNetMark = useCallback((team: Team, x: number, y: number, outcome: 'save' | 'goal') => {
+    const setMarks = team === Team.HOME ? setNetMarksHome : setNetMarksAway;
+    setMarks(prev => [...prev, { x, y, outcome }]);
+  }, []);
+
+  const clearNetMarks = useCallback((team: Team) => {
+    const setMarks = team === Team.HOME ? setNetMarksHome : setNetMarksAway;
+    setMarks([]);
   }, []);
 
   const confirmPlayerTag = useCallback((eventId: string, num: string, playerTeam: Team) => {
@@ -1504,9 +1536,11 @@ const App: React.FC = () => {
     setStartingGoalieAway('');
     setGoalieHistoryHome([]);
     setGoalieHistoryAway([]);
+    setNetMarksHome([]);
+    setNetMarksAway([]);
     setSummaries({ 'total': 'Game tracking active. Generate coaching analysis after logging more events.' });
     localStorage.removeItem('tch_game_state');
-    try { ['tch_homeRoster','tch_awayRoster','tch_homeName','tch_awayName','tch_homeLogo','tch_awayLogo','tch_startingGoalieHome','tch_startingGoalieAway','tch_goalieHistoryHome','tch_goalieHistoryAway'].forEach(k => sessionStorage.removeItem(k)); } catch {}
+    try { ['tch_homeRoster','tch_awayRoster','tch_homeName','tch_awayName','tch_homeLogo','tch_awayLogo','tch_startingGoalieHome','tch_startingGoalieAway','tch_goalieHistoryHome','tch_goalieHistoryAway','tch_netMarksHome','tch_netMarksAway'].forEach(k => sessionStorage.removeItem(k)); } catch {}
     sessionStorage.setItem('tch_launched', 'true');
     setShowNewGameConfirm(false);
   };
@@ -1632,6 +1666,8 @@ const App: React.FC = () => {
     setStartingGoalieAway('');
     setGoalieHistoryHome([]);
     setGoalieHistoryAway([]);
+    setNetMarksHome([]);
+    setNetMarksAway([]);
     setSummaries({ 'total': 'Game tracking active. Generate coaching analysis after logging more events.' });
     setLastEvent(null);
     setPendingGoal(null);
@@ -1640,7 +1676,7 @@ const App: React.FC = () => {
     setPendingPenalty(null);
     setTaggingEvent(null);
     setPlayerTagDismissed(false);
-    try { ['tch_homeRoster','tch_awayRoster','tch_homeName','tch_awayName','tch_homeLogo','tch_awayLogo','tch_startingGoalieHome','tch_startingGoalieAway','tch_goalieHistoryHome','tch_goalieHistoryAway'].forEach(k => sessionStorage.removeItem(k)); } catch {}
+    try { ['tch_homeRoster','tch_awayRoster','tch_homeName','tch_awayName','tch_homeLogo','tch_awayLogo','tch_startingGoalieHome','tch_startingGoalieAway','tch_goalieHistoryHome','tch_goalieHistoryAway','tch_netMarksHome','tch_netMarksAway'].forEach(k => sessionStorage.removeItem(k)); } catch {}
     localStorage.removeItem('tch_game_state');
     setShowEndGame(false);
   };
@@ -2228,8 +2264,11 @@ const App: React.FC = () => {
               })} leftLogo={leftTeamDisplay.logo} rightLogo={rightTeamDisplay.logo} onPlot={handlePlot} onMoveEvent={handleMoveEvent} activeEventType={mapPlotType} />
             </div>
           </div>
-          {/* Player Stats — sits below the rink on every screen size, never overlaps the ice */}
-          <div className="flex justify-end px-3 pb-2">
+          {/* Player Stats + Goalie Hub — sit below the rink on every screen size, never overlap the ice */}
+          <div className="flex justify-end gap-2 px-3 pb-2">
+            <button onClick={() => setShowGoalieHub(true)} className="flex items-center gap-2 bg-slate-700/90 hover:bg-slate-600 text-white text-xs font-black uppercase tracking-wider px-4 py-2.5 rounded-full shadow-xl border border-slate-500/30 transition-all active:scale-95">
+              <span>🥅</span><span>Goalie Hub</span>
+            </button>
             <button onClick={() => setShowPlayerStats(true)} className="flex items-center gap-2 bg-blue-600/90 hover:bg-blue-500 text-white text-xs font-black uppercase tracking-wider px-4 py-2.5 rounded-full shadow-xl border border-blue-400/30 transition-all active:scale-95">
               <span>📊</span><span>Player Stats</span>
             </button>
@@ -2784,6 +2823,7 @@ const App: React.FC = () => {
     )}
 
     <PlayerStats isOpen={showPlayerStats} onClose={() => setShowPlayerStats(false)} events={events} homeRoster={homeRoster} awayRoster={awayRoster} homeName={homeName} awayName={awayName} goalieHistoryHome={goalieHistoryHome} goalieHistoryAway={goalieHistoryAway} />
+    <GoalieHub isOpen={showGoalieHub} onClose={() => setShowGoalieHub(false)} homeName={homeName} awayName={awayName} homeRoster={homeRoster} awayRoster={awayRoster} startingGoalieHome={startingGoalieHome} startingGoalieAway={startingGoalieAway} netMarksHome={netMarksHome} netMarksAway={netMarksAway} onAddMark={addNetMark} onClearMarks={clearNetMarks} />
 
     {/* End Game modal */}
     {showEndGame && (
