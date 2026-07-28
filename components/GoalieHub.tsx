@@ -19,6 +19,7 @@ interface GoalieHubProps {
   netMarksHome: NetMark[];
   netMarksAway: NetMark[];
   onAddMark: (team: Team, x: number, y: number, outcome: 'save' | 'goal') => void;
+  onUndoMark: (team: Team) => void;
   onClearMarks: (team: Team) => void;
 }
 
@@ -72,7 +73,7 @@ const NetDiagram: React.FC<{
 const GoalieHub: React.FC<GoalieHubProps> = ({
   isOpen, onClose, homeName, awayName, homeRoster, awayRoster,
   startingGoalieHome, startingGoalieAway, netMarksHome, netMarksAway,
-  onAddMark, onClearMarks,
+  onAddMark, onUndoMark, onClearMarks,
 }) => {
   const [activeTeam, setActiveTeam] = useState<'home' | 'away'>('home');
   const [mode, setMode] = useState<'save' | 'goal'>('save');
@@ -133,9 +134,18 @@ const GoalieHub: React.FC<GoalieHubProps> = ({
                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Tracking</p>
                   <p className="text-white font-black text-lg">#{startingGoalie} {goalie?.name || teamName}</p>
                 </div>
-                <button onClick={() => onClearMarks(team)} className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 text-[11px] font-bold transition-all">
-                  Clear
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => onUndoMark(team)}
+                    disabled={marks.length === 0}
+                    className={`px-3 py-1.5 rounded-lg border text-[11px] font-bold transition-all ${marks.length === 0 ? 'bg-white/[0.02] border-white/5 text-slate-700 cursor-not-allowed' : 'bg-white/5 hover:bg-white/10 border-white/10 text-slate-400'}`}
+                  >
+                    Undo
+                  </button>
+                  <button onClick={() => onClearMarks(team)} className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 text-[11px] font-bold transition-all">
+                    Clear
+                  </button>
+                </div>
               </div>
 
               <div className="flex items-center gap-2 mb-3">
