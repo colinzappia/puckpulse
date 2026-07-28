@@ -1473,6 +1473,11 @@ const App: React.FC = () => {
     setMarks(prev => [...prev, { x, y, outcome }]);
   }, []);
 
+  const undoNetMark = useCallback((team: Team) => {
+    const setMarks = team === Team.HOME ? setNetMarksHome : setNetMarksAway;
+    setMarks(prev => prev.slice(0, -1));
+  }, []);
+
   const clearNetMarks = useCallback((team: Team) => {
     const setMarks = team === Team.HOME ? setNetMarksHome : setNetMarksAway;
     setMarks([]);
@@ -2823,7 +2828,7 @@ const App: React.FC = () => {
     )}
 
     <PlayerStats isOpen={showPlayerStats} onClose={() => setShowPlayerStats(false)} events={events} homeRoster={homeRoster} awayRoster={awayRoster} homeName={homeName} awayName={awayName} goalieHistoryHome={goalieHistoryHome} goalieHistoryAway={goalieHistoryAway} />
-    <GoalieHub isOpen={showGoalieHub} onClose={() => setShowGoalieHub(false)} homeName={homeName} awayName={awayName} homeRoster={homeRoster} awayRoster={awayRoster} startingGoalieHome={startingGoalieHome} startingGoalieAway={startingGoalieAway} netMarksHome={netMarksHome} netMarksAway={netMarksAway} onAddMark={addNetMark} onClearMarks={clearNetMarks} />
+    <GoalieHub isOpen={showGoalieHub} onClose={() => setShowGoalieHub(false)} homeName={homeName} awayName={awayName} homeRoster={homeRoster} awayRoster={awayRoster} startingGoalieHome={startingGoalieHome} startingGoalieAway={startingGoalieAway} netMarksHome={netMarksHome} netMarksAway={netMarksAway} onAddMark={addNetMark} onUndoMark={undoNetMark} onClearMarks={clearNetMarks} />
 
     {/* End Game modal */}
     {showEndGame && (
