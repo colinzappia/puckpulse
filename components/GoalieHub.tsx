@@ -24,8 +24,8 @@ interface GoalieHubProps {
 }
 
 // Image's natural dimensions, so the viewBox maps 1:1 to its pixels.
-const IMG_W = 800;
-const IMG_H = 573;
+const IMG_W = 900;
+const IMG_H = 620;
 
 const NetDiagram: React.FC<{
   marks: NetMark[];
