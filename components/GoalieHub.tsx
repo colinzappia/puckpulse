@@ -193,19 +193,21 @@ const GoalieHub: React.FC<GoalieHubProps> = ({
       </div>
 
       {/* Team tabs */}
-      <div className="flex gap-1 p-3 bg-black/20 border-b border-white/5 shrink-0">
-        <button
-          onClick={() => setActiveTeam('home')}
-          className={`flex-1 py-2.5 rounded-xl text-sm font-black uppercase tracking-wider transition-all ${activeTeam === 'home' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}
-        >
-          {homeName}
-        </button>
-        <button
-          onClick={() => setActiveTeam('away')}
-          className={`flex-1 py-2.5 rounded-xl text-sm font-black uppercase tracking-wider transition-all ${activeTeam === 'away' ? 'bg-red-600 text-white' : 'text-slate-400 hover:text-white'}`}
-        >
-          {awayName}
-        </button>
+      <div className="px-4 py-3 bg-black/20 border-b border-white/5 shrink-0">
+        <div className="max-w-6xl mx-auto flex gap-1">
+          <button
+            onClick={() => setActiveTeam('home')}
+            className={`flex-1 py-2.5 rounded-xl text-sm font-black uppercase tracking-wider transition-all ${activeTeam === 'home' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}
+          >
+            {homeName}
+          </button>
+          <button
+            onClick={() => setActiveTeam('away')}
+            className={`flex-1 py-2.5 rounded-xl text-sm font-black uppercase tracking-wider transition-all ${activeTeam === 'away' ? 'bg-red-600 text-white' : 'text-slate-400 hover:text-white'}`}
+          >
+            {awayName}
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-auto px-4 py-4">
