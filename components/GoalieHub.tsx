@@ -107,7 +107,7 @@ const NetPanel: React.FC<{
   const pct = total > 0 ? `.${Math.round((positiveCount / total) * 1000)}` : '—';
 
   return (
-    <div className="mb-8">
+    <div>
       <div className="flex items-center justify-between mb-3">
         <div>
           <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{title}</p>
@@ -209,40 +209,42 @@ const GoalieHub: React.FC<GoalieHubProps> = ({
       </div>
 
       <div className="flex-1 overflow-auto px-4 py-4">
-        <div className="max-w-lg mx-auto">
-          <NetPanel
-            title="Shots against"
-            subtitle={startingGoalie ? `Tracking #${startingGoalie} ${goalie?.name || teamName}` : `No starting goalie set for ${teamName} — set one with the ★ in Roster Setup`}
-            marks={marksAgainst}
-            positiveValue="save"
-            negativeValue="goal"
-            positiveLabel="Save"
-            negativeLabel="Goal"
-            positiveStatLabel="Saves"
-            negativeStatLabel="Goals"
-            pctLabel="SV%"
-            onAdd={(x, y, outcome) => onAddMark(team, x, y, outcome as 'save' | 'goal')}
-            onUndo={() => onUndoMark(team)}
-            onClear={() => onClearMarks(team)}
-          />
+        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:divide-x md:divide-white/10">
+          <div>
+            <NetPanel
+              title="Shots against"
+              subtitle={startingGoalie ? `Tracking #${startingGoalie} ${goalie?.name || teamName}` : `No starting goalie set for ${teamName} — set one with the ★ in Roster Setup`}
+              marks={marksAgainst}
+              positiveValue="save"
+              negativeValue="goal"
+              positiveLabel="Save"
+              negativeLabel="Goal"
+              positiveStatLabel="Saves"
+              negativeStatLabel="Goals"
+              pctLabel="SV%"
+              onAdd={(x, y, outcome) => onAddMark(team, x, y, outcome as 'save' | 'goal')}
+              onUndo={() => onUndoMark(team)}
+              onClear={() => onClearMarks(team)}
+            />
+          </div>
 
-          <div className="h-px bg-white/10 mb-8" />
-
-          <NetPanel
-            title="Shots for"
-            subtitle={`${teamName}'s own shots on the opposing net`}
-            marks={marksFor}
-            positiveValue="goal"
-            negativeValue="missed"
-            positiveLabel="Goal"
-            negativeLabel="Missed"
-            positiveStatLabel="Goals"
-            negativeStatLabel="Missed"
-            pctLabel="Shoot%"
-            onAdd={(x, y, outcome) => onAddShotFor(team, x, y, outcome as 'goal' | 'missed')}
-            onUndo={() => onUndoShotFor(team)}
-            onClear={() => onClearShotFor(team)}
-          />
+          <div className="md:pl-8">
+            <NetPanel
+              title="Shots for"
+              subtitle={`${teamName}'s own shots on the opposing net`}
+              marks={marksFor}
+              positiveValue="goal"
+              negativeValue="missed"
+              positiveLabel="Goal"
+              negativeLabel="Missed"
+              positiveStatLabel="Goals"
+              negativeStatLabel="Missed"
+              pctLabel="Shoot%"
+              onAdd={(x, y, outcome) => onAddShotFor(team, x, y, outcome as 'goal' | 'missed')}
+              onUndo={() => onUndoShotFor(team)}
+              onClear={() => onClearShotFor(team)}
+            />
+          </div>
         </div>
       </div>
     </div>
