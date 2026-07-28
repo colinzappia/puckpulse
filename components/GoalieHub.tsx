@@ -22,50 +22,14 @@ interface GoalieHubProps {
   onClearMarks: (team: Team) => void;
 }
 
-// Net interior bounds, in the diagram's own coordinate space (viewBox
-// 0 0 300 200). Kept as named constants since the grid math and the
-// click-to-zone math both depend on staying in sync with these.
-const NET_X = 20;
-const NET_Y = 20;
-const NET_W = 260;
-const NET_H = 160;
-const COLS = 3;
-const ROWS = 3;
-const CELL_W = NET_W / COLS;
-const CELL_H = NET_H / ROWS;
-
-// Nine genuinely equal zones, drawn as their own bordered rectangles
-// (not just crossing lines) so the grid reads unambiguously as nine
-// same-size cells rather than something that merely looks gridded.
-const NetGrid: React.FC = () => {
-  const cells: React.ReactElement[] = [];
-  for (let row = 0; row < ROWS; row++) {
-    for (let col = 0; col < COLS; col++) {
-      cells.push(
-        <rect
-          key={`${row}-${col}`}
-          x={NET_X + col * CELL_W}
-          y={NET_Y + row * CELL_H}
-          width={CELL_W}
-          height={CELL_H}
-          fill="none"
-          stroke="rgba(255,255,255,0.25)"
-          strokeWidth={1}
-        />
-      );
-    }
-  }
-  return <>{cells}</>;
-};
-
-// Goalie silhouette dimensions, sized to preserve its own aspect ratio
-// (roughly square) rather than being stretched to fill the wide net
-// rectangle — fit to net height with a small margin, centred horizontally.
-const GOALIE_ASPECT = 500 / 510;
-const GOALIE_H = NET_H - 10;
-const GOALIE_W = GOALIE_H * GOALIE_ASPECT;
-const GOALIE_X = NET_X + (NET_W - GOALIE_W) / 2;
-const GOALIE_Y = NET_Y + (NET_H - GOALIE_H) / 2;
+// Image dimensions and zone boundaries, measured directly from the actual
+// goalie-net.png — its red gridlines aren't perfectly even, so these
+// bounds match wherever the lines really are in the image, rather than
+// assuming equal thirds.
+const IMG_W = 800;
+const IMG_H = 573;
+const COL_BOUNDS = [37.9, 244.1, 552.4, 765.5]; // left edge, 2 gridlines, right edge
+const ROW_BOUNDS = [24.1, 173.1, 336.6, 541.4]; // top edge, 2 gridlines, bottom edge
 
 const NetDiagram: React.FC<{
   marks: NetMark[];
@@ -79,38 +43,28 @@ const NetDiagram: React.FC<{
     pt.y = e.clientY;
     const loc = pt.matrixTransform(svg.getScreenCTM()!.inverse());
 
-    // Snap to the centre of whichever of the 9 zones was tapped, rather
-    // than the raw pixel — these are meant to function as discrete target
-    // zones (e.g. "top far corner", "five hole"), not freeform placement.
-    const col = Math.min(COLS - 1, Math.max(0, Math.floor((loc.x - NET_X) / CELL_W)));
-    const row = Math.min(ROWS - 1, Math.max(0, Math.floor((loc.y - NET_Y) / CELL_H)));
-    const cx = NET_X + col * CELL_W + CELL_W / 2;
-    const cy = NET_Y + row * CELL_H + CELL_H / 2;
+    // Snap to whichever of the 9 zones (as bounded by the image's own
+    // gridlines) was tapped, using its actual centre — not an assumed
+    // equal-thirds centre.
+    let col = 0;
+    while (col < 2 && loc.x >= COL_BOUNDS[col + 1]) col++;
+    let row = 0;
+    while (row < 2 && loc.y >= ROW_BOUNDS[row + 1]) row++;
+    const cx = (COL_BOUNDS[col] + COL_BOUNDS[col + 1]) / 2;
+    const cy = (ROW_BOUNDS[row] + ROW_BOUNDS[row + 1]) / 2;
     onTap(cx, cy);
   };
 
   return (
     <svg
-      viewBox="0 0 300 200"
+      viewBox={`0 0 ${IMG_W} ${IMG_H}`}
       xmlns="http://www.w3.org/2000/svg"
       xmlnsXlink="http://www.w3.org/1999/xlink"
       onClick={handleClick}
       className="w-full rounded-xl cursor-crosshair touch-none"
       style={{ background: '#0a1628' }}
     >
-      <defs>
-        <pattern id="netMesh" width="9" height="9" patternUnits="userSpaceOnUse">
-          <path d="M0,9 L9,0" stroke="rgba(200,205,215,0.35)" strokeWidth={0.6} />
-          <path d="M-2.25,2.25 L2.25,-2.25" stroke="rgba(200,205,215,0.35)" strokeWidth={0.6} />
-          <path d="M6.75,11.25 L11.25,6.75" stroke="rgba(200,205,215,0.35)" strokeWidth={0.6} />
-        </pattern>
-      </defs>
-      {/* Netting mesh, clipped to the frame's interior */}
-      <rect x={NET_X + 3} y={NET_Y + 3} width={NET_W - 6} height={NET_H - 6} fill="url(#netMesh)" rx={NET_Y} />
-      {/* Red net frame — arched top corners like a real net, straight sides */}
-      <rect x={NET_X} y={NET_Y} width={NET_W} height={NET_H} fill="none" stroke="#dc2626" strokeWidth={7} strokeLinejoin="round" rx={NET_Y} />
-      <image href="/goalie-silhouette.png" xlinkHref="/goalie-silhouette.png" x={GOALIE_X} y={GOALIE_Y} width={GOALIE_W} height={GOALIE_H} opacity={0.85} />
-      <NetGrid />
+      <image href="/goalie-net.png" xlinkHref="/goalie-net.png" x={0} y={0} width={IMG_W} height={IMG_H} />
       {marks.map((m, i) => {
         const color = m.outcome === 'save' ? '#22c55e' : '#ef4444';
         const symbol = m.outcome === 'save' ? 'M -5,0 L -1.5,4 L 6,-5' : 'M -5,-5 L 5,5 M 5,-5 L -5,5';
