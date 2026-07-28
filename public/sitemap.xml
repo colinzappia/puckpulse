@@ -1,32 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://topcheesehockey.com/</loc>
+    <loc>https://www.topcheesehockey.com/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://topcheesehockey.com/about</loc>
+    <loc>https://www.topcheesehockey.com/about</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://topcheesehockey.com/manual</loc>
+    <loc>https://www.topcheesehockey.com/manual</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://topcheesehockey.com/contact</loc>
+    <loc>https://www.topcheesehockey.com/contact</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://topcheesehockey.com/terms.html</loc>
+    <loc>https://www.topcheesehockey.com/terms.html</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://topcheesehockey.com/privacy.html</loc>
+    <loc>https://www.topcheesehockey.com/privacy.html</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
