@@ -1087,6 +1087,15 @@ const App: React.FC = () => {
   const [netMarksAway, setNetMarksAway] = useState<{ x: number; y: number; outcome: 'save' | 'goal' }[]>(() => {
     try { const v = sessionStorage.getItem('tch_netMarksAway'); return v ? JSON.parse(v) : []; } catch { return []; }
   });
+  // Shots FOR — this team's own shooting placement against the opposing
+  // net. Separate from the shots-against/goalie marks above: not tied to
+  // any specific goalie, so it doesn't reset on a goalie swap.
+  const [shotsForHome, setShotsForHome] = useState<{ x: number; y: number; outcome: 'goal' | 'missed' }[]>(() => {
+    try { const v = sessionStorage.getItem('tch_shotsForHome'); return v ? JSON.parse(v) : []; } catch { return []; }
+  });
+  const [shotsForAway, setShotsForAway] = useState<{ x: number; y: number; outcome: 'goal' | 'missed' }[]>(() => {
+    try { const v = sessionStorage.getItem('tch_shotsForAway'); return v ? JSON.parse(v) : []; } catch { return []; }
+  });
 
   const [homeRoster, setHomeRoster] = useState<Player[]>(() => {
     try { const s = sessionStorage.getItem('tch_homeRoster'); return s ? JSON.parse(s) : []; } catch { return []; }
@@ -1186,6 +1195,14 @@ const App: React.FC = () => {
   useEffect(() => {
     try { sessionStorage.setItem('tch_netMarksAway', JSON.stringify(netMarksAway)); } catch {}
   }, [netMarksAway]);
+
+  useEffect(() => {
+    try { sessionStorage.setItem('tch_shotsForHome', JSON.stringify(shotsForHome)); } catch {}
+  }, [shotsForHome]);
+
+  useEffect(() => {
+    try { sessionStorage.setItem('tch_shotsForAway', JSON.stringify(shotsForAway)); } catch {}
+  }, [shotsForAway]);
 
   useEffect(() => {
     try {
@@ -1483,6 +1500,21 @@ const App: React.FC = () => {
     setMarks([]);
   }, []);
 
+  const addShotFor = useCallback((team: Team, x: number, y: number, outcome: 'goal' | 'missed') => {
+    const setMarks = team === Team.HOME ? setShotsForHome : setShotsForAway;
+    setMarks(prev => [...prev, { x, y, outcome }]);
+  }, []);
+
+  const undoShotFor = useCallback((team: Team) => {
+    const setMarks = team === Team.HOME ? setShotsForHome : setShotsForAway;
+    setMarks(prev => prev.slice(0, -1));
+  }, []);
+
+  const clearShotFor = useCallback((team: Team) => {
+    const setMarks = team === Team.HOME ? setShotsForHome : setShotsForAway;
+    setMarks([]);
+  }, []);
+
   const confirmPlayerTag = useCallback((eventId: string, num: string, playerTeam: Team) => {
     setEvents(prev => prev.map(e => {
       if (e.id !== eventId) return e;
@@ -1543,9 +1575,11 @@ const App: React.FC = () => {
     setGoalieHistoryAway([]);
     setNetMarksHome([]);
     setNetMarksAway([]);
+    setShotsForHome([]);
+    setShotsForAway([]);
     setSummaries({ 'total': 'Game tracking active. Generate coaching analysis after logging more events.' });
     localStorage.removeItem('tch_game_state');
-    try { ['tch_homeRoster','tch_awayRoster','tch_homeName','tch_awayName','tch_homeLogo','tch_awayLogo','tch_startingGoalieHome','tch_startingGoalieAway','tch_goalieHistoryHome','tch_goalieHistoryAway','tch_netMarksHome','tch_netMarksAway'].forEach(k => sessionStorage.removeItem(k)); } catch {}
+    try { ['tch_homeRoster','tch_awayRoster','tch_homeName','tch_awayName','tch_homeLogo','tch_awayLogo','tch_startingGoalieHome','tch_startingGoalieAway','tch_goalieHistoryHome','tch_goalieHistoryAway','tch_netMarksHome','tch_netMarksAway','tch_shotsForHome','tch_shotsForAway'].forEach(k => sessionStorage.removeItem(k)); } catch {}
     sessionStorage.setItem('tch_launched', 'true');
     setShowNewGameConfirm(false);
   };
@@ -1673,6 +1707,8 @@ const App: React.FC = () => {
     setGoalieHistoryAway([]);
     setNetMarksHome([]);
     setNetMarksAway([]);
+    setShotsForHome([]);
+    setShotsForAway([]);
     setSummaries({ 'total': 'Game tracking active. Generate coaching analysis after logging more events.' });
     setLastEvent(null);
     setPendingGoal(null);
@@ -1681,7 +1717,7 @@ const App: React.FC = () => {
     setPendingPenalty(null);
     setTaggingEvent(null);
     setPlayerTagDismissed(false);
-    try { ['tch_homeRoster','tch_awayRoster','tch_homeName','tch_awayName','tch_homeLogo','tch_awayLogo','tch_startingGoalieHome','tch_startingGoalieAway','tch_goalieHistoryHome','tch_goalieHistoryAway','tch_netMarksHome','tch_netMarksAway'].forEach(k => sessionStorage.removeItem(k)); } catch {}
+    try { ['tch_homeRoster','tch_awayRoster','tch_homeName','tch_awayName','tch_homeLogo','tch_awayLogo','tch_startingGoalieHome','tch_startingGoalieAway','tch_goalieHistoryHome','tch_goalieHistoryAway','tch_netMarksHome','tch_netMarksAway','tch_shotsForHome','tch_shotsForAway'].forEach(k => sessionStorage.removeItem(k)); } catch {}
     localStorage.removeItem('tch_game_state');
     setShowEndGame(false);
   };
@@ -2828,7 +2864,7 @@ const App: React.FC = () => {
     )}
 
     <PlayerStats isOpen={showPlayerStats} onClose={() => setShowPlayerStats(false)} events={events} homeRoster={homeRoster} awayRoster={awayRoster} homeName={homeName} awayName={awayName} goalieHistoryHome={goalieHistoryHome} goalieHistoryAway={goalieHistoryAway} />
-    <GoalieHub isOpen={showGoalieHub} onClose={() => setShowGoalieHub(false)} homeName={homeName} awayName={awayName} homeRoster={homeRoster} awayRoster={awayRoster} startingGoalieHome={startingGoalieHome} startingGoalieAway={startingGoalieAway} netMarksHome={netMarksHome} netMarksAway={netMarksAway} onAddMark={addNetMark} onUndoMark={undoNetMark} onClearMarks={clearNetMarks} />
+    <GoalieHub isOpen={showGoalieHub} onClose={() => setShowGoalieHub(false)} homeName={homeName} awayName={awayName} homeRoster={homeRoster} awayRoster={awayRoster} startingGoalieHome={startingGoalieHome} startingGoalieAway={startingGoalieAway} netMarksHome={netMarksHome} netMarksAway={netMarksAway} onAddMark={addNetMark} onUndoMark={undoNetMark} onClearMarks={clearNetMarks} shotsForHome={shotsForHome} shotsForAway={shotsForAway} onAddShotFor={addShotFor} onUndoShotFor={undoShotFor} onClearShotFor={clearShotFor} />
 
     {/* End Game modal */}
     {showEndGame && (
