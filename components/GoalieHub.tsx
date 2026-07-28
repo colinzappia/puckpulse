@@ -22,21 +22,50 @@ interface GoalieHubProps {
   onClearMarks: (team: Team) => void;
 }
 
-// A flat, simplified goalie silhouette in a ready/butterfly stance —
-// purely decorative, sits behind the marks so it's clear where a shot
-// landed relative to the goalie's body.
-const GoalieSilhouette: React.FC = () => (
-  <g opacity={0.85} fill="#3b4a63">
-    <path d="M 130,150 L 110,178 L 95,180 L 100,183 L 126,183 L 140,155 Z" />
-    <path d="M 170,150 L 190,178 L 205,180 L 200,183 L 174,183 L 160,155 Z" />
-    <rect x="127" y="107" width="46" height="47" rx="11" />
-    <path d="M 129,114 L 104,104 L 97,112 L 119,129 Z" />
-    <rect x="90" y="98" width="15" height="19" rx="4" />
-    <path d="M 171,114 L 196,100 L 204,108 L 181,129 Z" />
-    <circle cx="202" cy="99" r="11" />
-    <circle cx="150" cy="91" r="14" />
-  </g>
-);
+// Net interior bounds, in the diagram's own coordinate space (viewBox
+// 0 0 300 200). Kept as named constants since the grid math and the
+// click-to-zone math both depend on staying in sync with these.
+const NET_X = 20;
+const NET_Y = 20;
+const NET_W = 260;
+const NET_H = 160;
+const COLS = 3;
+const ROWS = 3;
+const CELL_W = NET_W / COLS;
+const CELL_H = NET_H / ROWS;
+
+// Nine genuinely equal zones, drawn as their own bordered rectangles
+// (not just crossing lines) so the grid reads unambiguously as nine
+// same-size cells rather than something that merely looks gridded.
+const NetGrid: React.FC = () => {
+  const cells: React.ReactElement[] = [];
+  for (let row = 0; row < ROWS; row++) {
+    for (let col = 0; col < COLS; col++) {
+      cells.push(
+        <rect
+          key={`${row}-${col}`}
+          x={NET_X + col * CELL_W}
+          y={NET_Y + row * CELL_H}
+          width={CELL_W}
+          height={CELL_H}
+          fill="none"
+          stroke="rgba(255,255,255,0.15)"
+          strokeWidth={1}
+        />
+      );
+    }
+  }
+  return <>{cells}</>;
+};
+
+// Goalie silhouette dimensions, sized to preserve its own aspect ratio
+// (roughly square) rather than being stretched to fill the wide net
+// rectangle — fit to net height with a small margin, centred horizontally.
+const GOALIE_ASPECT = 500 / 510;
+const GOALIE_H = NET_H - 10;
+const GOALIE_W = GOALIE_H * GOALIE_ASPECT;
+const GOALIE_X = NET_X + (NET_W - GOALIE_W) / 2;
+const GOALIE_Y = NET_Y + (NET_H - GOALIE_H) / 2;
 
 const NetDiagram: React.FC<{
   marks: NetMark[];
@@ -49,7 +78,15 @@ const NetDiagram: React.FC<{
     pt.x = e.clientX;
     pt.y = e.clientY;
     const loc = pt.matrixTransform(svg.getScreenCTM()!.inverse());
-    onTap(loc.x, loc.y);
+
+    // Snap to the centre of whichever of the 9 zones was tapped, rather
+    // than the raw pixel — these are meant to function as discrete target
+    // zones (e.g. "top far corner", "five hole"), not freeform placement.
+    const col = Math.min(COLS - 1, Math.max(0, Math.floor((loc.x - NET_X) / CELL_W)));
+    const row = Math.min(ROWS - 1, Math.max(0, Math.floor((loc.y - NET_Y) / CELL_H)));
+    const cx = NET_X + col * CELL_W + CELL_W / 2;
+    const cy = NET_Y + row * CELL_H + CELL_H / 2;
+    onTap(cx, cy);
   };
 
   return (
@@ -59,12 +96,9 @@ const NetDiagram: React.FC<{
       className="w-full rounded-xl cursor-crosshair touch-none"
       style={{ background: '#0a1628' }}
     >
-      <rect x="20" y="20" width="260" height="160" fill="none" stroke="#2563eb" strokeWidth={6} rx={4} />
-      <line x1="20" y1="86.7" x2="280" y2="86.7" stroke="rgba(255,255,255,0.12)" strokeWidth={1} />
-      <line x1="20" y1="153.3" x2="280" y2="153.3" stroke="rgba(255,255,255,0.12)" strokeWidth={1} />
-      <line x1="106.7" y1="20" x2="106.7" y2="180" stroke="rgba(255,255,255,0.12)" strokeWidth={1} />
-      <line x1="193.3" y1="20" x2="193.3" y2="180" stroke="rgba(255,255,255,0.12)" strokeWidth={1} />
-      <GoalieSilhouette />
+      <rect x={NET_X} y={NET_Y} width={NET_W} height={NET_H} fill="none" stroke="#2563eb" strokeWidth={6} rx={4} />
+      <image href="/goalie-silhouette.png" x={GOALIE_X} y={GOALIE_Y} width={GOALIE_W} height={GOALIE_H} opacity={0.55} />
+      <NetGrid />
       {marks.map((m, i) => {
         const color = m.outcome === 'save' ? '#22c55e' : '#ef4444';
         const symbol = m.outcome === 'save' ? 'M -5,0 L -1.5,4 L 6,-5' : 'M -5,-5 L 5,5 M 5,-5 L -5,5';
