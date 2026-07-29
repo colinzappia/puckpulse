@@ -106,7 +106,11 @@ function buildFOStats(events: GameEvent[], roster: Player[], team: Team): Player
 }
 
 function buildMatchups(events: GameEvent[], homeRoster: Player[], awayRoster: Player[]) {
-  const matchups: Record<string, { homeNum: string; awayNum: string; homeWins: number; awayWins: number }> = {};
+  const matchups: Record<string, {
+    homeNum: string; awayNum: string; homeWins: number; awayWins: number;
+    byZone: Record<string, { homeWins: number; awayWins: number }>;
+    bySide: { left: { homeWins: number; awayWins: number }; right: { homeWins: number; awayWins: number } };
+  }> = {};
 
   const homeEvents = events.filter(e =>
     e.team === Team.HOME &&
@@ -124,9 +128,28 @@ function buildMatchups(events: GameEvent[], homeRoster: Player[], awayRoster: Pl
     if (!paired) return;
 
     const key = `${he.playerNumber}-vs-${paired.playerNumber}`;
-    if (!matchups[key]) matchups[key] = { homeNum: he.playerNumber!, awayNum: paired.playerNumber!, homeWins: 0, awayWins: 0 };
-    if (he.type === EventType.FACEOFF_WIN) matchups[key].homeWins++;
-    else matchups[key].awayWins++;
+    if (!matchups[key]) {
+      matchups[key] = {
+        homeNum: he.playerNumber!, awayNum: paired.playerNumber!, homeWins: 0, awayWins: 0,
+        byZone: {
+          [Zone.OFFENSIVE]: { homeWins: 0, awayWins: 0 },
+          [Zone.NEUTRAL]: { homeWins: 0, awayWins: 0 },
+          [Zone.DEFENSIVE]: { homeWins: 0, awayWins: 0 },
+        },
+        bySide: { left: { homeWins: 0, awayWins: 0 }, right: { homeWins: 0, awayWins: 0 } }
+      };
+    }
+    const m = matchups[key];
+    if (he.type === EventType.FACEOFF_WIN) m.homeWins++; else m.awayWins++;
+
+    // Zone/side is the same physical spot for both players in this draw,
+    // so the home event's own zone/coordinates describe it either way.
+    const zone = he.zone || Zone.NEUTRAL;
+    if (m.byZone[zone]) {
+      if (he.type === EventType.FACEOFF_WIN) m.byZone[zone].homeWins++; else m.byZone[zone].awayWins++;
+    }
+    const side = he.coordinates && he.coordinates.y < 42.5 ? 'left' : 'right';
+    if (he.type === EventType.FACEOFF_WIN) m.bySide[side].homeWins++; else m.bySide[side].awayWins++;
   });
 
   return Object.values(matchups)
@@ -144,6 +167,23 @@ function buildMatchups(events: GameEvent[], homeRoster: Player[], awayRoster: Pl
     .sort((a, b) => b.total - a.total);
 }
 
+// Head-to-head version of ZoneBadge — shows the split between the two
+// specific players in this matchup for one zone/side, not a single
+// player's overall win rate.
+const MatchupZoneBadge = ({ label, homeWins, awayWins }: { label: string; homeWins: number; awayWins: number }) => {
+  const total = homeWins + awayWins;
+  const homePct = total > 0 ? Math.round(homeWins / total * 100) : null;
+  return (
+    <div className="bg-black/40 rounded-xl p-2.5 text-center border border-white/5">
+      <div className={`text-sm font-black ${homePct !== null ? (homePct >= 50 ? 'text-blue-400' : 'text-red-400') : 'text-slate-700'}`}>
+        {homePct !== null ? `${homePct}%` : '—'}
+      </div>
+      <div className="text-[7px] font-black text-slate-600 uppercase tracking-tight mt-0.5">{label}</div>
+      {total > 0 && <div className="text-[7px] text-slate-700 mt-0.5">{homeWins}-{awayWins}</div>}
+    </div>
+  );
+};
+
 const ZoneBadge = ({ label, wins, losses }: { label: string; wins: number; losses: number }) => {
   const total = wins + losses;
   const pct = total > 0 ? Math.round(wins / total * 100) : null;
@@ -160,6 +200,7 @@ const ZoneBadge = ({ label, wins, losses }: { label: string; wins: number; losse
 
 const CenterAnalytics: React.FC<CenterAnalyticsProps> = ({ events, rosters, homeName, awayName }) => {
   const [view, setView] = useState<'players' | 'matchups'>('players');
+  const [expandedMatchups, setExpandedMatchups] = useState<Set<number>>(new Set());
 
   const homeStats = buildFOStats(events, rosters.home, Team.HOME);
   const awayStats = buildFOStats(events, rosters.away, Team.AWAY);
@@ -253,21 +294,50 @@ const CenterAnalytics: React.FC<CenterAnalyticsProps> = ({ events, rosters, home
             matchups.map((m, i) => {
               const total = m.homeWins + m.awayWins;
               const homePct = Math.round(m.homeWins / total * 100);
+              const isExpanded = expandedMatchups.has(i);
               return (
                 <div key={i} className="bg-black/40 border border-white/5 rounded-2xl p-4 mb-3">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-xs font-black text-blue-300">{m.homeName}</span>
-                    <span className="text-[10px] text-slate-600">{total} draws</span>
-                    <span className="text-xs font-black text-red-300">{m.awayName}</span>
-                  </div>
-                  <div className="flex h-3 rounded-full overflow-hidden mb-1.5">
-                    <div className="bg-blue-500 transition-all" style={{ width: `${homePct}%` }} />
-                    <div className="bg-red-500 transition-all" style={{ width: `${100 - homePct}%` }} />
-                  </div>
-                  <div className="flex justify-between text-[10px] font-black">
-                    <span className="text-blue-400">{m.homeWins}W ({homePct}%)</span>
-                    <span className="text-red-400">{m.awayWins}W ({100 - homePct}%)</span>
-                  </div>
+                  <button
+                    className="w-full text-left"
+                    onClick={() => setExpandedMatchups(prev => {
+                      const next = new Set(prev);
+                      if (next.has(i)) next.delete(i); else next.add(i);
+                      return next;
+                    })}
+                  >
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-xs font-black text-blue-300">{m.homeName}</span>
+                      <span className="text-[10px] text-slate-600 flex items-center gap-1">
+                        {total} draws
+                        <span className={`inline-block transition-transform text-[9px] ${isExpanded ? 'rotate-180' : ''}`}>▾</span>
+                      </span>
+                      <span className="text-xs font-black text-red-300">{m.awayName}</span>
+                    </div>
+                    <div className="flex h-3 rounded-full overflow-hidden mb-1.5">
+                      <div className="bg-blue-500 transition-all" style={{ width: `${homePct}%` }} />
+                      <div className="bg-red-500 transition-all" style={{ width: `${100 - homePct}%` }} />
+                    </div>
+                    <div className="flex justify-between text-[10px] font-black">
+                      <span className="text-blue-400">{m.homeWins}W ({homePct}%)</span>
+                      <span className="text-red-400">{m.awayWins}W ({100 - homePct}%)</span>
+                    </div>
+                  </button>
+
+                  {isExpanded && (
+                    <div className="mt-3 pt-3 border-t border-white/5">
+                      <p className="text-[8px] font-black text-slate-600 uppercase tracking-wider mb-1.5">By zone</p>
+                      <div className="grid grid-cols-3 gap-1.5 mb-2.5">
+                        <MatchupZoneBadge label="D-Zone" homeWins={m.byZone[Zone.DEFENSIVE]?.homeWins || 0} awayWins={m.byZone[Zone.DEFENSIVE]?.awayWins || 0} />
+                        <MatchupZoneBadge label="Neutral" homeWins={m.byZone[Zone.NEUTRAL]?.homeWins || 0} awayWins={m.byZone[Zone.NEUTRAL]?.awayWins || 0} />
+                        <MatchupZoneBadge label="O-Zone" homeWins={m.byZone[Zone.OFFENSIVE]?.homeWins || 0} awayWins={m.byZone[Zone.OFFENSIVE]?.awayWins || 0} />
+                      </div>
+                      <p className="text-[8px] font-black text-slate-600 uppercase tracking-wider mb-1.5">By side</p>
+                      <div className="grid grid-cols-2 gap-1.5">
+                        <MatchupZoneBadge label="Left Circle" homeWins={m.bySide.left.homeWins} awayWins={m.bySide.left.awayWins} />
+                        <MatchupZoneBadge label="Right Circle" homeWins={m.bySide.right.homeWins} awayWins={m.bySide.right.awayWins} />
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })
