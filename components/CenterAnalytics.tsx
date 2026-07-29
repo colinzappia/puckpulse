@@ -108,7 +108,12 @@ function buildFOStats(events: GameEvent[], roster: Player[], team: Team): Player
 function buildMatchups(events: GameEvent[], homeRoster: Player[], awayRoster: Player[]) {
   const matchups: Record<string, {
     homeNum: string; awayNum: string; homeWins: number; awayWins: number;
-    byZone: Record<string, { homeWins: number; awayWins: number }>;
+    // "Zone" is stored per-team relative to that team's own net (the same
+    // physical spot is simultaneously Home's D-Zone and Away's O-Zone), so
+    // it can't be honestly shown as one shared D/Neutral/O bucket for a
+    // two-team matchup. Bucketed by absolute rink end instead — same spot,
+    // same bucket, regardless of which team is looking at it.
+    byRinkArea: Record<string, { homeWins: number; awayWins: number }>;
     bySide: { left: { homeWins: number; awayWins: number }; right: { homeWins: number; awayWins: number } };
   }> = {};
 
@@ -131,10 +136,10 @@ function buildMatchups(events: GameEvent[], homeRoster: Player[], awayRoster: Pl
     if (!matchups[key]) {
       matchups[key] = {
         homeNum: he.playerNumber!, awayNum: paired.playerNumber!, homeWins: 0, awayWins: 0,
-        byZone: {
-          [Zone.OFFENSIVE]: { homeWins: 0, awayWins: 0 },
-          [Zone.NEUTRAL]: { homeWins: 0, awayWins: 0 },
-          [Zone.DEFENSIVE]: { homeWins: 0, awayWins: 0 },
+        byRinkArea: {
+          left: { homeWins: 0, awayWins: 0 },
+          centre: { homeWins: 0, awayWins: 0 },
+          right: { homeWins: 0, awayWins: 0 },
         },
         bySide: { left: { homeWins: 0, awayWins: 0 }, right: { homeWins: 0, awayWins: 0 } }
       };
@@ -142,12 +147,12 @@ function buildMatchups(events: GameEvent[], homeRoster: Player[], awayRoster: Pl
     const m = matchups[key];
     if (he.type === EventType.FACEOFF_WIN) m.homeWins++; else m.awayWins++;
 
-    // Zone/side is the same physical spot for both players in this draw,
-    // so the home event's own zone/coordinates describe it either way.
-    const zone = he.zone || Zone.NEUTRAL;
-    if (m.byZone[zone]) {
-      if (he.type === EventType.FACEOFF_WIN) m.byZone[zone].homeWins++; else m.byZone[zone].awayWins++;
-    }
+    // Absolute rink thirds by raw x-coordinate — same physical draw spot
+    // always lands in the same bucket no matter which team won it.
+    const x = he.coordinates?.x ?? 100;
+    const area = x < 75 ? 'left' : x > 125 ? 'right' : 'centre';
+    if (he.type === EventType.FACEOFF_WIN) m.byRinkArea[area].homeWins++; else m.byRinkArea[area].awayWins++;
+
     const side = he.coordinates && he.coordinates.y < 42.5 ? 'left' : 'right';
     if (he.type === EventType.FACEOFF_WIN) m.bySide[side].homeWins++; else m.bySide[side].awayWins++;
   });
@@ -325,11 +330,11 @@ const CenterAnalytics: React.FC<CenterAnalyticsProps> = ({ events, rosters, home
 
                   {isExpanded && (
                     <div className="mt-3 pt-3 border-t border-white/5">
-                      <p className="text-[8px] font-black text-slate-600 uppercase tracking-wider mb-1.5">By zone</p>
+                      <p className="text-[8px] font-black text-slate-600 uppercase tracking-wider mb-1.5">By rink area</p>
                       <div className="grid grid-cols-3 gap-1.5 mb-2.5">
-                        <MatchupZoneBadge label="D-Zone" homeWins={m.byZone[Zone.DEFENSIVE]?.homeWins || 0} awayWins={m.byZone[Zone.DEFENSIVE]?.awayWins || 0} />
-                        <MatchupZoneBadge label="Neutral" homeWins={m.byZone[Zone.NEUTRAL]?.homeWins || 0} awayWins={m.byZone[Zone.NEUTRAL]?.awayWins || 0} />
-                        <MatchupZoneBadge label="O-Zone" homeWins={m.byZone[Zone.OFFENSIVE]?.homeWins || 0} awayWins={m.byZone[Zone.OFFENSIVE]?.awayWins || 0} />
+                        <MatchupZoneBadge label="Left End" homeWins={m.byRinkArea.left.homeWins} awayWins={m.byRinkArea.left.awayWins} />
+                        <MatchupZoneBadge label="Centre Ice" homeWins={m.byRinkArea.centre.homeWins} awayWins={m.byRinkArea.centre.awayWins} />
+                        <MatchupZoneBadge label="Right End" homeWins={m.byRinkArea.right.homeWins} awayWins={m.byRinkArea.right.awayWins} />
                       </div>
                       <p className="text-[8px] font-black text-slate-600 uppercase tracking-wider mb-1.5">By side</p>
                       <div className="grid grid-cols-2 gap-1.5">
