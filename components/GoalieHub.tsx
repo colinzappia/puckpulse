@@ -211,8 +211,8 @@ const GoalieHub: React.FC<GoalieHubProps> = ({
       </div>
 
       <div className="flex-1 overflow-auto px-4 py-4">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:divide-x md:divide-white/10">
-          <div className="w-full max-w-md mx-auto">
+        {(() => {
+          const shotsAgainstPanel = (
             <NetPanel
               title="Shots against"
               subtitle={startingGoalie ? `Tracking #${startingGoalie} ${goalie?.name || teamName}` : `No starting goalie set for ${teamName} — set one with the ★ in Roster Setup`}
@@ -228,9 +228,8 @@ const GoalieHub: React.FC<GoalieHubProps> = ({
               onUndo={() => onUndoMark(team)}
               onClear={() => onClearMarks(team)}
             />
-          </div>
-
-          <div className="w-full max-w-md mx-auto md:pl-8">
+          );
+          const shotsForPanel = (
             <NetPanel
               title="Shots for"
               subtitle={`${teamName}'s own shots on the opposing net`}
@@ -246,8 +245,21 @@ const GoalieHub: React.FC<GoalieHubProps> = ({
               onUndo={() => onUndoShotFor(team)}
               onClear={() => onClearShotFor(team)}
             />
-          </div>
-        </div>
+          );
+          // Home's tab sits on the left, Away's on the right — so Shots
+          // Against (the goalie-focused panel, showing that team's own
+          // goalie name) should sit under whichever side the selected
+          // team's own banner is on, not always pinned to the left.
+          const [leftPanel, rightPanel] = activeTeam === 'home'
+            ? [shotsAgainstPanel, shotsForPanel]
+            : [shotsForPanel, shotsAgainstPanel];
+          return (
+            <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:divide-x md:divide-white/10">
+              <div className="w-full max-w-md mx-auto">{leftPanel}</div>
+              <div className="w-full max-w-md mx-auto md:pl-8">{rightPanel}</div>
+            </div>
+          );
+        })()}
       </div>
     </div>
   );
