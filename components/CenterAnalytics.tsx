@@ -188,12 +188,20 @@ const MatchupZoneBadge = ({ label, homeWins, awayWins }: { label: string; homeWi
   const total = homeWins + awayWins;
   const homePct = total > 0 ? Math.round(homeWins / total * 100) : null;
   return (
-    <div className="bg-black/40 rounded-xl p-2.5 text-center border border-white/5">
-      <div className={`text-sm font-black ${homePct !== null ? (homePct >= 50 ? 'text-blue-400' : 'text-red-400') : 'text-slate-700'}`}>
-        {homePct !== null ? `${homePct}%` : '—'}
-      </div>
-      <div className="text-[7px] font-black text-slate-600 uppercase tracking-tight mt-0.5">{label}</div>
-      {total > 0 && <div className="text-[7px] text-slate-700 mt-0.5">{homeWins}-{awayWins}</div>}
+    <div className="bg-black/40 rounded-xl p-2 text-center border border-white/5">
+      <div className="text-[7px] font-black text-slate-600 uppercase tracking-tight mb-1">{label}</div>
+      {total > 0 ? (
+        <>
+          <div className="flex items-baseline justify-center gap-1.5">
+            <span className="text-sm font-black text-blue-400">{homePct}%</span>
+            <span className="text-[8px] text-slate-700">/</span>
+            <span className="text-sm font-black text-red-400">{100 - homePct!}%</span>
+          </div>
+          <div className="text-[7px] text-slate-700 mt-0.5">{homeWins}W – {awayWins}W</div>
+        </>
+      ) : (
+        <div className="text-sm font-black text-slate-700">—</div>
+      )}
     </div>
   );
 };
