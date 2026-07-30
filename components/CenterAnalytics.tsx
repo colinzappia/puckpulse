@@ -256,11 +256,13 @@ const CenterAnalytics: React.FC<CenterAnalyticsProps> = ({ events, rosters, home
 
       {s.total > 0 && (
         <>
+          <p className="text-[8px] font-black text-slate-600 uppercase tracking-wider mb-1.5">By zone</p>
           <div className="grid grid-cols-3 gap-1.5 mb-2">
-            <ZoneBadge label="D-Zone" wins={s.byZone[Zone.DEFENSIVE]?.wins || 0} losses={s.byZone[Zone.DEFENSIVE]?.losses || 0} />
+            <ZoneBadge label="Own End" wins={s.byZone[Zone.DEFENSIVE]?.wins || 0} losses={s.byZone[Zone.DEFENSIVE]?.losses || 0} />
             <ZoneBadge label="Neutral" wins={s.byZone[Zone.NEUTRAL]?.wins || 0} losses={s.byZone[Zone.NEUTRAL]?.losses || 0} />
-            <ZoneBadge label="O-Zone" wins={s.byZone[Zone.OFFENSIVE]?.wins || 0} losses={s.byZone[Zone.OFFENSIVE]?.losses || 0} />
+            <ZoneBadge label="Opp. End" wins={s.byZone[Zone.OFFENSIVE]?.wins || 0} losses={s.byZone[Zone.OFFENSIVE]?.losses || 0} />
           </div>
+          <p className="text-[8px] font-black text-slate-600 uppercase tracking-wider mb-1.5">By side</p>
           <div className="grid grid-cols-2 gap-1.5">
             <ZoneBadge label="Left Circle" wins={s.bySide.left.wins} losses={s.bySide.left.losses} />
             <ZoneBadge label="Right Circle" wins={s.bySide.right.wins} losses={s.bySide.right.losses} />
@@ -350,7 +352,7 @@ const CenterAnalytics: React.FC<CenterAnalyticsProps> = ({ events, rosters, home
                       <p className="text-[8px] font-black text-slate-600 uppercase tracking-wider mb-1.5">By rink area</p>
                       <div className="grid grid-cols-3 gap-1.5 mb-2.5">
                         <MatchupZoneBadge label="Home End" homeWins={m.byRinkArea.homeEnd.homeWins} awayWins={m.byRinkArea.homeEnd.awayWins} />
-                        <MatchupZoneBadge label="Centre Ice" homeWins={m.byRinkArea.centre.homeWins} awayWins={m.byRinkArea.centre.awayWins} />
+                        <MatchupZoneBadge label="Neutral" homeWins={m.byRinkArea.centre.homeWins} awayWins={m.byRinkArea.centre.awayWins} />
                         <MatchupZoneBadge label="Away End" homeWins={m.byRinkArea.awayEnd.homeWins} awayWins={m.byRinkArea.awayEnd.awayWins} />
                       </div>
                       <p className="text-[8px] font-black text-slate-600 uppercase tracking-wider mb-1.5">By side</p>
