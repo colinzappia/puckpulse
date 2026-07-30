@@ -2625,7 +2625,7 @@ const App: React.FC = () => {
             )}
           </div>
           <div className="lg:col-span-4 flex flex-col gap-6">
-            <CenterAnalytics events={events} rosters={{ home: homeRoster, away: awayRoster }} homeName={homeName} awayName={awayName} />
+            <CenterAnalytics events={events} rosters={{ home: homeRoster, away: awayRoster }} homeName={homeName} awayName={awayName} isRosterSwapped={isRosterSwapped} />
           </div>
         </div>
       </main>
