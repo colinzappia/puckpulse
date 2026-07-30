@@ -6,6 +6,7 @@ interface CenterAnalyticsProps {
   rosters: { home: Player[]; away: Player[] };
   homeName: string;
   awayName: string;
+  isRosterSwapped: boolean;
 }
 
 interface PlayerFOStats {
@@ -105,7 +106,7 @@ function buildFOStats(events: GameEvent[], roster: Player[], team: Team): Player
   });
 }
 
-function buildMatchups(events: GameEvent[], homeRoster: Player[], awayRoster: Player[]) {
+function buildMatchups(events: GameEvent[], homeRoster: Player[], awayRoster: Player[], isRosterSwapped: boolean) {
   const matchups: Record<string, {
     homeNum: string; awayNum: string; homeWins: number; awayWins: number;
     // "Zone" is stored per-team relative to that team's own net (the same
@@ -137,9 +138,9 @@ function buildMatchups(events: GameEvent[], homeRoster: Player[], awayRoster: Pl
       matchups[key] = {
         homeNum: he.playerNumber!, awayNum: paired.playerNumber!, homeWins: 0, awayWins: 0,
         byRinkArea: {
-          left: { homeWins: 0, awayWins: 0 },
+          homeEnd: { homeWins: 0, awayWins: 0 },
           centre: { homeWins: 0, awayWins: 0 },
-          right: { homeWins: 0, awayWins: 0 },
+          awayEnd: { homeWins: 0, awayWins: 0 },
         },
         bySide: { left: { homeWins: 0, awayWins: 0 }, right: { homeWins: 0, awayWins: 0 } }
       };
@@ -147,10 +148,18 @@ function buildMatchups(events: GameEvent[], homeRoster: Player[], awayRoster: Pl
     const m = matchups[key];
     if (he.type === EventType.FACEOFF_WIN) m.homeWins++; else m.awayWins++;
 
-    // Absolute rink thirds by raw x-coordinate — same physical draw spot
-    // always lands in the same bucket no matter which team won it.
+    // Teams switch ends every period, so a raw geometric "left/right"
+    // would mean a different team's end depending on which period a draw
+    // happened in. Work out which side Home defended THAT period (same
+    // period-parity logic used everywhere else in the app) and bucket by
+    // which team's own end it actually was — that stays meaningful across
+    // every period, unlike a fixed geometric label.
+    const periodFlip = he.period % 2 === 0;
+    const wasSwappedThatPeriod = isRosterSwapped ? !periodFlip : periodFlip;
+    const isHomeOnLeftThatPeriod = !wasSwappedThatPeriod;
     const x = he.coordinates?.x ?? 100;
-    const area = x < 75 ? 'left' : x > 125 ? 'right' : 'centre';
+    const rawSide = x < 75 ? 'left' : x > 125 ? 'right' : 'centre';
+    const area = rawSide === 'centre' ? 'centre' : (rawSide === 'left') === isHomeOnLeftThatPeriod ? 'homeEnd' : 'awayEnd';
     if (he.type === EventType.FACEOFF_WIN) m.byRinkArea[area].homeWins++; else m.byRinkArea[area].awayWins++;
 
     const side = he.coordinates && he.coordinates.y < 42.5 ? 'left' : 'right';
@@ -203,13 +212,13 @@ const ZoneBadge = ({ label, wins, losses }: { label: string; wins: number; losse
   );
 };
 
-const CenterAnalytics: React.FC<CenterAnalyticsProps> = ({ events, rosters, homeName, awayName }) => {
+const CenterAnalytics: React.FC<CenterAnalyticsProps> = ({ events, rosters, homeName, awayName, isRosterSwapped }) => {
   const [view, setView] = useState<'players' | 'matchups'>('players');
   const [expandedMatchups, setExpandedMatchups] = useState<Set<number>>(new Set());
 
   const homeStats = buildFOStats(events, rosters.home, Team.HOME);
   const awayStats = buildFOStats(events, rosters.away, Team.AWAY);
-  const matchups = buildMatchups(events, rosters.home, rosters.away);
+  const matchups = buildMatchups(events, rosters.home, rosters.away, isRosterSwapped);
 
   const totalFO = Math.floor(events.filter(e => e.type === EventType.FACEOFF_WIN || e.type === EventType.FACEOFF_LOSS).length / 2);
 
@@ -332,9 +341,9 @@ const CenterAnalytics: React.FC<CenterAnalyticsProps> = ({ events, rosters, home
                     <div className="mt-3 pt-3 border-t border-white/5">
                       <p className="text-[8px] font-black text-slate-600 uppercase tracking-wider mb-1.5">By rink area</p>
                       <div className="grid grid-cols-3 gap-1.5 mb-2.5">
-                        <MatchupZoneBadge label="Left End" homeWins={m.byRinkArea.left.homeWins} awayWins={m.byRinkArea.left.awayWins} />
+                        <MatchupZoneBadge label="Home End" homeWins={m.byRinkArea.homeEnd.homeWins} awayWins={m.byRinkArea.homeEnd.awayWins} />
                         <MatchupZoneBadge label="Centre Ice" homeWins={m.byRinkArea.centre.homeWins} awayWins={m.byRinkArea.centre.awayWins} />
-                        <MatchupZoneBadge label="Right End" homeWins={m.byRinkArea.right.homeWins} awayWins={m.byRinkArea.right.awayWins} />
+                        <MatchupZoneBadge label="Away End" homeWins={m.byRinkArea.awayEnd.homeWins} awayWins={m.byRinkArea.awayEnd.awayWins} />
                       </div>
                       <p className="text-[8px] font-black text-slate-600 uppercase tracking-wider mb-1.5">By side</p>
                       <div className="grid grid-cols-2 gap-1.5">
