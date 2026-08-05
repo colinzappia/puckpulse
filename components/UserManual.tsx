@@ -7,7 +7,19 @@ interface UserManualProps {
   onClose: () => void;
 }
 
-const sections = [
+interface ManualSubsection {
+  title: string;
+  content: string;
+  videoId?: string; // YouTube video ID — optional, shows a "Watch demo" toggle when present
+}
+interface ManualCategory {
+  id: string;
+  icon: string;
+  title: string;
+  subsections: ManualSubsection[];
+}
+
+const sections: ManualCategory[] = [
   {
     id: 'setup',
     icon: '⚙️',
@@ -303,6 +315,34 @@ const sections = [
   }
 ];
 
+// Collapsed by default so the manual stays text-first and fast to scan —
+// tapping reveals an embedded YouTube player right in place. Nothing
+// downloads or loads until the coach actually asks for it.
+const VideoEmbed: React.FC<{ videoId: string }> = ({ videoId }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="mt-3">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-1.5 text-xs font-bold text-cyan-400 hover:text-cyan-300 transition-colors"
+      >
+        🎥 {open ? 'Hide demo' : 'Watch demo'}
+      </button>
+      {open && (
+        <div className="mt-2 rounded-xl overflow-hidden border border-white/10 aspect-video">
+          <iframe
+            className="w-full h-full"
+            src={`https://www.youtube.com/embed/${videoId}`}
+            title="Feature demo"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        </div>
+      )}
+    </div>
+  );
+};
+
 const UserManual: React.FC<UserManualProps> = ({ isOpen, onClose }) => {
   const [activeSection, setActiveSection] = useState('setup');
 
@@ -372,6 +412,7 @@ const UserManual: React.FC<UserManualProps> = ({ isOpen, onClose }) => {
                 <div key={i} className="bg-black/60 border border-white/10 rounded-xl p-5">
                   <h4 className="text-sm font-bold text-blue-400 uppercase tracking-wider mb-3">{sub.title}</h4>
                   <div className="text-white/90 text-sm leading-relaxed whitespace-pre-line">{sub.content}</div>
+                  {sub.videoId && <VideoEmbed videoId={sub.videoId} />}
                 </div>
               ))}
             </div>
