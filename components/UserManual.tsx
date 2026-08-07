@@ -117,7 +117,7 @@ const sections: ManualCategory[] = [
       },
       {
         title: 'Faceoff Summary panel',
-        content: 'This panel sits alongside the rink on the tracking screen and updates live as you log draws. It has two views:\n\n• By Player — every centre\'s win percentage, broken down by zone (D-Zone / Neutral / O-Zone) and by which circle they took the draw in (left / right).\n\n• C vs C — real head-to-head results between specific centre matchups, e.g. "#9 Smith vs #14 Jones: 3W-1L." Tap a matchup card to expand it and see that same zone and circle-side breakdown for just that pairing. Matchups are built automatically by pairing each team\'s faceoff events that happened within moments of each other, so no extra setup is needed — just keep logging draws.\n\n50/50 draws are tracked and shown but never count toward either centre\'s win/loss record — they\'re a fair, neutral result.'
+        content: 'This panel sits alongside the rink on the tracking screen and updates live as you log draws. It has two views:\n\n• By Player — every centre\'s win percentage, broken down by zone (Own End / Neutral / Opp. End) and by which circle they took the draw in (left / right).\n\n• C vs C — real head-to-head results between specific centre matchups, e.g. "#9 Smith vs #14 Jones: 3W-1L." Tap a matchup card to expand it and see that same breakdown — by rink area (Home End / Neutral / Away End) and by circle side — for just that pairing. Rink-area labels are based on which team\'s own net a draw happened near for that specific period, so they stay accurate even after teams switch ends. Matchups are built automatically by pairing each team\'s faceoff events that happened within moments of each other, so no extra setup is needed — just keep logging draws.\n\n50/50 draws are tracked and shown but never count toward either centre\'s win/loss record — they\'re a fair, neutral result.'
       },
       {
         title: 'Logging a zone entry',
@@ -275,6 +275,10 @@ const sections: ManualCategory[] = [
       {
         title: 'Joining a session',
         content: 'Tap "Join session" below the header and enter the code provided by the session admin. Your role (Logger or Viewer) will be assigned automatically. You\'ll land directly in the live game view — no additional setup needed.'
+      },
+      {
+        title: 'Auto-resume on a new device',
+        content: 'If you\'re already part of an active session — whether you created it or joined earlier — opening the app fresh on a different device (like moving from your office computer to a tablet on the bench) will prompt you to resume automatically. You won\'t need to re-enter the session code.\n\nA "Resume active session?" screen shows the matchup, the session code, and your role — tap "Resume session" to jump straight back in, or "Not now" if you\'d rather start something else. This check happens once each time you open the app, and only appears if nothing is currently active.'
       },
       {
         title: 'Roles explained',
