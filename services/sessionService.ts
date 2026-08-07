@@ -139,6 +139,35 @@ export async function joinSession(
   return { session: mapSession(session), role: 'viewer' };
 }
  
+// ── Find any active session this user already belongs to ────
+// Used for auto-resume: if the same admin/logger opens the app on a
+// second device, this lets us offer to resume instead of requiring the
+// code to be typed in again.
+export async function getActiveSessionForUser(userId: string): Promise<{ session: GameSession; role: SessionRole } | null> {
+  const { data: memberships, error: memberError } = await supabase
+    .from('session_members')
+    .select('session_id, role')
+    .eq('user_id', userId);
+ 
+  if (memberError || !memberships || memberships.length === 0) return null;
+ 
+  const sessionIds = memberships.map(m => m.session_id);
+  const { data: sessions, error: sessionError } = await supabase
+    .from('game_sessions')
+    .select('*')
+    .in('id', sessionIds)
+    .eq('status', 'active')
+    .order('created_at', { ascending: false })
+    .limit(1);
+ 
+  if (sessionError || !sessions || sessions.length === 0) return null;
+ 
+  const match = memberships.find(m => m.session_id === sessions[0].id);
+  if (!match) return null;
+ 
+  return { session: mapSession(sessions[0]), role: match.role as SessionRole };
+}
+ 
 // ── Get session by ID ───────────────────────────────────────
 export async function getSession(sessionId: string): Promise<GameSession | null> {
   const { data, error } = await supabase
@@ -250,4 +279,5 @@ function mapSession(row: Record<string, unknown>): GameSession {
     createdAt: row.created_at as string,
   };
 }
+ 
  
