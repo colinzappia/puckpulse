@@ -29,7 +29,7 @@ import { saveGameReport, SavedGameReport } from './services/gameReportService';
 import { useAuth, UserButton, useClerk, useUser } from '@clerk/clerk-react';
 import { generateNarrative, fetchRosterByAI } from './services/geminiService';
 import { downloadPDFReport, downloadExcelReport, downloadHTMLExport } from './services/exportService';
-import { GameSession, SessionRole, endSession as endSessionDB } from './services/sessionService';
+import { GameSession, SessionRole, endSession as endSessionDB, getActiveSessionForUser } from './services/sessionService';
 import { broadcastEvent, deleteEvent, loadSessionEvents, subscribeToSession } from './services/syncService';
 import { Toaster, toast } from 'sonner';
 import { 
@@ -893,6 +893,7 @@ const App: React.FC = () => {
   const [mySessionRole, setMySessionRole] = useState<SessionRole | null>(null);
   const [showSessionSetup, setShowSessionSetup] = useState(false);
   const [showSessionJoin, setShowSessionJoin] = useState(false);
+  const [resumableSession, setResumableSession] = useState<{ session: GameSession; role: SessionRole } | null>(null);
   const unsubscribeRef = useRef<(() => void) | null>(null);
 
   const isSessionActive = !!activeSession;
@@ -963,6 +964,33 @@ const App: React.FC = () => {
     setActiveSession(null);
     setMySessionRole(null);
     setEvents([]);
+  };
+
+  // Auto-resume: if this user is already a member of a still-active
+  // session (e.g. they created it on another device and just opened the
+  // app fresh here), offer to resume instead of requiring the code to be
+  // typed in again. Runs once per app load, only while nothing's active.
+  useEffect(() => {
+    if (!user || activeSession) return;
+    let cancelled = false;
+    getActiveSessionForUser(user.id).then(result => {
+      if (!cancelled && result) setResumableSession(result);
+    }).catch(console.error);
+    return () => { cancelled = true; };
+  }, [user, activeSession]);
+
+  const handleResumeSession = () => {
+    if (!resumableSession) return;
+    const { session, role } = resumableSession;
+    setActiveSession(session);
+    setMySessionRole(role);
+    setHomeName(session.homeName);
+    setAwayName(session.awayName);
+    setHomeRoster(session.homeRoster);
+    setAwayRoster(session.awayRoster);
+    setCurrentPeriod(session.period);
+    setResumableSession(null);
+    toast.success(`Resumed session ${session.code}`);
   };
 
   const handleEndSession = async () => {
@@ -1918,6 +1946,35 @@ const App: React.FC = () => {
           onJoined={handleSessionJoined}
           onCancel={() => setShowSessionJoin(false)}
         />
+      )}
+
+      {/* Auto-resume prompt — this user is already a member of a still-
+          active session, likely started on another device */}
+      {resumableSession && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div style={{ background: '#0f1620', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 16, width: '100%', maxWidth: 380, padding: 24 }}>
+            <div style={{ textAlign: 'center', marginBottom: 20 }}>
+              <div style={{ fontSize: 28, marginBottom: 8 }}>🔄</div>
+              <div style={{ color: '#fff', fontSize: 16, fontWeight: 700, marginBottom: 6 }}>Resume active session?</div>
+              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>
+                {resumableSession.session.homeName} <span style={{ color: 'rgba(255,255,255,0.3)' }}>vs</span> {resumableSession.session.awayName}
+              </div>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginTop: 4 }}>Session {resumableSession.session.code} · you're a {resumableSession.role}</div>
+            </div>
+            <button
+              onClick={handleResumeSession}
+              style={{ width: '100%', padding: 12, borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', border: '0.5px solid rgba(96,165,250,0.4)', background: 'rgba(96,165,250,0.18)', color: '#60a5fa', marginBottom: 8 }}
+            >
+              Resume session →
+            </button>
+            <button
+              onClick={() => setResumableSession(null)}
+              style={{ width: '100%', padding: 12, borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', border: '0.5px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.5)' }}
+            >
+              Not now
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Game history */}
