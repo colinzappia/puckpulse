@@ -211,7 +211,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onContact, onAdvert
           Logo files go in /public/partners/, referenced by path below. */}
       {(() => {
         const partners: { name: string; logo: string; url: string }[] = [
-          // { name: 'Example Minor Hockey Association', logo: '/partners/example-mha.png', url: 'https://example.com' },
+          { name: 'uOttawa Gee-Gees', logo: '/partners/uottawa-geegees.png', url: 'https://teams.geegees.ca/sports/mice/index' },
         ];
         if (partners.length === 0) return null;
         return (
