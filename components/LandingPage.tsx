@@ -190,7 +190,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onContact, onAdvert
           <h2 className="text-4xl font-black tracking-tight mb-12">Up and running before puck drop</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {[
-              { num: '1', title: 'Sync your roster', desc: 'Paste your team URL and AI pulls the full roster automatically.' },
+              { num: '1', title: 'Sync your roster', desc: 'Paste your roster and AI builds your lineup in seconds.' },
               { num: '2', title: 'Track the game live', desc: 'Tap the rink map to log every event as it happens.' },
               { num: '3', title: 'Get AI insights', desc: 'Receive real coaching adjustments based on your live game data.' },
               { num: '4', title: 'Export your report', desc: 'Download a pro game summary report in PDF, Excel, or HTML.' },
@@ -204,6 +204,37 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onContact, onAdvert
           </div>
         </div>
       </section>
+
+      {/* PARTNERS — add teams here as they come on board. Section is
+          hidden entirely while this list is empty, so nothing broken or
+          half-finished shows on the live site until there's real content.
+          Logo files go in /public/partners/, referenced by path below. */}
+      {(() => {
+        const partners: { name: string; logo: string; url: string }[] = [
+          // { name: 'Example Minor Hockey Association', logo: '/partners/example-mha.png', url: 'https://example.com' },
+        ];
+        if (partners.length === 0) return null;
+        return (
+          <section className="px-6 py-16 max-w-6xl mx-auto w-full">
+            <p className="text-xs font-bold tracking-widest text-yellow-400 uppercase mb-3 text-center">Partners</p>
+            <h2 className="text-3xl sm:text-4xl font-black tracking-tight mb-10 text-center">Trusted by teams like yours</h2>
+            <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-8">
+              {partners.map(p => (
+                <a
+                  key={p.name}
+                  href={p.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={p.name}
+                  className="opacity-60 hover:opacity-100 transition-opacity duration-200"
+                >
+                  <img src={p.logo} alt={p.name} className="h-14 sm:h-16 w-auto object-contain grayscale hover:grayscale-0 transition-all duration-200" />
+                </a>
+              ))}
+            </div>
+          </section>
+        );
+      })()}
 
       {/* PRICING */}
       <section id="pricing" className="px-6 py-20 max-w-6xl mx-auto w-full">
