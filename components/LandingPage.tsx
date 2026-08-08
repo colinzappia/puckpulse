@@ -36,7 +36,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onContact, onAdvert
         
         <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 text-blue-300 text-xs font-bold tracking-widest uppercase px-4 py-2 rounded-full mb-6">
           <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
-          AI-Powered Live Hockey Analytics
+          Simple Live Tracking. Smarter Coaching.
         </div>
 
         <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black leading-tight tracking-tight mb-4">
