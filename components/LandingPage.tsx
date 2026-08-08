@@ -212,13 +212,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onContact, onAdvert
       {(() => {
         const partners: { name: string; logo: string; url: string }[] = [
           { name: 'uOttawa Gee-Gees', logo: '/partners/uottawa-geegees.png', url: 'https://teams.geegees.ca/sports/mice/index' },
+          { name: 'Carleton Ravens', logo: '/partners/carleton-ravens.png', url: 'https://goravens.ca/sports/mice/index' },
         ];
         if (partners.length === 0) return null;
         return (
           <section className="px-6 py-16 max-w-6xl mx-auto w-full">
             <p className="text-xs font-bold tracking-widest text-yellow-400 uppercase mb-3 text-center">Partners</p>
             <h2 className="text-3xl sm:text-4xl font-black tracking-tight mb-10 text-center">Trusted by teams like yours</h2>
-            <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-8">
+            <div className="flex flex-wrap items-center justify-center gap-6">
               {partners.map(p => (
                 <a
                   key={p.name}
@@ -226,9 +227,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onContact, onAdvert
                   target="_blank"
                   rel="noopener noreferrer"
                   title={p.name}
-                  className="opacity-60 hover:opacity-100 transition-opacity duration-200"
+                  className="w-36 h-36 sm:w-40 sm:h-40 bg-white rounded-2xl shadow-lg flex items-center justify-center p-5 hover:-translate-y-1 hover:shadow-xl transition-all duration-200"
                 >
-                  <img src={p.logo} alt={p.name} className="h-14 sm:h-16 w-auto object-contain grayscale hover:grayscale-0 transition-all duration-200" />
+                  <img src={p.logo} alt={p.name} className="max-w-full max-h-full object-contain" />
                 </a>
               ))}
             </div>
