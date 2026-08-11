@@ -29,7 +29,7 @@ import { saveGameReport, SavedGameReport } from './services/gameReportService';
 import { useAuth, UserButton, useClerk, useUser } from '@clerk/clerk-react';
 import { generateNarrative, fetchRosterByAI } from './services/geminiService';
 import { downloadPDFReport, downloadExcelReport, downloadHTMLExport } from './services/exportService';
-import { GameSession, SessionRole, endSession as endSessionDB, getActiveSessionForUser } from './services/sessionService';
+import { GameSession, SessionRole, endSession as endSessionDB, getActiveSessionForUser, endAllActiveSessionsForUser } from './services/sessionService';
 import { broadcastEvent, deleteEvent, loadSessionEvents, subscribeToSession } from './services/syncService';
 import { Toaster, toast } from 'sonner';
 import { 
@@ -1589,8 +1589,8 @@ const App: React.FC = () => {
   const handleNewGame = () => setShowNewGameConfirm(true);
 
   const confirmNewGame = async () => {
-    if (activeSession) {
-      try { await endSessionDB(activeSession.id); } catch (e) { console.error(e); }
+    if (user) {
+      try { await endAllActiveSessionsForUser(user.id); } catch (e) { console.error(e); }
       setActiveSession(null);
       setMySessionRole(null);
     }
@@ -1725,8 +1725,8 @@ const App: React.FC = () => {
   const handleExportHTML = () => downloadHTMLExport(prepareExportData());
   const handleEndGame = () => setShowEndGame(true);
   const handleConfirmEndGame = async () => {
-    if (activeSession) {
-      try { await endSessionDB(activeSession.id); } catch (e) { console.error(e); }
+    if (user) {
+      try { await endAllActiveSessionsForUser(user.id); } catch (e) { console.error(e); }
       setActiveSession(null);
       setMySessionRole(null);
     }
@@ -1986,8 +1986,11 @@ const App: React.FC = () => {
             </button>
             <button
               onClick={async () => {
-                if (!resumableSession) return;
-                try { await endSessionDB(resumableSession.session.id); toast.success('Session ended.'); } catch (e) { console.error(e); }
+                if (!user) return;
+                try {
+                  const count = await endAllActiveSessionsForUser(user.id);
+                  toast.success(count > 1 ? `Ended ${count} stale sessions.` : 'Session ended.');
+                } catch (e) { console.error(e); }
                 setResumableSession(null);
               }}
               style={{ width: '100%', padding: 10, borderRadius: 10, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: 'none', background: 'transparent', color: 'rgba(239,68,68,0.7)' }}
