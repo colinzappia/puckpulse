@@ -168,6 +168,37 @@ export async function getActiveSessionForUser(userId: string): Promise<{ session
   return { session: mapSession(sessions[0]), role: match.role as SessionRole };
 }
  
+// ── End every active session this user belongs to ────────────
+// A user should realistically only ever have one active session, but if
+// stale ones have piled up (e.g. from testing, or a session never
+// properly closed before this fix existed), this clears all of them in
+// one shot instead of surfacing them one at a time on each login.
+export async function endAllActiveSessionsForUser(userId: string): Promise<number> {
+  const { data: memberships, error: memberError } = await supabase
+    .from('session_members')
+    .select('session_id')
+    .eq('user_id', userId);
+
+  if (memberError || !memberships || memberships.length === 0) return 0;
+
+  const sessionIds = memberships.map(m => m.session_id);
+  const { data: activeSessions, error: sessionError } = await supabase
+    .from('game_sessions')
+    .select('id')
+    .in('id', sessionIds)
+    .eq('status', 'active');
+
+  if (sessionError || !activeSessions || activeSessions.length === 0) return 0;
+
+  const { error: updateError } = await supabase
+    .from('game_sessions')
+    .update({ status: 'ended' })
+    .in('id', activeSessions.map(s => s.id));
+
+  if (updateError) throw new Error(`Failed to end sessions: ${updateError.message}`);
+  return activeSessions.length;
+}
+
 // ── Get session by ID ───────────────────────────────────────
 export async function getSession(sessionId: string): Promise<GameSession | null> {
   const { data, error } = await supabase
