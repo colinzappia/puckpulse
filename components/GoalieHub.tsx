@@ -64,11 +64,22 @@ const NetDiagram: React.FC<{
       {marks.map((m, i) => {
         const isPositive = m.outcome === positiveValue;
         const color = isPositive ? '#22c55e' : '#ef4444';
-        const symbol = isPositive ? 'M -5,0 L -1.5,4 L 6,-5' : 'M -5,-5 L 5,5 M 5,-5 L -5,5';
+        const size = 11;
+        const s = size * 0.55;
         return (
-          <g key={i} transform={`translate(${m.x},${m.y})`}>
-            <circle r={9} fill={color} opacity={0.3} />
-            <path d={symbol} stroke={color} strokeWidth={2} strokeLinecap="round" fill="none" />
+          <g key={i}>
+            <circle cx={m.x} cy={m.y} r={size} fill={color} className="drop-shadow-lg" />
+            {isPositive ? (
+              <path
+                d={`M ${m.x - s * 0.55} ${m.y - s * 0.05} L ${m.x - s * 0.1} ${m.y + s * 0.45} L ${m.x + s * 0.6} ${m.y - s * 0.5}`}
+                fill="none" stroke="#ffffff" strokeWidth={size * 0.3} strokeLinecap="round" strokeLinejoin="round"
+              />
+            ) : (
+              <>
+                <line x1={m.x - s * 0.5} y1={m.y - s * 0.5} x2={m.x + s * 0.5} y2={m.y + s * 0.5} stroke="#ffffff" strokeWidth={size * 0.28} strokeLinecap="round" />
+                <line x1={m.x - s * 0.5} y1={m.y + s * 0.5} x2={m.x + s * 0.5} y2={m.y - s * 0.5} stroke="#ffffff" strokeWidth={size * 0.28} strokeLinecap="round" />
+              </>
+            )}
           </g>
         );
       })}
