@@ -194,7 +194,7 @@ const GoalieHub: React.FC<GoalieHubProps> = ({
 
       {/* Team tabs */}
       <div className="px-4 py-3 bg-black/20 border-b border-white/5 shrink-0">
-        <div className="max-w-6xl mx-auto flex gap-1">
+        <div className="max-w-[1700px] mx-auto flex gap-1">
           <button
             onClick={() => setActiveTeam('home')}
             className={`flex-1 py-2.5 rounded-xl text-sm font-black uppercase tracking-wider transition-all ${activeTeam === 'home' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}
@@ -254,9 +254,9 @@ const GoalieHub: React.FC<GoalieHubProps> = ({
             ? [shotsAgainstPanel, shotsForPanel]
             : [shotsForPanel, shotsAgainstPanel];
           return (
-            <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:divide-x md:divide-white/10">
-              <div className="w-full max-w-md mx-auto">{leftPanel}</div>
-              <div className="w-full max-w-md mx-auto md:pl-8">{rightPanel}</div>
+            <div className="max-w-[1700px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 md:divide-x md:divide-white/10">
+              <div className="w-full">{leftPanel}</div>
+              <div className="w-full md:pl-10">{rightPanel}</div>
             </div>
           );
         })()}
