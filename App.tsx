@@ -1588,7 +1588,12 @@ const App: React.FC = () => {
 
   const handleNewGame = () => setShowNewGameConfirm(true);
 
-  const confirmNewGame = () => {
+  const confirmNewGame = async () => {
+    if (activeSession) {
+      try { await endSessionDB(activeSession.id); } catch (e) { console.error(e); }
+      setActiveSession(null);
+      setMySessionRole(null);
+    }
     setEvents([]);
     setCurrentPeriod(1);
     setHomeName('HOME');
@@ -1719,7 +1724,12 @@ const App: React.FC = () => {
   const handleExportExcel = () => downloadExcelReport(prepareExportData());
   const handleExportHTML = () => downloadHTMLExport(prepareExportData());
   const handleEndGame = () => setShowEndGame(true);
-  const handleConfirmEndGame = () => {
+  const handleConfirmEndGame = async () => {
+    if (activeSession) {
+      try { await endSessionDB(activeSession.id); } catch (e) { console.error(e); }
+      setActiveSession(null);
+      setMySessionRole(null);
+    }
     // Clear all game data
     setEvents([]);
     setCurrentPeriod(1);
@@ -1970,9 +1980,19 @@ const App: React.FC = () => {
             </button>
             <button
               onClick={() => setResumableSession(null)}
-              style={{ width: '100%', padding: 12, borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', border: '0.5px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.5)' }}
+              style={{ width: '100%', padding: 12, borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', border: '0.5px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.5)', marginBottom: 8 }}
             >
               Not now
+            </button>
+            <button
+              onClick={async () => {
+                if (!resumableSession) return;
+                try { await endSessionDB(resumableSession.session.id); toast.success('Session ended.'); } catch (e) { console.error(e); }
+                setResumableSession(null);
+              }}
+              style={{ width: '100%', padding: 10, borderRadius: 10, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: 'none', background: 'transparent', color: 'rgba(239,68,68,0.7)' }}
+            >
+              End this session
             </button>
           </div>
         </div>
