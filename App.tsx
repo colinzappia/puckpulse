@@ -1147,6 +1147,7 @@ const App: React.FC = () => {
   const [playerTagDismissed, setPlayerTagDismissed] = useState(false);
   const [isRosterSwapped, setIsRosterSwapped] = useState(false);
   const [showNewGameConfirm, setShowNewGameConfirm] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   const toolbarButtons = useMemo(() => [
     { type: EventType.SHOT, label: 'SHOT', color: 'bg-cyan-600', dotColor: '#06b6d4' },
@@ -1783,6 +1784,14 @@ const App: React.FC = () => {
     if (last && activeSession) deleteEvent(last.id).catch(console.error);
     setEvents(prev => prev.slice(0, -1));
   };
+  const handleClearEvents = () => {
+    if (activeSession) {
+      events.forEach(e => deleteEvent(e.id).catch(console.error));
+    }
+    setEvents([]);
+    setShowClearConfirm(false);
+    toast.success('Rink cleared.');
+  };
   const handleRemoveEvent = (id: string) => {
     if (activeSession) deleteEvent(id).catch(console.error);
     setEvents(prev => prev.filter(e => e.id !== id));
@@ -2266,8 +2275,13 @@ const App: React.FC = () => {
                     {playerNumber && (
                       <div className={`px-2 py-1.5 rounded-xl text-[10px] font-black border transition-all shrink-0 ${activeTeam === Team.HOME ? 'bg-blue-600/20 border-blue-500/40 text-blue-300' : 'bg-red-600/20 border-red-500/40 text-red-300'}`}>#{playerNumber}</div>
                     )}
-                    <button onClick={handleUndo} className="p-2.5 bg-white/5 hover:bg-white/10 rounded-xl text-slate-400 active:bg-white/20 transition-all shadow-lg shrink-0">
+                    <button onClick={handleUndo} className="px-3 py-2.5 bg-white/5 hover:bg-white/10 rounded-xl text-slate-400 active:bg-white/20 transition-all shadow-lg shrink-0 flex items-center gap-1.5">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /></svg>
+                      <span className="text-[10px] font-black uppercase">Undo</span>
+                    </button>
+                    <button onClick={() => setShowClearConfirm(true)} className="px-3 py-2.5 bg-red-600/10 hover:bg-red-600/20 border border-red-500/30 rounded-xl text-red-400 active:bg-red-600/30 transition-all shadow-lg shrink-0 flex items-center gap-1.5">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 6l12 12M6 18L18 6" /></svg>
+                      <span className="text-[10px] font-black uppercase">Clear</span>
                     </button>
                   </div>
                 </>
@@ -2950,6 +2964,20 @@ const App: React.FC = () => {
           <div className="flex gap-3">
             <button onClick={() => setShowNewGameConfirm(false)} className="flex-1 py-3 border border-white/10 hover:border-white/20 text-white font-bold rounded-xl text-sm transition-colors">Cancel</button>
             <button onClick={confirmNewGame} className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white font-black rounded-xl text-sm transition-colors">Start New Game</button>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {showClearConfirm && (
+      <div className="fixed inset-0 z-[400] bg-black/80 backdrop-blur-sm flex items-center justify-center px-4">
+        <div className="bg-[#0f1620] border border-white/10 rounded-2xl p-8 max-w-sm w-full shadow-2xl text-center">
+          <div className="text-4xl mb-4">⚠️</div>
+          <h3 className="text-white font-black text-xl mb-2">Clear the Rink?</h3>
+          <p className="text-slate-400 text-sm mb-6">This will permanently remove every event logged so far — shots, goals, penalties, everything. This cannot be undone. Your rosters and team names stay intact.</p>
+          <div className="flex gap-3">
+            <button onClick={() => setShowClearConfirm(false)} className="flex-1 py-3 border border-white/10 hover:border-white/20 text-white font-bold rounded-xl text-sm transition-colors">Cancel</button>
+            <button onClick={handleClearEvents} className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white font-black rounded-xl text-sm transition-colors">Clear Everything</button>
           </div>
         </div>
       </div>
