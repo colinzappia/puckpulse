@@ -32,58 +32,11 @@ interface GoalieHubProps {
 const IMG_W = 1408;
 const IMG_H = 768;
 
-// Same grid-density approach as the rink's shot chart, sized to the net
-// image. Counts every mark regardless of outcome — this is "where are
-// shots landing on net", not save-vs-goal.
-const NET_HEAT_COLS = 12;
-const NET_HEAT_ROWS = 8;
-
-const NetHeatmap: React.FC<{ marks: NetMark[] }> = ({ marks }) => {
-  const cellW = IMG_W / NET_HEAT_COLS;
-  const cellH = IMG_H / NET_HEAT_ROWS;
-  const grid: number[][] = Array.from({ length: NET_HEAT_ROWS }, () => Array(NET_HEAT_COLS).fill(0));
-
-  marks.forEach(m => {
-    const col = Math.min(NET_HEAT_COLS - 1, Math.max(0, Math.floor(m.x / cellW)));
-    const row = Math.min(NET_HEAT_ROWS - 1, Math.max(0, Math.floor(m.y / cellH)));
-    grid[row][col]++;
-  });
-
-  const maxCount = Math.max(1, ...grid.flat());
-  const colorFor = (t: number) => {
-    if (t <= 0) return null;
-    if (t < 0.35) return { color: '#facc15', opacity: 0.3 + t * 0.5 };
-    if (t < 0.7) return { color: '#f97316', opacity: 0.5 + (t - 0.35) * 0.6 };
-    return { color: '#ef4444', opacity: 0.65 + (t - 0.7) * 0.9 };
-  };
-
-  return (
-    <g>
-      {grid.map((row, r) =>
-        row.map((count, c) => {
-          if (count === 0) return null;
-          const style = colorFor(count / maxCount);
-          if (!style) return null;
-          return (
-            <rect
-              key={`${r}-${c}`}
-              x={c * cellW} y={r * cellH} width={cellW} height={cellH}
-              fill={style.color} opacity={Math.min(0.85, style.opacity)}
-              style={{ filter: 'blur(5px)' }}
-            />
-          );
-        })
-      )}
-    </g>
-  );
-};
-
 const NetDiagram: React.FC<{
   marks: NetMark[];
   positiveValue: string;
   onTap: (x: number, y: number) => void;
-  viewMode: 'markers' | 'heatmap';
-}> = ({ marks, positiveValue, onTap, viewMode }) => {
+}> = ({ marks, positiveValue, onTap }) => {
   const handleClick = (e: React.MouseEvent<SVGSVGElement>) => {
     const svg = e.currentTarget;
     const pt = svg.createSVGPoint();
@@ -108,8 +61,7 @@ const NetDiagram: React.FC<{
       style={{ background: '#0a1628' }}
     >
       <image href="/goalie-net.png" xlinkHref="/goalie-net.png" x={0} y={0} width={IMG_W} height={IMG_H} />
-      {viewMode === 'heatmap' && <NetHeatmap marks={marks} />}
-      {viewMode === 'markers' && marks.map((m, i) => {
+      {marks.map((m, i) => {
         const isPositive = m.outcome === positiveValue;
         const color = isPositive ? '#22c55e' : '#ef4444';
         const size = 11;
@@ -159,7 +111,6 @@ const NetPanel: React.FC<{
   positiveStatLabel, negativeStatLabel, pctLabel, onAdd, onUndo, onClear,
 }) => {
   const [mode, setMode] = useState<string>(positiveValue);
-  const [diagramView, setDiagramView] = useState<'markers' | 'heatmap'>('markers');
 
   const positiveCount = marks.filter(m => m.outcome === positiveValue).length;
   const negativeCount = marks.filter(m => m.outcome === negativeValue).length;
@@ -174,12 +125,6 @@ const NetPanel: React.FC<{
           <p className="text-slate-400 text-xs">{subtitle}</p>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setDiagramView(diagramView === 'markers' ? 'heatmap' : 'markers')}
-            className={`px-3 py-1.5 rounded-lg border text-[11px] font-bold transition-all ${diagramView === 'heatmap' ? 'bg-orange-500 text-white border-orange-300' : 'bg-orange-600/15 hover:bg-orange-600/25 border-orange-500/30 text-orange-400'}`}
-          >
-            🔥 {diagramView === 'heatmap' ? 'Markers' : 'Heat Map'}
-          </button>
           <button
             onClick={onUndo}
             disabled={marks.length === 0}
@@ -208,7 +153,7 @@ const NetPanel: React.FC<{
         </button>
       </div>
 
-      <NetDiagram marks={marks} positiveValue={positiveValue} onTap={(x, y) => onAdd(x, y, mode)} viewMode={diagramView} />
+      <NetDiagram marks={marks} positiveValue={positiveValue} onTap={(x, y) => onAdd(x, y, mode)} />
       <p className="text-slate-600 text-[11px] text-center mt-2">Tap anywhere in the net to log a shot placement</p>
 
       <div className="flex items-center gap-3 mt-4">
