@@ -1989,9 +1989,19 @@ const App: React.FC = () => {
                 if (!user) return;
                 try {
                   const count = await endAllActiveSessionsForUser(user.id);
+                  if (count === 0) {
+                    toast.error("Couldn't find the session to end it — try refreshing and reporting this if it persists.");
+                    return;
+                  }
                   toast.success(count > 1 ? `Ended ${count} stale sessions.` : 'Session ended.');
-                } catch (e) { console.error(e); }
-                setResumableSession(null);
+                  setResumableSession(null);
+                } catch (e: any) {
+                  console.error(e);
+                  toast.error(`Couldn't end session: ${e?.message || 'unknown error'}`);
+                  // Deliberately NOT clearing resumableSession here — if the
+                  // database update actually failed, the prompt should stay
+                  // visible rather than falsely appearing to have worked.
+                }
               }}
               style={{ width: '100%', padding: 10, borderRadius: 10, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: 'none', background: 'transparent', color: 'rgba(239,68,68,0.7)' }}
             >
