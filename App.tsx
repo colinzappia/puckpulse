@@ -1063,6 +1063,7 @@ const App: React.FC = () => {
   const [shotResultFilter, setShotResultFilter] = useState<'ALL' | 'onNet' | 'attempt'>('ALL');
   const [shotStrengthFilter, setShotStrengthFilter] = useState<'ALL' | 'pp' | 'pk'>('ALL');
   const [shotFilterExpanded, setShotFilterExpanded] = useState(false);
+  const [rinkViewMode, setRinkViewMode] = useState<'dots' | 'heatmap'>('dots');
   const [entryRetrievalFilter, setEntryRetrievalFilter] = useState<'ALL' | 'FOR' | 'AGAINST'>('ALL');
   const [entryFilterExpanded, setEntryFilterExpanded] = useState(false);
   const [breakoutResultFilter, setBreakoutResultFilter] = useState<'ALL' | 'CONTROLLED' | 'FAILED'>('ALL');
@@ -2394,7 +2395,7 @@ const App: React.FC = () => {
                   if (breakoutResultFilter === 'FAILED' && !isFailed) return false;
                 }
                 return true;
-              })} leftLogo={leftTeamDisplay.logo} rightLogo={rightTeamDisplay.logo} onPlot={handlePlot} onMoveEvent={handleMoveEvent} activeEventType={mapPlotType} />
+              })} leftLogo={leftTeamDisplay.logo} rightLogo={rightTeamDisplay.logo} onPlot={handlePlot} onMoveEvent={handleMoveEvent} activeEventType={mapPlotType} viewMode={rinkViewMode} />
             </div>
           </div>
           {/* Player Stats + Goalie Hub — sit below the rink on every screen size, never overlap the ice */}
@@ -2410,6 +2411,12 @@ const App: React.FC = () => {
 
         {/* MAP FILTERS */}
         <div className="w-full px-4 py-3 max-md:landscape:py-1.5 bg-black/40 border-b border-white/5 flex items-center justify-center gap-2 overflow-x-auto scrollbar-none shadow-inner">
+          <button
+            onClick={() => setRinkViewMode(rinkViewMode === 'dots' ? 'heatmap' : 'dots')}
+            className={`shrink-0 px-4 py-2 rounded-xl text-[9px] font-black uppercase border active:scale-95 transition-all ${rinkViewMode === 'heatmap' ? 'bg-orange-500 text-white border-orange-300' : 'bg-orange-600/15 text-orange-400 border-orange-500/30 hover:bg-orange-600/30'}`}
+          >
+            🔥 {rinkViewMode === 'heatmap' ? 'Dots View' : 'Heat Map'}
+          </button>
           <button onClick={toggleAllFilters} className="shrink-0 px-4 py-2 rounded-xl bg-white/10 text-[9px] font-black uppercase text-slate-300 border border-white/10 active:scale-95 transition-all">
             {toolbarButtons.every(t => visibleTypes.includes(t.type)) ? 'Isolate' : 'Show All'}
           </button>
