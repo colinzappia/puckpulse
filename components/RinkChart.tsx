@@ -8,7 +8,6 @@ interface RinkChartProps {
   onPlot?: (x: number, y: number) => void;
   onMoveEvent?: (eventId: string, x: number, y: number) => void;
   activeEventType?: EventType;
-  viewMode?: 'dots' | 'heatmap';
 }
 
 // Radius (px, in the *5-scaled SVG space) of the clickable zone around each
@@ -141,70 +140,13 @@ const ShotMarker: React.FC<{
   );
 };
 
-// Classic grid-based shot chart. Only EventType.SHOT counts here (not
-// goals) — a grid keeps this reliable and simple to reason about in SVG,
-// versus a true gaussian-blur heatmap which would need canvas.
-const HEAT_COLS = 20;
-const HEAT_ROWS = 10;
-
-const ShotHeatmap: React.FC<{ events: GameEvent[] }> = ({ events }) => {
-  const cellW = 1000 / HEAT_COLS;
-  const cellH = 425 / HEAT_ROWS;
-  const grid: number[][] = Array.from({ length: HEAT_ROWS }, () => Array(HEAT_COLS).fill(0));
-
-  events.forEach(e => {
-    if (e.type !== EventType.SHOT || !e.coordinates) return;
-    const col = Math.min(HEAT_COLS - 1, Math.max(0, Math.floor((e.coordinates.x * 5) / cellW)));
-    const row = Math.min(HEAT_ROWS - 1, Math.max(0, Math.floor((e.coordinates.y * 5) / cellH)));
-    grid[row][col]++;
-  });
-
-  const maxCount = Math.max(1, ...grid.flat());
-
-  // Cool-to-hot scale: transparent -> yellow -> orange -> red, distinct
-  // from the app's normal cyan shot-dot colour so it reads as a clearly
-  // different view mode, not just more dots.
-  const colorFor = (t: number) => {
-    if (t <= 0) return null;
-    if (t < 0.35) return { color: '#facc15', opacity: 0.25 + t * 0.5 };
-    if (t < 0.7) return { color: '#f97316', opacity: 0.45 + (t - 0.35) * 0.6 };
-    return { color: '#ef4444', opacity: 0.6 + (t - 0.7) * 0.9 };
-  };
-
-  return (
-    <g>
-      {grid.map((row, r) =>
-        row.map((count, c) => {
-          if (count === 0) return null;
-          const t = count / maxCount;
-          const style = colorFor(t);
-          if (!style) return null;
-          return (
-            <rect
-              key={`${r}-${c}`}
-              x={c * cellW}
-              y={r * cellH}
-              width={cellW}
-              height={cellH}
-              fill={style.color}
-              opacity={Math.min(0.85, style.opacity)}
-              style={{ filter: 'blur(6px)' }}
-            />
-          );
-        })
-      )}
-    </g>
-  );
-};
-
 const RinkChart: React.FC<RinkChartProps> = ({ 
   events, 
   leftLogo,
   rightLogo,
   onPlot,
   onMoveEvent,
-  activeEventType,
-  viewMode = 'dots'
+  activeEventType
 }) => {
   const draggingRef = React.useRef<{ id: string; startX: number; startY: number; moved: boolean } | null>(null);
   const getSVGCoords = (e: React.PointerEvent<SVGSVGElement>) => {
@@ -513,8 +455,7 @@ const RinkChart: React.FC<RinkChartProps> = ({
           style={{ pointerEvents: 'none' }}
         />
 
-        {viewMode === 'heatmap' && <ShotHeatmap events={events} />}
-        {viewMode === 'dots' && events.map(e => {
+        {events.map(e => {
           if (!e.coordinates) return null;
           const style = getEventStyle(e);
           const cx = e.coordinates.x * 5;
