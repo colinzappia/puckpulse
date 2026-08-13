@@ -21,7 +21,31 @@ interface PlayerFOStats {
   bySide: { left: { wins: number; losses: number }; right: { wins: number; losses: number } };
 }
 
-function buildFOStats(events: GameEvent[], roster: Player[], team: Team): PlayerFOStats[] {
+// "Left"/"right" from the perspective of whichever goalie's net is
+// actually nearby that draw — not a fixed geometric split. A goalie
+// facing out of their own net toward centre ice has a left and right
+// hand; which physical side of the rendered rink that corresponds to
+// depends on which net is nearby (a team's own net for a DEFENSIVE draw,
+// the opponent's net for an OFFENSIVE draw) and which way that team was
+// facing that period (teams switch ends every period). Neutral-zone
+// draws have no natural nearby goalie, so they default to being read
+// from the home goalie's perspective, same as a defensive-zone draw
+// would be for home.
+function goalieRelativeSide(y: number, netBelongsToHome: boolean, isHomeOnLeftThatPeriod: boolean): 'left' | 'right' {
+  const netOnLeft = netBelongsToHome ? isHomeOnLeftThatPeriod : !isHomeOnLeftThatPeriod;
+  const rawTop = y < 42.5;
+  // A net on the left faces out toward increasing x — like facing east,
+  // where your left hand points north (the top of the rendered rink).
+  return netOnLeft ? (rawTop ? 'left' : 'right') : (rawTop ? 'right' : 'left');
+}
+
+function isHomeOnLeftForPeriod(period: number, isRosterSwapped: boolean): boolean {
+  const periodFlip = period % 2 === 0;
+  const wasSwappedThatPeriod = isRosterSwapped ? !periodFlip : periodFlip;
+  return !wasSwappedThatPeriod;
+}
+
+function buildFOStats(events: GameEvent[], roster: Player[], team: Team, isRosterSwapped: boolean): PlayerFOStats[] {
   // Sort centres by line order (C on Line 1 first, then Line 2, etc.)
   const lineOrder: Record<string, number> = { '1': 1, '2': 2, '3': 3, '4': 4 };
   const centres = roster
@@ -85,7 +109,13 @@ function buildFOStats(events: GameEvent[], roster: Player[], team: Team): Player
       if (isWin) row.byZone[zone].wins++; else row.byZone[zone].losses++;
     }
 
-    const side = e.coordinates && e.coordinates.y < 42.5 ? 'left' : 'right';
+    const side = e.coordinates
+      ? goalieRelativeSide(
+          e.coordinates.y,
+          zone === Zone.OFFENSIVE ? team !== Team.HOME : team === Team.HOME,
+          isHomeOnLeftForPeriod(e.period, isRosterSwapped)
+        )
+      : 'left';
     if (isWin) row.bySide[side].wins++; else row.bySide[side].losses++;
   });
 
@@ -162,7 +192,11 @@ function buildMatchups(events: GameEvent[], homeRoster: Player[], awayRoster: Pl
     const area = rawSide === 'centre' ? 'centre' : (rawSide === 'left') === isHomeOnLeftThatPeriod ? 'homeEnd' : 'awayEnd';
     if (he.type === EventType.FACEOFF_WIN) m.byRinkArea[area].homeWins++; else m.byRinkArea[area].awayWins++;
 
-    const side = he.coordinates && he.coordinates.y < 42.5 ? 'left' : 'right';
+    const side = goalieRelativeSide(
+      he.coordinates?.y ?? 42.5,
+      area === 'awayEnd' ? false : true,
+      isHomeOnLeftThatPeriod
+    );
     if (he.type === EventType.FACEOFF_WIN) m.bySide[side].homeWins++; else m.bySide[side].awayWins++;
   });
 
@@ -225,8 +259,8 @@ const CenterAnalytics: React.FC<CenterAnalyticsProps> = ({ events, rosters, home
   const [expandedMatchups, setExpandedMatchups] = useState<Set<number>>(new Set());
   const [expandedPlayers, setExpandedPlayers] = useState<Set<string>>(new Set());
 
-  const homeStats = buildFOStats(events, rosters.home, Team.HOME);
-  const awayStats = buildFOStats(events, rosters.away, Team.AWAY);
+  const homeStats = buildFOStats(events, rosters.home, Team.HOME, isRosterSwapped);
+  const awayStats = buildFOStats(events, rosters.away, Team.AWAY, isRosterSwapped);
   const matchups = buildMatchups(events, rosters.home, rosters.away, isRosterSwapped);
 
   const totalFO = Math.floor(events.filter(e => e.type === EventType.FACEOFF_WIN || e.type === EventType.FACEOFF_LOSS).length / 2);
@@ -298,7 +332,10 @@ const CenterAnalytics: React.FC<CenterAnalyticsProps> = ({ events, rosters, home
           <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_10px_rgba(34,211,238,0.6)]"></div>
           <h3 className="text-sm font-black uppercase tracking-[0.3em] text-white italic">Faceoff Summary</h3>
         </div>
-        <span className="text-[10px] font-black text-slate-500 bg-black/40 px-3 py-1 rounded-full border border-white/5">{totalFO} draws</span>
+        <div className="flex items-center gap-2">
+          <span className="text-[9px] font-black text-cyan-500 uppercase tracking-widest">Full Game</span>
+          <span className="text-[10px] font-black text-slate-500 bg-black/40 px-3 py-1 rounded-full border border-white/5">{totalFO} draws</span>
+        </div>
       </div>
 
       {/* View toggle */}
