@@ -1063,6 +1063,7 @@ const App: React.FC = () => {
   const [shotResultFilter, setShotResultFilter] = useState<'ALL' | 'onNet' | 'attempt'>('ALL');
   const [shotStrengthFilter, setShotStrengthFilter] = useState<'ALL' | 'pp' | 'pk'>('ALL');
   const [shotFilterExpanded, setShotFilterExpanded] = useState(false);
+  const [showAllPeriods, setShowAllPeriods] = useState(false);
   const [entryRetrievalFilter, setEntryRetrievalFilter] = useState<'ALL' | 'FOR' | 'AGAINST'>('ALL');
   const [entryFilterExpanded, setEntryFilterExpanded] = useState(false);
   const [breakoutResultFilter, setBreakoutResultFilter] = useState<'ALL' | 'CONTROLLED' | 'FAILED'>('ALL');
@@ -2394,7 +2395,7 @@ const App: React.FC = () => {
 
             <div className="w-full max-w-6xl aspect-[200/85] rounded-[5rem] sm:rounded-[8.5rem] p-2 shadow-2xl">
               <RinkChart events={events.filter(e => {
-                if (e.period !== currentPeriod || !visibleTypes.includes(e.type)) return false;
+                if ((!showAllPeriods && e.period !== currentPeriod) || !visibleTypes.includes(e.type)) return false;
                 if (e.type === EventType.SHOT) {
                   if (shotResultFilter === 'onNet' && e.metadata?.onNet === false) return false;
                   if (shotResultFilter === 'attempt' && e.metadata?.onNet !== false) return false;
@@ -2424,6 +2425,12 @@ const App: React.FC = () => {
 
         {/* MAP FILTERS */}
         <div className="w-full px-4 py-3 max-md:landscape:py-1.5 bg-black/40 border-b border-white/5 flex items-center justify-center gap-2 overflow-x-auto scrollbar-none shadow-inner">
+          <button
+            onClick={() => setShowAllPeriods(!showAllPeriods)}
+            className={`shrink-0 px-4 py-2 rounded-xl text-[9px] font-black uppercase border active:scale-95 transition-all ${showAllPeriods ? 'bg-cyan-500 text-white border-cyan-300' : 'bg-cyan-600/15 text-cyan-400 border-cyan-500/30 hover:bg-cyan-600/30'}`}
+          >
+            {showAllPeriods ? `All Periods` : `Period ${currentPeriod} Only`}
+          </button>
           <button onClick={toggleAllFilters} className="shrink-0 px-4 py-2 rounded-xl bg-white/10 text-[9px] font-black uppercase text-slate-300 border border-white/10 active:scale-95 transition-all">
             {toolbarButtons.every(t => visibleTypes.includes(t.type)) ? 'Isolate' : 'Show All'}
           </button>
