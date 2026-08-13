@@ -1916,6 +1916,7 @@ const App: React.FC = () => {
     'codycaron@cunet.carleton.ca',
     'shahbazimel@gmail.com',
     'patrick.grandmaitre@uottawa.ca',
+    'patrickdelislehoude@cunet.carleton.ca',
   ];
   const userEmail = currentUser?.primaryEmailAddress?.emailAddress?.toLowerCase() || user?.primaryEmailAddress?.emailAddress?.toLowerCase() || '';
   const isAdmin = ADMIN_EMAILS.includes(userEmail);
