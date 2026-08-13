@@ -223,6 +223,7 @@ const ZoneBadge = ({ label, wins, losses }: { label: string; wins: number; losse
 const CenterAnalytics: React.FC<CenterAnalyticsProps> = ({ events, rosters, homeName, awayName, isRosterSwapped }) => {
   const [view, setView] = useState<'players' | 'matchups'>('players');
   const [expandedMatchups, setExpandedMatchups] = useState<Set<number>>(new Set());
+  const [expandedPlayers, setExpandedPlayers] = useState<Set<string>>(new Set());
 
   const homeStats = buildFOStats(events, rosters.home, Team.HOME);
   const awayStats = buildFOStats(events, rosters.away, Team.AWAY);
@@ -232,45 +233,63 @@ const CenterAnalytics: React.FC<CenterAnalyticsProps> = ({ events, rosters, home
 
   if (homeStats.length === 0 && awayStats.length === 0) return null;
 
-  const renderPlayer = (s: PlayerFOStats, isHome: boolean) => (
-    <div key={`${s.team}-${s.number}`} className={`bg-black/40 border ${isHome ? 'border-blue-500/20' : 'border-red-500/20'} rounded-2xl p-4 mb-3`}>
-      <div className="flex justify-between items-center mb-3">
-        <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black border ${isHome ? 'bg-blue-600/10 border-blue-500/30 text-blue-400' : 'bg-red-600/10 border-red-500/30 text-red-400'}`}>
-            {s.number}
-          </div>
-          <div>
-            <div className="text-xs font-black text-white uppercase">{s.name}</div>
-            <div className={`text-[9px] font-black uppercase tracking-widest ${isHome ? 'text-blue-500' : 'text-red-500'}`}>
-              {isHome ? homeName : awayName}
+  const renderPlayer = (s: PlayerFOStats, isHome: boolean) => {
+    const key = `${s.team}-${s.number}`;
+    const isExpanded = expandedPlayers.has(key);
+    return (
+      <div key={key} className={`bg-black/40 border ${isHome ? 'border-blue-500/20' : 'border-red-500/20'} rounded-2xl p-4 mb-3`}>
+        <button
+          className="w-full text-left"
+          onClick={() => setExpandedPlayers(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) next.delete(key); else next.add(key);
+            return next;
+          })}
+        >
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black border ${isHome ? 'bg-blue-600/10 border-blue-500/30 text-blue-400' : 'bg-red-600/10 border-red-500/30 text-red-400'}`}>
+                {s.number}
+              </div>
+              <div>
+                <div className="text-xs font-black text-white uppercase">{s.name}</div>
+                <div className={`text-[9px] font-black uppercase tracking-widest ${isHome ? 'text-blue-500' : 'text-red-500'}`}>
+                  {isHome ? homeName : awayName}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="text-right">
+                <div className={`text-2xl font-black italic ${s.total > 0 && s.pct >= 50 ? 'text-cyan-400' : s.total > 0 ? 'text-white' : 'text-slate-700'}`}>
+                  {s.total > 0 ? `${s.pct}%` : '—'}
+                </div>
+                <div className="text-[8px] text-slate-600 uppercase">{s.wins}W {s.losses}L</div>
+              </div>
+              {s.total > 0 && (
+                <span className={`inline-block transition-transform text-[9px] text-slate-600 ${isExpanded ? 'rotate-180' : ''}`}>▾</span>
+              )}
             </div>
           </div>
-        </div>
-        <div className="text-right">
-          <div className={`text-2xl font-black italic ${s.total > 0 && s.pct >= 50 ? 'text-cyan-400' : s.total > 0 ? 'text-white' : 'text-slate-700'}`}>
-            {s.total > 0 ? `${s.pct}%` : '—'}
-          </div>
-          <div className="text-[8px] text-slate-600 uppercase">{s.wins}W {s.losses}L</div>
-        </div>
-      </div>
+        </button>
 
-      {s.total > 0 && (
-        <>
-          <p className="text-[8px] font-black text-slate-600 uppercase tracking-wider mb-1.5">By zone</p>
-          <div className="grid grid-cols-3 gap-1.5 mb-2">
-            <ZoneBadge label="Own End" wins={s.byZone[Zone.DEFENSIVE]?.wins || 0} losses={s.byZone[Zone.DEFENSIVE]?.losses || 0} />
-            <ZoneBadge label="Neutral" wins={s.byZone[Zone.NEUTRAL]?.wins || 0} losses={s.byZone[Zone.NEUTRAL]?.losses || 0} />
-            <ZoneBadge label="Opp. End" wins={s.byZone[Zone.OFFENSIVE]?.wins || 0} losses={s.byZone[Zone.OFFENSIVE]?.losses || 0} />
+        {isExpanded && s.total > 0 && (
+          <div className="mt-3 pt-3 border-t border-white/5">
+            <p className="text-[8px] font-black text-slate-600 uppercase tracking-wider mb-1.5">By zone</p>
+            <div className="grid grid-cols-3 gap-1.5 mb-2">
+              <ZoneBadge label="Own End" wins={s.byZone[Zone.DEFENSIVE]?.wins || 0} losses={s.byZone[Zone.DEFENSIVE]?.losses || 0} />
+              <ZoneBadge label="Neutral" wins={s.byZone[Zone.NEUTRAL]?.wins || 0} losses={s.byZone[Zone.NEUTRAL]?.losses || 0} />
+              <ZoneBadge label="Opp. End" wins={s.byZone[Zone.OFFENSIVE]?.wins || 0} losses={s.byZone[Zone.OFFENSIVE]?.losses || 0} />
+            </div>
+            <p className="text-[8px] font-black text-slate-600 uppercase tracking-wider mb-1.5">By side</p>
+            <div className="grid grid-cols-2 gap-1.5">
+              <ZoneBadge label="Left Circle" wins={s.bySide.left.wins} losses={s.bySide.left.losses} />
+              <ZoneBadge label="Right Circle" wins={s.bySide.right.wins} losses={s.bySide.right.losses} />
+            </div>
           </div>
-          <p className="text-[8px] font-black text-slate-600 uppercase tracking-wider mb-1.5">By side</p>
-          <div className="grid grid-cols-2 gap-1.5">
-            <ZoneBadge label="Left Circle" wins={s.bySide.left.wins} losses={s.bySide.left.losses} />
-            <ZoneBadge label="Right Circle" wins={s.bySide.right.wins} losses={s.bySide.right.losses} />
-          </div>
-        </>
-      )}
-    </div>
-  );
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="bg-slate-900/40 border border-white/10 rounded-[2.5rem] p-5 flex flex-col gap-4 shadow-2xl">
