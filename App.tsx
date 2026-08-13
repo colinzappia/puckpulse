@@ -2438,13 +2438,13 @@ const App: React.FC = () => {
             onClick={() => setTeamFilter(teamFilter === 'HOME' ? 'ALL' : 'HOME')}
             className={`shrink-0 px-4 py-2 rounded-xl text-[9px] font-black uppercase border active:scale-95 transition-all ${teamFilter === 'HOME' ? 'bg-blue-500 text-white border-blue-300' : 'bg-blue-600/15 text-blue-400 border-blue-500/30 hover:bg-blue-600/30'}`}
           >
-            {homeName}
+            {homeName ? homeName.trim().split(' ').pop() : 'Home'}
           </button>
           <button
             onClick={() => setTeamFilter(teamFilter === 'AWAY' ? 'ALL' : 'AWAY')}
             className={`shrink-0 px-4 py-2 rounded-xl text-[9px] font-black uppercase border active:scale-95 transition-all ${teamFilter === 'AWAY' ? 'bg-red-500 text-white border-red-300' : 'bg-red-600/15 text-red-400 border-red-500/30 hover:bg-red-600/30'}`}
           >
-            {awayName}
+            {awayName ? awayName.trim().split(' ').pop() : 'Away'}
           </button>
           <button onClick={toggleAllFilters} className="shrink-0 px-4 py-2 rounded-xl bg-white/10 text-[9px] font-black uppercase text-slate-300 border border-white/10 active:scale-95 transition-all">
             {toolbarButtons.every(t => visibleTypes.includes(t.type)) ? 'Isolate' : 'Show All'}
