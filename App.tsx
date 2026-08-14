@@ -2292,105 +2292,88 @@ const App: React.FC = () => {
             </div>
 
             {(() => {
-              const tagged = taggingEvent ? events.find(e => e.id === taggingEvent) : null;
-              if (!tagged || tagged.type !== EventType.SHOT) return null;
-              const onNet = tagged.metadata?.onNet !== false; // default true
+              if (!taggingEvent || playerTagDismissed) return null;
+              const tagged = events.find(e => e.id === taggingEvent);
+              if (!tagged) return null;
+
+              const isHomeTeam = tagged.team === Team.HOME;
+              const roster = isHomeTeam ? homeRoster : awayRoster;
+              const teamName = isHomeTeam ? homeName : awayName;
+              const taggedNum = tagged.playerNumber;
+              const onNet = tagged.metadata?.onNet !== false;
               const shotStrength = tagged.metadata?.strength || 'ES';
-              return (
-                <div className="w-full px-3 py-2 flex items-center gap-3 animate-in slide-in-from-top duration-200 bg-black/30 border-b border-white/5">
-                  <span className="text-[9px] font-black uppercase tracking-wider text-cyan-400 shrink-0">Shot:</span>
-                  <div className="flex items-center gap-1">
-                    {[{ key: true, label: 'On Net' }, { key: false, label: 'Attempt' }].map(({ key, label }) => {
-                      const active = onNet === key;
-                      return (
-                        <button
-                          key={label}
-                          onClick={() => updateShotMeta(taggingEvent!, { onNet: key })}
-                          className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase transition-all border ${active ? 'bg-cyan-600 text-white border-cyan-400' : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'}`}
-                        >{label}</button>
-                      );
-                    })}
-                  </div>
-                  <span className="text-slate-700 shrink-0">·</span>
-                  <div className="flex items-center gap-1">
-                    {(['PP', 'PK'] as const).map(s => {
-                      const active = shotStrength === s;
-                      const activeClass = s === 'PP' ? 'bg-amber-500 text-black border-amber-300' : 'bg-pink-500 text-white border-pink-300';
-                      return (
-                        <button
-                          key={s}
-                          onClick={() => updateShotMeta(taggingEvent!, { strength: active ? 'ES' : s })}
-                          className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase transition-all border ${active ? activeClass : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'}`}
-                        >{s}</button>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })()}
-
-            {(() => {
-              const tagged = taggingEvent ? events.find(e => e.id === taggingEvent) : null;
-              if (!tagged || tagged.type !== EventType.BREAKOUT) return null;
               const controlled = tagged.metadata?.breakoutResult !== 'FAILED';
+
               return (
-                <div className="w-full px-3 py-2 flex items-center gap-3 animate-in slide-in-from-top duration-200 bg-black/30 border-b border-white/5">
-                  <span className="text-[9px] font-black uppercase tracking-wider" style={{ color: '#84cc16' }}>Breakout:</span>
-                  <div className="flex items-center gap-1">
-                    {[{ key: true, label: 'Controlled' }, { key: false, label: 'Failed' }].map(({ key, label }) => {
-                      const active = controlled === key;
+                <div className="w-full px-3 py-1.5 flex items-center gap-2 animate-in slide-in-from-top duration-200 bg-black/40 border-b border-white/10">
+                  {tagged.type === EventType.SHOT && (
+                    <>
+                      <div className="flex items-center gap-1 shrink-0">
+                        {[{ key: true, label: 'On Net' }, { key: false, label: 'Attempt' }].map(({ key, label }) => {
+                          const active = onNet === key;
+                          return (
+                            <button
+                              key={label}
+                              onClick={() => updateShotMeta(taggingEvent, { onNet: key })}
+                              className={`px-2 py-1 rounded-md text-[9px] font-black uppercase transition-all border ${active ? 'bg-cyan-600 text-white border-cyan-400' : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'}`}
+                            >{label}</button>
+                          );
+                        })}
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        {(['PP', 'PK'] as const).map(s => {
+                          const active = shotStrength === s;
+                          const activeClass = s === 'PP' ? 'bg-amber-500 text-black border-amber-300' : 'bg-pink-500 text-white border-pink-300';
+                          return (
+                            <button
+                              key={s}
+                              onClick={() => updateShotMeta(taggingEvent, { strength: active ? 'ES' : s })}
+                              className={`px-2 py-1 rounded-md text-[9px] font-black uppercase transition-all border ${active ? activeClass : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'}`}
+                            >{s}</button>
+                          );
+                        })}
+                      </div>
+                      <span className="text-slate-700 shrink-0">·</span>
+                    </>
+                  )}
+
+                  {tagged.type === EventType.BREAKOUT && (
+                    <>
+                      <div className="flex items-center gap-1 shrink-0">
+                        {[{ key: true, label: 'Controlled' }, { key: false, label: 'Failed' }].map(({ key, label }) => {
+                          const active = controlled === key;
+                          return (
+                            <button
+                              key={label}
+                              onClick={() => updateBreakoutMeta(taggingEvent, key ? 'CONTROLLED' : 'FAILED')}
+                              className={`px-2 py-1 rounded-md text-[9px] font-black uppercase transition-all border ${active ? 'text-white' : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'}`}
+                              style={active ? { background: '#65a30d', borderColor: '#a3e635' } : undefined}
+                            >{label}</button>
+                          );
+                        })}
+                      </div>
+                      <span className="text-slate-700 shrink-0">·</span>
+                    </>
+                  )}
+
+                  <span className={`text-[9px] font-black uppercase tracking-wider shrink-0 ${isHomeTeam ? 'text-blue-400' : 'text-red-400'}`}>{teamName}:</span>
+                  <div className="flex-1 min-w-0 flex gap-1 overflow-x-auto scrollbar-none">
+                    {roster.filter(p => p.position?.toUpperCase() !== 'G').map(p => {
+                      const isTagged = taggedNum === p.number;
                       return (
                         <button
-                          key={label}
-                          onClick={() => updateBreakoutMeta(taggingEvent!, key ? 'CONTROLLED' : 'FAILED')}
-                          className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase transition-all border ${active ? 'text-white' : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'}`}
-                          style={active ? { background: '#65a30d', borderColor: '#a3e635' } : undefined}
-                        >{label}</button>
+                          key={p.number}
+                          onClick={() => confirmPlayerTag(taggingEvent, p.number, tagged.team)}
+                          className={`w-9 h-8 rounded-md text-[11px] font-black transition-all border shrink-0 ${isTagged ? (isHomeTeam ? 'bg-blue-600 text-white border-blue-400' : 'bg-red-600 text-white border-red-400') : 'bg-white/5 text-slate-300 border-white/5 hover:bg-white/10'}`}
+                        >{p.number}</button>
                       );
                     })}
                   </div>
+
+                  <button onClick={() => setPlayerTagDismissed(true)} className="shrink-0 text-slate-500 hover:text-white text-sm font-bold px-1">×</button>
                 </div>
               );
             })()}
-
-            {taggingEvent && !playerTagDismissed && events.some(e => e.id === taggingEvent) && (
-              <div className="w-full px-3 py-1.5 flex items-start gap-2 animate-in slide-in-from-top duration-200 bg-black/40 border-b border-white/10">
-                <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 shrink-0 pt-1.5">Tag:</span>
-
-                <div className="flex-1 min-w-0 grid grid-cols-2 gap-2">
-                  {([Team.HOME, Team.AWAY] as const).map(team => {
-                    const roster = team === Team.HOME ? homeRoster : awayRoster;
-                    const taggedNum = events.find(e => e.id === taggingEvent)?.playerNumber;
-                    const isHomeTeam = team === Team.HOME;
-                    return (
-                      <div
-                        key={team}
-                        className="rounded-lg p-1"
-                        style={{
-                          background: isHomeTeam ? 'rgba(37,99,235,0.10)' : 'rgba(220,38,38,0.10)',
-                          border: `1px solid ${isHomeTeam ? 'rgba(37,99,235,0.25)' : 'rgba(220,38,38,0.25)'}`
-                        }}
-                      >
-                        <div className="flex gap-1 overflow-x-auto scrollbar-none pb-0.5">
-                          {roster.filter(p => p.position?.toUpperCase() !== 'G').map(p => {
-                            const isTagged = taggedNum === p.number;
-                            return (
-                              <button
-                                key={p.number}
-                                onClick={() => confirmPlayerTag(taggingEvent, p.number, team)}
-                                className={`w-8 h-7 rounded-md text-[10px] font-black transition-all border shrink-0 ${isTagged ? (isHomeTeam ? 'bg-blue-600 text-white border-blue-400' : 'bg-red-600 text-white border-red-400') : 'bg-white/5 text-slate-300 border-white/5 hover:bg-white/10'}`}
-                              >{p.number}</button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <button onClick={() => setPlayerTagDismissed(true)} className="shrink-0 text-slate-500 hover:text-white text-sm font-bold px-1 pt-1.5">×</button>
-              </div>
-            )}
 
             <div className="w-full max-w-6xl aspect-[200/85] rounded-[5rem] sm:rounded-[8.5rem] p-2 shadow-2xl">
               <RinkChart events={events.filter(e => {
