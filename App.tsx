@@ -2354,7 +2354,7 @@ const App: React.FC = () => {
             })()}
 
             {taggingEvent && !playerTagDismissed && events.some(e => e.id === taggingEvent) && (
-              <div className="w-full px-3 py-2.5 flex items-start gap-3 animate-in slide-in-from-top duration-200 bg-black/40 border-b border-white/10">
+              <div className="w-full px-3 py-1.5 flex items-start gap-2 animate-in slide-in-from-top duration-200 bg-black/40 border-b border-white/10">
                 <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 shrink-0 pt-1.5">Tag:</span>
 
                 <div className="flex-1 min-w-0 grid grid-cols-2 gap-2">
@@ -2365,23 +2365,20 @@ const App: React.FC = () => {
                     return (
                       <div
                         key={team}
-                        className="rounded-lg p-1.5"
+                        className="rounded-lg p-1"
                         style={{
                           background: isHomeTeam ? 'rgba(37,99,235,0.10)' : 'rgba(220,38,38,0.10)',
                           border: `1px solid ${isHomeTeam ? 'rgba(37,99,235,0.25)' : 'rgba(220,38,38,0.25)'}`
                         }}
                       >
-                        <p className={`text-[8px] font-black uppercase tracking-wider mb-1 px-0.5 ${isHomeTeam ? 'text-blue-400' : 'text-red-400'}`}>
-                          {isHomeTeam ? homeName : awayName}
-                        </p>
-                        <div className="flex flex-wrap gap-1">
+                        <div className="flex gap-1 overflow-x-auto scrollbar-none pb-0.5">
                           {roster.filter(p => p.position?.toUpperCase() !== 'G').map(p => {
                             const isTagged = taggedNum === p.number;
                             return (
                               <button
                                 key={p.number}
                                 onClick={() => confirmPlayerTag(taggingEvent, p.number, team)}
-                                className={`w-10 h-9 rounded-md text-[11px] font-black transition-all border shrink-0 ${isTagged ? (isHomeTeam ? 'bg-blue-600 text-white border-blue-400' : 'bg-red-600 text-white border-red-400') : 'bg-white/5 text-slate-300 border-white/5 hover:bg-white/10'}`}
+                                className={`w-8 h-7 rounded-md text-[10px] font-black transition-all border shrink-0 ${isTagged ? (isHomeTeam ? 'bg-blue-600 text-white border-blue-400' : 'bg-red-600 text-white border-red-400') : 'bg-white/5 text-slate-300 border-white/5 hover:bg-white/10'}`}
                               >{p.number}</button>
                             );
                           })}
