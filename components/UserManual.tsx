@@ -5,6 +5,7 @@ import { usePageMeta } from '../hooks/usePageMeta';
 interface UserManualProps {
   isOpen: boolean;
   onClose: () => void;
+  onReplayTour?: () => void;
 }
 
 interface ManualSubsection {
@@ -347,7 +348,7 @@ const VideoEmbed: React.FC<{ videoId: string }> = ({ videoId }) => {
   );
 };
 
-const UserManual: React.FC<UserManualProps> = ({ isOpen, onClose }) => {
+const UserManual: React.FC<UserManualProps> = ({ isOpen, onClose, onReplayTour }) => {
   const [activeSection, setActiveSection] = useState('setup');
 
   usePageMeta(
@@ -375,11 +376,21 @@ const UserManual: React.FC<UserManualProps> = ({ isOpen, onClose }) => {
             <p className="text-[10px] font-bold text-blue-400 uppercase tracking-[0.3em] mt-0.5">Top Cheese Hockey Elite Suite</p>
           </div>
         </div>
-        <button
-          onClick={onClose}
-          className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors text-lg font-bold"
-          aria-label="Close manual"
-        >×</button>
+        <div className="flex items-center gap-2">
+          {onReplayTour && (
+            <button
+              onClick={onReplayTour}
+              className="px-3 py-2 rounded-full bg-cyan-600/15 hover:bg-cyan-600/25 border border-cyan-500/30 text-cyan-400 text-xs font-bold transition-colors whitespace-nowrap"
+            >
+              🎬 Replay Tour
+            </button>
+          )}
+          <button
+            onClick={onClose}
+            className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors text-lg font-bold"
+            aria-label="Close manual"
+          >×</button>
+        </div>
       </div>
 
       {/* Body */}
