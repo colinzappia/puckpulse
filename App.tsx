@@ -2972,6 +2972,11 @@ const App: React.FC = () => {
                             onChange={e => isHome ? setHomeNickname(e.target.value) : setAwayNickname(e.target.value)}
                             placeholder={teamNickname(name, '', isHome ? 'Home' : 'Away')}
                           />
+                          <p className="text-[9px] text-slate-600 ml-1">
+                            {(isHome ? homeNickname : awayNickname).trim()
+                              ? 'Using your custom nickname above.'
+                              : `Auto-detected as "${teamNickname(name, '', isHome ? 'Home' : 'Away')}" — type above to override.`}
+                          </p>
                         </div>
                         <div className="space-y-1">
                           <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Logo URL</label>
