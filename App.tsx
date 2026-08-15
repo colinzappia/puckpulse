@@ -10,6 +10,7 @@ import UserManual from './components/UserManual';
 import LandingPage from './components/LandingPage';
 import AdBanner from './components/AdBanner';
 import PlayerStats from './components/playerstats';
+import FirstRunTour from './components/FirstRunTour';
 import GoalieHub from './components/GoalieHub';
 import AuthGate from './components/AuthGate';
 import PricingGate from './components/PricingGate';
@@ -1051,6 +1052,17 @@ const App: React.FC = () => {
   };
 
   const [showSetup, setShowSetup] = useState(() => sessionStorage.getItem('tch_showSetup') === 'true');
+  const [hasSeenTour, setHasSeenTour] = useState(() => {
+    try { return localStorage.getItem('tch_hasSeenTour') === 'true'; } catch { return false; }
+  });
+  const [showTour, setShowTour] = useState(() => {
+    try { return localStorage.getItem('tch_hasSeenTour') !== 'true'; } catch { return false; }
+  });
+  const finishTour = () => {
+    setShowTour(false);
+    setHasSeenTour(true);
+    try { localStorage.setItem('tch_hasSeenTour', 'true'); } catch {}
+  };
   useEffect(() => {
     try { sessionStorage.setItem('tch_showSetup', String(showSetup)); } catch {}
   }, [showSetup]);
@@ -1882,7 +1894,7 @@ const App: React.FC = () => {
     return <AboutPage onClose={() => navigate('/')} onContact={() => navigate('/contact')} />;
   }
   if (location.pathname === '/manual') {
-    return <UserManual isOpen={true} onClose={() => navigate('/')} />;
+    return <UserManual isOpen={true} onClose={() => navigate('/')} onReplayTour={() => { navigate('/'); setShowTour(true); }} />;
   }
   if (location.pathname === '/contact') {
     return <ContactPage onClose={() => navigate('/')} />;
@@ -2960,6 +2972,8 @@ const App: React.FC = () => {
     )}
 
     {/* New Game confirm */}
+    {showTour && <FirstRunTour onFinish={finishTour} />}
+
     {showNewGameConfirm && (
       <div className="fixed inset-0 z-[400] bg-black/80 backdrop-blur-sm flex items-center justify-center px-4">
         <div className="bg-[#0f1620] border border-white/10 rounded-2xl p-8 max-w-sm w-full shadow-2xl text-center">
