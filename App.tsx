@@ -31,6 +31,7 @@ import { useAuth, UserButton, useClerk, useUser } from '@clerk/clerk-react';
 import { generateNarrative, fetchRosterByAI } from './services/geminiService';
 import { downloadPDFReport, downloadExcelReport, downloadHTMLExport } from './services/exportService';
 import { GameSession, SessionRole, endSession as endSessionDB, getActiveSessionForUser, endAllActiveSessionsForUser } from './services/sessionService';
+import { uploadLogo } from './services/storageService';
 import { broadcastEvent, deleteEvent, loadSessionEvents, subscribeToSession } from './services/syncService';
 import { Toaster, toast } from 'sonner';
 import { 
@@ -1104,6 +1105,7 @@ const App: React.FC = () => {
   const [awayLogo, setAwayLogo] = useState(() => {
     try { return sessionStorage.getItem('tch_awayLogo') || ''; } catch { return ''; }
   });
+  const [logoUploading, setLogoUploading] = useState<{ home: boolean; away: boolean }>({ home: false, away: false });
   const [startingGoalieHome, setStartingGoalieHome] = useState(() => {
     try { return sessionStorage.getItem('tch_startingGoalieHome') || ''; } catch { return ''; }
   });
@@ -1836,15 +1838,20 @@ const App: React.FC = () => {
     else { setAwayRoster(sortByNumber([...awayRoster, p])); setManualAway({ number: '', name: '', pos: 'F', line: '1' }); }
   };
 
-  const handleLogoUpload = (team: Team, file: File | null) => {
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result as string;
-      if (team === Team.HOME) setHomeLogo(result);
-      else setAwayLogo(result);
-    };
-    reader.readAsDataURL(file);
+  const handleLogoUpload = async (team: Team, file: File | null) => {
+    if (!file || !user) return;
+    const key = team === Team.HOME ? 'home' : 'away';
+    setLogoUploading(prev => ({ ...prev, [key]: true }));
+    try {
+      const url = await uploadLogo(user.id, file);
+      if (team === Team.HOME) setHomeLogo(url);
+      else setAwayLogo(url);
+    } catch (err) {
+      console.error(err);
+      toast.error('Logo upload failed — try again.');
+    } finally {
+      setLogoUploading(prev => ({ ...prev, [key]: false }));
+    }
   };
 
   const orderedTeams = useMemo(() => isCurrentlySwapped ? [Team.AWAY, Team.HOME] : [Team.HOME, Team.AWAY], [isCurrentlySwapped]);
@@ -2832,6 +2839,11 @@ const App: React.FC = () => {
                     <div className="flex flex-col sm:flex-row gap-6">
                       <div className={`w-24 h-24 rounded-[2.5rem] border-2 border-dashed flex items-center justify-center relative group transition-all shrink-0 bg-black/40 ${isHome ? 'border-blue-500/30' : 'border-red-500/30'}`}>
                         {logo ? <img src={logo} className="w-full h-full object-contain p-4" alt="" /> : <div className="text-3xl font-black text-slate-700">{name.charAt(0)}</div>}
+                        {logoUploading[isHome ? 'home' : 'away'] && (
+                          <div className="absolute inset-0 rounded-[2.5rem] bg-black/70 flex items-center justify-center">
+                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          </div>
+                        )}
                         <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={e => handleLogoUpload(team, e.target.files?.[0] || null)} />
                       </div>
                       <div className="flex-1 space-y-4">
