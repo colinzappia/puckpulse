@@ -789,6 +789,12 @@ const App: React.FC = () => {
   const [showPlayerStats, setShowPlayerStats] = useState(false);
   const [showGoalieHub, setShowGoalieHub] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  // Events logged during a Live Session that failed to reach the server —
+  // kept here so they can be retried automatically the moment connectivity
+  // returns, instead of being silently lost to other devices in the session.
+  const [pendingSync, setPendingSync] = useState<GameEvent[]>(() => {
+    try { const v = sessionStorage.getItem('tch_pendingSync'); return v ? JSON.parse(v) : []; } catch { return []; }
+  });
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -800,6 +806,53 @@ const App: React.FC = () => {
       window.removeEventListener('offline', handleOffline);
     };
   }, []);
+
+  useEffect(() => {
+    try { sessionStorage.setItem('tch_pendingSync', JSON.stringify(pendingSync)); } catch {}
+  }, [pendingSync]);
+
+  // Every place that syncs an event to a Live Session should call this
+  // instead of broadcastEvent directly — logging itself never depends on
+  // this succeeding (local state already updated before this runs), but a
+  // failure here gets queued for automatic retry on reconnect rather than
+  // silently dropped.
+  const syncEvent = useCallback((event: GameEvent) => {
+    if (!activeSession || !user) return;
+    broadcastEvent(activeSession.id, event, user.id).catch(() => {
+      setPendingSync(prev => prev.find(e => e.id === event.id) ? prev : [...prev, event]);
+    });
+  }, [activeSession, user]);
+
+  // Reconnect handling for Live Sessions: retry anything that failed to
+  // sync while offline, then re-fetch the full event list so anything
+  // logged by OTHER devices during the outage gets caught up too —
+  // without this, a dropped connection mid-session silently loses events
+  // between devices with no way to recover.
+  useEffect(() => {
+    if (!isOnline || !activeSession || !user) return;
+
+    if (pendingSync.length > 0) {
+      const toRetry = pendingSync;
+      setPendingSync([]);
+      toRetry.forEach(ev => {
+        broadcastEvent(activeSession.id, ev, user.id).catch(() => {
+          setPendingSync(prev => prev.find(e => e.id === ev.id) ? prev : [...prev, ev]);
+        });
+      });
+    }
+
+    loadSessionEvents(activeSession.id).then(serverEvents => {
+      setEvents(prev => {
+        const knownIds = new Set(prev.map(e => e.id));
+        const missed = serverEvents.filter(e => !knownIds.has(e.id));
+        if (missed.length === 0) return prev;
+        toast.success(`Caught up on ${missed.length} event${missed.length > 1 ? 's' : ''} from while you were offline.`);
+        return [...prev, ...missed];
+      });
+    }).catch(console.error);
+    // Only re-run when connectivity is regained, not on every pendingSync change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOnline, activeSession?.id, user?.id]);
 
   const { isSignedIn, userId, isLoaded: authLoaded } = useAuth();
   const { user } = useClerk();
@@ -841,6 +894,10 @@ const App: React.FC = () => {
 
   const handleSaveReport = async (isShared = false) => {
     if (!user) return;
+    if (!navigator.onLine) {
+      toast.error("Can't save to history while offline — your tracking data is safe, try again once you're reconnected.");
+      return;
+    }
     setSavingReport(true);
     try {
       await saveGameReport(user.id, {
@@ -853,7 +910,7 @@ const App: React.FC = () => {
       });
       toast.success('Game saved to history!');
     } catch (e) {
-      toast.error('Failed to save game');
+      toast.error(navigator.onLine ? 'Failed to save game — please try again.' : "Can't save to history while offline — your tracking data is safe, try again once you're reconnected.");
     } finally {
       setSavingReport(false);
     }
@@ -1378,7 +1435,7 @@ const App: React.FC = () => {
       metadata: { shotQuality: quality, lineOnIce, playersOnIce, againstPlayersOnIce, strength: strength || 'ES', assists: assists && assists.length > 0 ? assists : undefined }
     };
     setEvents(prev => [...prev, newEvent]);
-    if (activeSession && user) broadcastEvent(activeSession.id, newEvent, user.id).catch(console.error);
+    syncEvent(newEvent);
     setLastEvent({ type: EventType.GOAL, playerNumber: pNum, team });
     setPendingGoal(null);
   }, [pendingGoal, currentPeriod, getTeamZone, activeSession, user]);
@@ -1399,7 +1456,7 @@ const App: React.FC = () => {
       metadata: { penaltyType, minutes, isPowerPlay: true }
     };
     setEvents(prev => [...prev, newEvent]);
-    if (activeSession && user) broadcastEvent(activeSession.id, newEvent, user.id).catch(console.error);
+    syncEvent(newEvent);
     setLastEvent({ type: EventType.PENALTY, playerNumber: playerNum, team });
     setPendingPenalty(null);
   }, [pendingPenalty, currentPeriod, getTeamZone, activeSession, user]);
@@ -1420,7 +1477,7 @@ const App: React.FC = () => {
     ];
     setEvents(prev => [...prev, ...newFaceoffEvents]);
     if (activeSession && user) {
-      newFaceoffEvents.forEach(ev => broadcastEvent(activeSession.id, ev, user.id).catch(console.error));
+      newFaceoffEvents.forEach(ev => syncEvent(ev));
     }
     setLastEvent({ type: homeWins ? EventType.FACEOFF_WIN : EventType.FACEOFF_LOSS, playerNumber: homeCenter, team: Team.HOME });
     setPendingFaceoff(null);
@@ -1445,7 +1502,7 @@ const App: React.FC = () => {
     setEvents(prev => [...prev, newEvent]);
     setLastEvent({ type: entryType, playerNumber, team: activeTeam });
     if (activeSession && user) {
-      broadcastEvent(activeSession.id, newEvent, user.id).catch(console.error);
+      syncEvent(newEvent);
     }
     setPendingEntry(null);
   }, [pendingEntry, currentPeriod, getTeamZone, activeTeam, playerNumber, activeSession, user]);
@@ -1511,7 +1568,7 @@ const App: React.FC = () => {
     setPlayerTagDismissed(false);
     // Broadcast to session if active
     if (activeSession && user) {
-      broadcastEvent(activeSession.id, newEvent, user.id).catch(console.error);
+      syncEvent(newEvent);
     }
   }, [mapPlotType, activeTeam, playerNumber, currentPeriod, getTeamZone]);
 
@@ -1963,6 +2020,24 @@ const App: React.FC = () => {
       {ADS_ENABLED && <AdBanner position="top" onContactClick={() => navigate('/advertise')} />}
       <Toaster position="top-center" richColors theme="dark" />
 
+      {/* Offline indicator — message differs depending on whether a Live
+          Session is active, since the actual impact of being offline is
+          very different in each case */}
+      {!isOnline && (
+        <div className={`w-full px-4 py-2 text-center text-xs font-bold flex items-center justify-center gap-2 ${activeSession ? 'bg-red-600/90 text-white' : 'bg-amber-500/90 text-black'}`}>
+          <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+          {activeSession
+            ? "You're offline — logging still works, but won't sync to other devices until you reconnect."
+            : "You're offline — game tracking still works normally. AI features, roster sync, and saving to history need a connection."}
+        </div>
+      )}
+      {isOnline && pendingSync.length > 0 && (
+        <div className="w-full px-4 py-2 text-center text-xs font-bold bg-amber-500/90 text-black flex items-center justify-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-black animate-pulse" />
+          Syncing {pendingSync.length} event{pendingSync.length > 1 ? 's' : ''}...
+        </div>
+      )}
+
       {/* Session banner — shown when a live session is active */}
       {activeSession && mySessionRole && (
         <SessionBanner
@@ -2093,13 +2168,19 @@ const App: React.FC = () => {
         {!activeSession && (
           <div style={{ display: 'flex', gap: 8, padding: '8px 16px', background: 'rgba(0,0,0,0.2)', borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}>
             <button
-              onClick={() => setShowSessionSetup(true)}
+              onClick={() => {
+                if (!navigator.onLine) { toast.error("Live sessions need an internet connection to set up."); return; }
+                setShowSessionSetup(true);
+              }}
               style={{ flex: 1, padding: '7px 12px', borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: 'pointer', background: 'rgba(96,165,250,0.12)', border: '0.5px solid rgba(96,165,250,0.3)', color: '#60a5fa' }}
             >
               ＋ Share this game live
             </button>
             <button
-              onClick={() => setShowSessionJoin(true)}
+              onClick={() => {
+                if (!navigator.onLine) { toast.error("Live sessions need an internet connection to join."); return; }
+                setShowSessionJoin(true);
+              }}
               style={{ flex: 1, padding: '7px 12px', borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: 'pointer', background: 'rgba(255,255,255,0.04)', border: '0.5px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)' }}
             >
               Join session
