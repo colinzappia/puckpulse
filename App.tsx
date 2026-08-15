@@ -789,12 +789,6 @@ const App: React.FC = () => {
   const [showPlayerStats, setShowPlayerStats] = useState(false);
   const [showGoalieHub, setShowGoalieHub] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  // Events logged during a Live Session that failed to reach the server —
-  // kept here so they can be retried automatically the moment connectivity
-  // returns, instead of being silently lost to other devices in the session.
-  const [pendingSync, setPendingSync] = useState<GameEvent[]>(() => {
-    try { const v = sessionStorage.getItem('tch_pendingSync'); return v ? JSON.parse(v) : []; } catch { return []; }
-  });
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -806,53 +800,6 @@ const App: React.FC = () => {
       window.removeEventListener('offline', handleOffline);
     };
   }, []);
-
-  useEffect(() => {
-    try { sessionStorage.setItem('tch_pendingSync', JSON.stringify(pendingSync)); } catch {}
-  }, [pendingSync]);
-
-  // Every place that syncs an event to a Live Session should call this
-  // instead of broadcastEvent directly — logging itself never depends on
-  // this succeeding (local state already updated before this runs), but a
-  // failure here gets queued for automatic retry on reconnect rather than
-  // silently dropped.
-  const syncEvent = useCallback((event: GameEvent) => {
-    if (!activeSession || !user) return;
-    broadcastEvent(activeSession.id, event, user.id).catch(() => {
-      setPendingSync(prev => prev.find(e => e.id === event.id) ? prev : [...prev, event]);
-    });
-  }, [activeSession, user]);
-
-  // Reconnect handling for Live Sessions: retry anything that failed to
-  // sync while offline, then re-fetch the full event list so anything
-  // logged by OTHER devices during the outage gets caught up too —
-  // without this, a dropped connection mid-session silently loses events
-  // between devices with no way to recover.
-  useEffect(() => {
-    if (!isOnline || !activeSession || !user) return;
-
-    if (pendingSync.length > 0) {
-      const toRetry = pendingSync;
-      setPendingSync([]);
-      toRetry.forEach(ev => {
-        broadcastEvent(activeSession.id, ev, user.id).catch(() => {
-          setPendingSync(prev => prev.find(e => e.id === ev.id) ? prev : [...prev, ev]);
-        });
-      });
-    }
-
-    loadSessionEvents(activeSession.id).then(serverEvents => {
-      setEvents(prev => {
-        const knownIds = new Set(prev.map(e => e.id));
-        const missed = serverEvents.filter(e => !knownIds.has(e.id));
-        if (missed.length === 0) return prev;
-        toast.success(`Caught up on ${missed.length} event${missed.length > 1 ? 's' : ''} from while you were offline.`);
-        return [...prev, ...missed];
-      });
-    }).catch(console.error);
-    // Only re-run when connectivity is regained, not on every pendingSync change
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOnline, activeSession?.id, user?.id]);
 
   const { isSignedIn, userId, isLoaded: authLoaded } = useAuth();
   const { user } = useClerk();
@@ -954,6 +901,60 @@ const App: React.FC = () => {
   const [showSessionJoin, setShowSessionJoin] = useState(false);
   const [resumableSession, setResumableSession] = useState<{ session: GameSession; role: SessionRole } | null>(null);
   const unsubscribeRef = useRef<(() => void) | null>(null);
+
+  // Events logged during a Live Session that failed to reach the server —
+  // kept here so they can be retried automatically the moment connectivity
+  // returns, instead of being silently lost to other devices in the session.
+  const [pendingSync, setPendingSync] = useState<GameEvent[]>(() => {
+    try { const v = sessionStorage.getItem('tch_pendingSync'); return v ? JSON.parse(v) : []; } catch { return []; }
+  });
+
+  useEffect(() => {
+    try { sessionStorage.setItem('tch_pendingSync', JSON.stringify(pendingSync)); } catch {}
+  }, [pendingSync]);
+
+  // Every place that syncs an event to a Live Session should call this
+  // instead of broadcastEvent directly — logging itself never depends on
+  // this succeeding (local state already updated before this runs), but a
+  // failure here gets queued for automatic retry on reconnect rather than
+  // silently dropped.
+  const syncEvent = useCallback((event: GameEvent) => {
+    if (!activeSession || !user) return;
+    broadcastEvent(activeSession.id, event, user.id).catch(() => {
+      setPendingSync(prev => prev.find(e => e.id === event.id) ? prev : [...prev, event]);
+    });
+  }, [activeSession, user]);
+
+  // Reconnect handling for Live Sessions: retry anything that failed to
+  // sync while offline, then re-fetch the full event list so anything
+  // logged by OTHER devices during the outage gets caught up too —
+  // without this, a dropped connection mid-session silently loses events
+  // between devices with no way to recover.
+  useEffect(() => {
+    if (!isOnline || !activeSession || !user) return;
+
+    if (pendingSync.length > 0) {
+      const toRetry = pendingSync;
+      setPendingSync([]);
+      toRetry.forEach(ev => {
+        broadcastEvent(activeSession.id, ev, user.id).catch(() => {
+          setPendingSync(prev => prev.find(e => e.id === ev.id) ? prev : [...prev, ev]);
+        });
+      });
+    }
+
+    loadSessionEvents(activeSession.id).then(serverEvents => {
+      setEvents(prev => {
+        const knownIds = new Set(prev.map(e => e.id));
+        const missed = serverEvents.filter(e => !knownIds.has(e.id));
+        if (missed.length === 0) return prev;
+        toast.success(`Caught up on ${missed.length} event${missed.length > 1 ? 's' : ''} from while you were offline.`);
+        return [...prev, ...missed];
+      });
+    }).catch(console.error);
+    // Only re-run when connectivity is regained, not on every pendingSync change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOnline, activeSession?.id, user?.id]);
 
   const isSessionActive = !!activeSession;
   const canLogEvents = !isSessionActive || mySessionRole === 'admin' || mySessionRole === 'logger';
