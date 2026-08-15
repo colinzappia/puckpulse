@@ -1145,6 +1145,17 @@ const App: React.FC = () => {
   const [awayName, setAwayName] = useState(() => {
     try { return sessionStorage.getItem('tch_awayName') || 'AWAY'; } catch { return 'AWAY'; }
   });
+  // Nickname override — the auto-derived guess (everything after the
+  // first word of the team name) is right most of the time, but breaks
+  // for multi-word city/region names like "Ottawa West". Empty string
+  // means "no override, use the automatic guess"; once a coach edits it,
+  // that exact value is used everywhere instead.
+  const [homeNickname, setHomeNickname] = useState(() => {
+    try { return sessionStorage.getItem('tch_homeNickname') || ''; } catch { return ''; }
+  });
+  const [awayNickname, setAwayNickname] = useState(() => {
+    try { return sessionStorage.getItem('tch_awayNickname') || ''; } catch { return ''; }
+  });
   // Which side the coach using this app is actually with — tailors AI tactical
   // intel to give advice from this team's perspective rather than a neutral summary.
   // 'NEUTRAL' covers broadcasters, scouts, or fans tracking without taking a side —
@@ -1312,6 +1323,13 @@ const App: React.FC = () => {
       sessionStorage.setItem('tch_awayName', awayName);
     } catch {}
   }, [homeName, awayName]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('tch_homeNickname', homeNickname);
+      sessionStorage.setItem('tch_awayNickname', awayNickname);
+    } catch {}
+  }, [homeNickname, awayNickname]);
 
   useEffect(() => {
     try { sessionStorage.setItem('tch_myTeam', myTeam); } catch {}
@@ -1872,6 +1890,19 @@ const App: React.FC = () => {
   const handleUpdateEvent = (id: string, updates: Partial<GameEvent>) => setEvents(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
   const selectPlayer = (num: string, team: Team) => { setActiveTeam(team); setPlayerNumber(num === playerNumber && activeTeam === team ? '' : num); };
   const toggleVisibleType = (type: EventType) => setVisibleTypes(prev => prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]);
+  // "Nickname" = the manual override if the coach has set one, otherwise
+  // everything after the first word of the team name (not just the last
+  // word, so multi-word nicknames like "Golden Knights" show in full).
+  // The automatic guess can't know a city/region name has multiple words
+  // (e.g. "Ottawa West") — that's exactly what the override is for.
+  const teamNickname = (fullName: string, override: string, fallback: string) => {
+    if (override.trim()) return override.trim();
+    const trimmed = fullName?.trim();
+    if (!trimmed) return fallback;
+    const parts = trimmed.split(' ');
+    return parts.length > 1 ? parts.slice(1).join(' ') : parts[0];
+  };
+
   const toggleAllFilters = () => {
     const allTrackedTypes = [...toolbarButtons.map(b => b.type), EventType.FACEOFF_WIN, EventType.ZONE_ENTRY_CARRY, EventType.ZONE_ENTRY_DUMP, EventType.ZONE_ENTRY_PASS, EventType.ZONE_ENTRY_DENIED, EventType.BREAKOUT];
     const showingAll = allTrackedTypes.every(t => visibleTypes.includes(t));
@@ -2342,8 +2373,8 @@ const App: React.FC = () => {
 
             {/* Home/Away — sets which team the next event belongs to, independent of picking a specific player */}
             <div className="flex items-center bg-white/5 p-0.5 rounded-xl border border-white/10 shrink-0 shadow-inner gap-0.5">
-              <button onClick={() => setActiveTeam(Team.HOME)} className={`px-2.5 sm:px-4 py-2 rounded-lg text-[10px] sm:text-xs font-black uppercase transition-all ${activeTeam === Team.HOME ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>{homeName ? homeName.trim().split(' ').pop() : 'Home'}</button>
-              <button onClick={() => setActiveTeam(Team.AWAY)} className={`px-2.5 sm:px-4 py-2 rounded-lg text-[10px] sm:text-xs font-black uppercase transition-all ${activeTeam === Team.AWAY ? 'bg-red-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>{awayName ? awayName.trim().split(' ').pop() : 'Away'}</button>
+              <button onClick={() => setActiveTeam(Team.HOME)} className={`px-2.5 sm:px-4 py-2 rounded-lg text-[10px] sm:text-xs font-black uppercase transition-all ${activeTeam === Team.HOME ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>{teamNickname(homeName, homeNickname, 'Home')}</button>
+              <button onClick={() => setActiveTeam(Team.AWAY)} className={`px-2.5 sm:px-4 py-2 rounded-lg text-[10px] sm:text-xs font-black uppercase transition-all ${activeTeam === Team.AWAY ? 'bg-red-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>{teamNickname(awayName, awayNickname, 'Away')}</button>
             </div>
 
             {/* Away shot counter */}
@@ -2521,13 +2552,13 @@ const App: React.FC = () => {
             onClick={() => setTeamFilter(teamFilter === 'HOME' ? 'ALL' : 'HOME')}
             className={`shrink-0 px-4 py-2 rounded-xl text-[9px] font-black uppercase border active:scale-95 transition-all ${teamFilter === 'HOME' ? 'bg-blue-500 text-white border-blue-300' : 'bg-blue-600/15 text-blue-400 border-blue-500/30 hover:bg-blue-600/30'}`}
           >
-            {homeName ? homeName.trim().split(' ').pop() : 'Home'}
+            {teamNickname(homeName, homeNickname, 'Home')}
           </button>
           <button
             onClick={() => setTeamFilter(teamFilter === 'AWAY' ? 'ALL' : 'AWAY')}
             className={`shrink-0 px-4 py-2 rounded-xl text-[9px] font-black uppercase border active:scale-95 transition-all ${teamFilter === 'AWAY' ? 'bg-red-500 text-white border-red-300' : 'bg-red-600/15 text-red-400 border-red-500/30 hover:bg-red-600/30'}`}
           >
-            {awayName ? awayName.trim().split(' ').pop() : 'Away'}
+            {teamNickname(awayName, awayNickname, 'Away')}
           </button>
           <button onClick={toggleAllFilters} className="shrink-0 px-4 py-2 rounded-xl bg-white/10 text-[9px] font-black uppercase text-slate-300 border border-white/10 active:scale-95 transition-all">
             {toolbarButtons.every(t => visibleTypes.includes(t.type)) ? 'Isolate' : 'Show All'}
@@ -2910,8 +2941,8 @@ const App: React.FC = () => {
                   <div className="flex items-center gap-3">
                     <button onClick={() => handleLoadFromLibrary(isHome ? 'home' : 'away')} className="text-[9px] font-black text-cyan-500 hover:text-cyan-300 uppercase transition-colors">📚 Load from Library</button>
                     <button onClick={() => {
-                      if (isHome) { setHomeRoster([]); setHomeSources([]); setPasteRosterHome(''); setHomeName(''); setHomeLogo(''); }
-                      else { setAwayRoster([]); setAwaySources([]); setPasteRosterAway(''); setAwayName(''); setAwayLogo(''); }
+                      if (isHome) { setHomeRoster([]); setHomeSources([]); setPasteRosterHome(''); setHomeName(''); setHomeLogo(''); setHomeNickname(''); }
+                      else { setAwayRoster([]); setAwaySources([]); setPasteRosterAway(''); setAwayName(''); setAwayLogo(''); setAwayNickname(''); }
                     }} className="text-[9px] font-black text-slate-700 hover:text-red-500 uppercase transition-colors">Clear Roster</button>
                   </div>
                 </div>
@@ -2931,6 +2962,15 @@ const App: React.FC = () => {
                         <div className="space-y-1">
                           <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Team Name</label>
                           <input className="w-full bg-black/60 border border-white/10 p-3 rounded-xl text-xs font-black text-white outline-none focus:border-white/20" value={name} onChange={e => isHome ? setHomeName(e.target.value) : setAwayName(e.target.value)} placeholder="E.G. BRUINS" />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Nickname (shown on toggles &amp; filters)</label>
+                          <input
+                            className="w-full bg-black/60 border border-white/10 p-3 rounded-xl text-xs font-black text-white outline-none focus:border-white/20"
+                            value={isHome ? homeNickname : awayNickname}
+                            onChange={e => isHome ? setHomeNickname(e.target.value) : setAwayNickname(e.target.value)}
+                            placeholder={teamNickname(name, '', isHome ? 'Home' : 'Away')}
+                          />
                         </div>
                         <div className="space-y-1">
                           <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Logo URL</label>
