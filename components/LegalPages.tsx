@@ -24,7 +24,7 @@ const TermsContent = () => (
     <section>
       <h3 className="text-white font-black text-base uppercase tracking-wider mb-3">2. Subscriptions & Billing</h3>
       <p className="mb-2">The Service is offered on a subscription basis with the following plans: Basic ($9.99/month), Pro ($14.99/month), and Team ($29.99/month for up to 5 users). Prices are in CAD and do not include applicable sales tax, which is calculated and added at checkout based on your billing address.</p>
-      <p className="mb-2">All new subscriptions include a 7-day free trial. You will not be charged during the trial period. After the trial ends, your chosen subscription fee will be billed automatically on a monthly basis.</p>
+      <p className="mb-2">All new subscriptions include a 30-day free trial. You will not be charged during the trial period. After the trial ends, your chosen subscription fee will be billed automatically on a monthly basis.</p>
       <p className="mb-2">Payments are processed securely by Stripe. I do not store your credit card information.</p>
       <p>Subscription fees are non-refundable except where required by applicable Canadian law. You may cancel your subscription at any time and will retain access until the end of your current billing period.</p>
     </section>
