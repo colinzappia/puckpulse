@@ -32,7 +32,7 @@ import { generateNarrative, fetchRosterByAI } from './services/geminiService';
 import { downloadPDFReport, downloadExcelReport, downloadHTMLExport } from './services/exportService';
 import { endAllActiveSessionsForUser } from './services/sessionService';
 import { useLiveSession } from './hooks/useLiveSession';
-import { uploadLogo } from './services/storageService';
+import { useTeamRoster, sortByNumber, normalizeName } from './hooks/useTeamRoster';
 import { deleteEvent } from './services/syncService';
 import { Toaster, toast } from 'sonner';
 import { 
@@ -975,23 +975,30 @@ const App: React.FC = () => {
   const [entryFilterExpanded, setEntryFilterExpanded] = useState(false);
   const [breakoutResultFilter, setBreakoutResultFilter] = useState<'ALL' | 'CONTROLLED' | 'FAILED'>('ALL');
   const [breakoutFilterExpanded, setBreakoutFilterExpanded] = useState(false);
-  const [homeName, setHomeName] = useState(() => {
-    try { return sessionStorage.getItem('tch_homeName') || 'HOME'; } catch { return 'HOME'; }
-  });
-  const [awayName, setAwayName] = useState(() => {
-    try { return sessionStorage.getItem('tch_awayName') || 'AWAY'; } catch { return 'AWAY'; }
-  });
-  // Nickname override — the auto-derived guess (everything after the
-  // first word of the team name) is right most of the time, but breaks
-  // for multi-word city/region names like "Ottawa West". Empty string
-  // means "no override, use the automatic guess"; once a coach edits it,
-  // that exact value is used everywhere instead.
-  const [homeNickname, setHomeNickname] = useState(() => {
-    try { return sessionStorage.getItem('tch_homeNickname') || ''; } catch { return ''; }
-  });
-  const [awayNickname, setAwayNickname] = useState(() => {
-    try { return sessionStorage.getItem('tch_awayNickname') || ''; } catch { return ''; }
-  });
+  const {
+    homeName, setHomeName,
+    awayName, setAwayName,
+    homeNickname, setHomeNickname,
+    awayNickname, setAwayNickname,
+    homeLogo, setHomeLogo,
+    awayLogo, setAwayLogo,
+    logoUploading,
+    startingGoalieHome, setStartingGoalieHome,
+    startingGoalieAway, setStartingGoalieAway,
+    goalieHistoryHome, setGoalieHistoryHome,
+    goalieHistoryAway, setGoalieHistoryAway,
+    homeRoster, setHomeRoster,
+    awayRoster, setAwayRoster,
+    homeSources, setHomeSources,
+    awaySources, setAwaySources,
+    manualHome, setManualHome,
+    manualAway, setManualAway,
+    teamNickname,
+    handleLogoUpload,
+    handleUpdatePlayerInline,
+    handleAddPlayerQuickly,
+    resetTeamData,
+  } = useTeamRoster({ user });
   // Which side the coach using this app is actually with — tailors AI tactical
   // intel to give advice from this team's perspective rather than a neutral summary.
   // 'NEUTRAL' covers broadcasters, scouts, or fans tracking without taking a side —
@@ -1002,29 +1009,6 @@ const App: React.FC = () => {
       if (stored === Team.HOME || stored === Team.AWAY || stored === 'NEUTRAL') return stored as Team | 'NEUTRAL';
       return 'NEUTRAL';
     } catch { return 'NEUTRAL'; }
-  });
-  const [homeLogo, setHomeLogo] = useState(() => {
-    try { return sessionStorage.getItem('tch_homeLogo') || ''; } catch { return ''; }
-  });
-  const [awayLogo, setAwayLogo] = useState(() => {
-    try { return sessionStorage.getItem('tch_awayLogo') || ''; } catch { return ''; }
-  });
-  const [logoUploading, setLogoUploading] = useState<{ home: boolean; away: boolean }>({ home: false, away: false });
-  const [startingGoalieHome, setStartingGoalieHome] = useState(() => {
-    try { return sessionStorage.getItem('tch_startingGoalieHome') || ''; } catch { return ''; }
-  });
-  const [startingGoalieAway, setStartingGoalieAway] = useState(() => {
-    try { return sessionStorage.getItem('tch_startingGoalieAway') || ''; } catch { return ''; }
-  });
-  // Tracks every goalie who's been "in net" and when each stint started,
-  // using the same real timestamp every event already gets — not the game
-  // clock. This is what lets saves split correctly between two goalies
-  // after a mid-game swap, without asking the user to enter a time.
-  const [goalieHistoryHome, setGoalieHistoryHome] = useState<{ number: string; since: number }[]>(() => {
-    try { const v = sessionStorage.getItem('tch_goalieHistoryHome'); return v ? JSON.parse(v) : []; } catch { return []; }
-  });
-  const [goalieHistoryAway, setGoalieHistoryAway] = useState<{ number: string; since: number }[]>(() => {
-    try { const v = sessionStorage.getItem('tch_goalieHistoryAway'); return v ? JSON.parse(v) : []; } catch { return []; }
   });
   // Goalie Hub net-placement marks — purely visual, per-team, reset whenever
   // that team's goalie changes (initial pick or a mid-game swap), since a
@@ -1044,13 +1028,6 @@ const App: React.FC = () => {
   const [shotsForAway, setShotsForAway] = useState<{ x: number; y: number; outcome: 'goal' | 'missed' }[]>(() => {
     try { const v = sessionStorage.getItem('tch_shotsForAway'); return v ? JSON.parse(v) : []; } catch { return []; }
   });
-
-  const [homeRoster, setHomeRoster] = useState<Player[]>(() => {
-    try { const s = sessionStorage.getItem('tch_homeRoster'); return s ? JSON.parse(s) : []; } catch { return []; }
-  });
-  const [awayRoster, setAwayRoster] = useState<Player[]>(() => {
-    try { const s = sessionStorage.getItem('tch_awayRoster'); return s ? JSON.parse(s) : []; } catch { return []; }
-  });
   const {
     activeSession, mySessionRole,
     showSessionSetup, setShowSessionSetup,
@@ -1064,10 +1041,6 @@ const App: React.FC = () => {
     user, isOnline, setEvents,
     setHomeName, setAwayName, setHomeRoster, setAwayRoster, setCurrentPeriod,
   });
-  const [homeSources, setHomeSources] = useState<{ uri: string; title: string }[]>([]);
-  const [awaySources, setAwaySources] = useState<{ uri: string; title: string }[]>([]);
-  const [manualHome, setManualHome] = useState({ number: '', name: '', pos: 'F', line: '1' });
-  const [manualAway, setManualAway] = useState({ number: '', name: '', pos: 'F', line: '1' });
   const [mapPlotType, setMapPlotType] = useState<EventType>(EventType.SHOT);
   const [lastEvent, setLastEvent] = useState<{type: EventType; playerNumber: string; team: Team} | null>(null);
   const [plotFlash, setPlotFlash] = useState(false);
@@ -1119,38 +1092,6 @@ const App: React.FC = () => {
   }, [currentPeriod]);
 
   useEffect(() => {
-    try { sessionStorage.setItem('tch_homeRoster', JSON.stringify(homeRoster)); } catch {}
-  }, [homeRoster]);
-
-  useEffect(() => {
-    try { sessionStorage.setItem('tch_awayRoster', JSON.stringify(awayRoster)); } catch {}
-  }, [awayRoster]);
-
-  useEffect(() => {
-    try { sessionStorage.setItem('tch_homeLogo', homeLogo); } catch {}
-  }, [homeLogo]);
-
-  useEffect(() => {
-    try { sessionStorage.setItem('tch_awayLogo', awayLogo); } catch {}
-  }, [awayLogo]);
-
-  useEffect(() => {
-    try { sessionStorage.setItem('tch_startingGoalieHome', startingGoalieHome); } catch {}
-  }, [startingGoalieHome]);
-
-  useEffect(() => {
-    try { sessionStorage.setItem('tch_startingGoalieAway', startingGoalieAway); } catch {}
-  }, [startingGoalieAway]);
-
-  useEffect(() => {
-    try { sessionStorage.setItem('tch_goalieHistoryHome', JSON.stringify(goalieHistoryHome)); } catch {}
-  }, [goalieHistoryHome]);
-
-  useEffect(() => {
-    try { sessionStorage.setItem('tch_goalieHistoryAway', JSON.stringify(goalieHistoryAway)); } catch {}
-  }, [goalieHistoryAway]);
-
-  useEffect(() => {
     try { sessionStorage.setItem('tch_netMarksHome', JSON.stringify(netMarksHome)); } catch {}
   }, [netMarksHome]);
 
@@ -1167,40 +1108,8 @@ const App: React.FC = () => {
   }, [shotsForAway]);
 
   useEffect(() => {
-    try {
-      sessionStorage.setItem('tch_homeName', homeName);
-      sessionStorage.setItem('tch_awayName', awayName);
-    } catch {}
-  }, [homeName, awayName]);
-
-  useEffect(() => {
-    try {
-      sessionStorage.setItem('tch_homeNickname', homeNickname);
-      sessionStorage.setItem('tch_awayNickname', awayNickname);
-    } catch {}
-  }, [homeNickname, awayNickname]);
-
-  useEffect(() => {
     try { sessionStorage.setItem('tch_myTeam', myTeam); } catch {}
   }, [myTeam]);
-
-  const sortByNumber = (roster: Player[]) => [...roster].sort((a, b) => {
-    const aIsG = a.position?.toUpperCase() === 'G' ? 0 : 1;
-    const bIsG = b.position?.toUpperCase() === 'G' ? 0 : 1;
-    if (aIsG !== bIsG) return aIsG - bIsG;
-    return (parseInt(a.number, 10) || 0) - (parseInt(b.number, 10) || 0);
-  });
-
-  // Converts "Last, First" (and "Last, First Middle") into "First Last" order.
-  // Backstops the AI prompt for roster imports, and also cleans up names
-  // typed directly in "Last, First" form via the quick-add field.
-  const normalizeName = (raw: string): string => {
-    const name = (raw || '').trim();
-    if (!name.includes(',')) return name;
-    const [last, rest] = name.split(',', 2).map(s => s.trim());
-    if (!last || !rest) return name;
-    return `${rest} ${last}`.replace(/\s+/g, ' ').trim();
-  };
 
   const centers = useMemo(() => ({
     home: homeRoster.filter(p => p.position?.toUpperCase().includes('C')),
@@ -1536,23 +1445,14 @@ const App: React.FC = () => {
     }
     setEvents([]);
     setCurrentPeriod(1);
-    setHomeName('HOME');
-    setAwayName('AWAY');
-    setHomeRoster([]);
-    setAwayRoster([]);
-    setHomeLogo('');
-    setAwayLogo('');
-    setStartingGoalieHome('');
-    setStartingGoalieAway('');
-    setGoalieHistoryHome([]);
-    setGoalieHistoryAway([]);
+    resetTeamData();
     setNetMarksHome([]);
     setNetMarksAway([]);
     setShotsForHome([]);
     setShotsForAway([]);
     setSummaries({ 'total': 'Game tracking active. Generate coaching analysis after logging more events.' });
     localStorage.removeItem('tch_game_state');
-    try { ['tch_homeRoster','tch_awayRoster','tch_homeName','tch_awayName','tch_homeLogo','tch_awayLogo','tch_startingGoalieHome','tch_startingGoalieAway','tch_goalieHistoryHome','tch_goalieHistoryAway','tch_netMarksHome','tch_netMarksAway','tch_shotsForHome','tch_shotsForAway'].forEach(k => sessionStorage.removeItem(k)); } catch {}
+    try { ['tch_netMarksHome','tch_netMarksAway','tch_shotsForHome','tch_shotsForAway'].forEach(k => sessionStorage.removeItem(k)); } catch {}
     sessionStorage.setItem('tch_launched', 'true');
     setShowNewGameConfirm(false);
   };
@@ -1672,16 +1572,7 @@ const App: React.FC = () => {
     // Clear all game data
     setEvents([]);
     setCurrentPeriod(1);
-    setHomeName('HOME');
-    setAwayName('AWAY');
-    setHomeRoster([]);
-    setAwayRoster([]);
-    setHomeLogo('');
-    setAwayLogo('');
-    setStartingGoalieHome('');
-    setStartingGoalieAway('');
-    setGoalieHistoryHome([]);
-    setGoalieHistoryAway([]);
+    resetTeamData();
     setNetMarksHome([]);
     setNetMarksAway([]);
     setShotsForHome([]);
@@ -1694,7 +1585,7 @@ const App: React.FC = () => {
     setPendingPenalty(null);
     setTaggingEvent(null);
     setPlayerTagDismissed(false);
-    try { ['tch_homeRoster','tch_awayRoster','tch_homeName','tch_awayName','tch_homeLogo','tch_awayLogo','tch_startingGoalieHome','tch_startingGoalieAway','tch_goalieHistoryHome','tch_goalieHistoryAway','tch_netMarksHome','tch_netMarksAway','tch_shotsForHome','tch_shotsForAway'].forEach(k => sessionStorage.removeItem(k)); } catch {}
+    try { ['tch_netMarksHome','tch_netMarksAway','tch_shotsForHome','tch_shotsForAway'].forEach(k => sessionStorage.removeItem(k)); } catch {}
     localStorage.removeItem('tch_game_state');
     setShowEndGame(false);
   };
@@ -1737,56 +1628,12 @@ const App: React.FC = () => {
   const handleUpdateEvent = (id: string, updates: Partial<GameEvent>) => setEvents(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
   const selectPlayer = (num: string, team: Team) => { setActiveTeam(team); setPlayerNumber(num === playerNumber && activeTeam === team ? '' : num); };
   const toggleVisibleType = (type: EventType) => setVisibleTypes(prev => prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]);
-  // "Nickname" = the manual override if the coach has set one, otherwise
-  // everything after the first word of the team name (not just the last
-  // word, so multi-word nicknames like "Golden Knights" show in full).
-  // The automatic guess can't know a city/region name has multiple words
-  // (e.g. "Ottawa West") — that's exactly what the override is for.
-  const teamNickname = (fullName: string, override: string, fallback: string) => {
-    if (override.trim()) return override.trim();
-    const trimmed = fullName?.trim();
-    if (!trimmed) return fallback;
-    const parts = trimmed.split(' ');
-    return parts.length > 1 ? parts.slice(1).join(' ') : parts[0];
-  };
 
   const toggleAllFilters = () => {
     const allTrackedTypes = [...toolbarButtons.map(b => b.type), EventType.FACEOFF_WIN, EventType.ZONE_ENTRY_CARRY, EventType.ZONE_ENTRY_DUMP, EventType.ZONE_ENTRY_PASS, EventType.ZONE_ENTRY_DENIED, EventType.BREAKOUT];
     const showingAll = allTrackedTypes.every(t => visibleTypes.includes(t));
     if (showingAll) setVisibleTypes(prev => prev.filter(t => !allTrackedTypes.includes(t)));
     else setVisibleTypes(prev => Array.from(new Set([...prev, ...allTrackedTypes])));
-  };
-
-  const handleUpdatePlayerInline = (team: Team, index: number, field: keyof Player, value: string) => {
-    const updateFn = team === Team.HOME ? setHomeRoster : setAwayRoster;
-    updateFn(prev => prev.map((p, i) => i === index ? { ...p, [field]: value } : p));
-  };
-
-  const handleAddPlayerQuickly = (team: Team) => {
-    const isHome = team === Team.HOME;
-    const roster = isHome ? homeRoster : awayRoster;
-    const data = isHome ? manualHome : manualAway;
-    if (!data.name || !data.number) return;
-    if (roster.some(p => p.number === data.number)) { toast.error(`Player #${data.number} already exists on this roster.`); return; }
-    const p: Player = { number: data.number, name: normalizeName(data.name), position: data.pos || 'F', line: data.line };
-    if (isHome) { setHomeRoster(sortByNumber([...homeRoster, p])); setManualHome({ number: '', name: '', pos: 'F', line: '1' }); }
-    else { setAwayRoster(sortByNumber([...awayRoster, p])); setManualAway({ number: '', name: '', pos: 'F', line: '1' }); }
-  };
-
-  const handleLogoUpload = async (team: Team, file: File | null) => {
-    if (!file || !user) return;
-    const key = team === Team.HOME ? 'home' : 'away';
-    setLogoUploading(prev => ({ ...prev, [key]: true }));
-    try {
-      const url = await uploadLogo(user.id, file);
-      if (team === Team.HOME) setHomeLogo(url);
-      else setAwayLogo(url);
-    } catch (err) {
-      console.error(err);
-      toast.error('Logo upload failed — try again.');
-    } finally {
-      setLogoUploading(prev => ({ ...prev, [key]: false }));
-    }
   };
 
   const orderedTeams = useMemo(() => isCurrentlySwapped ? [Team.AWAY, Team.HOME] : [Team.HOME, Team.AWAY], [isCurrentlySwapped]);
