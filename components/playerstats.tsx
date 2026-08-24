@@ -13,7 +13,7 @@ interface PlayerStatsProps {
   onClose: () => void;
 }
 
-interface PlayerRow {
+export interface PlayerRow {
   number: string;
   name: string;
   position: string;
@@ -33,7 +33,7 @@ interface PlayerRow {
   total: number;
 }
 
-function buildPlayerStats(events: GameEvent[], roster: Player[], team: Team): PlayerRow[] {
+export function buildPlayerStats(events: GameEvent[], roster: Player[], team: Team): PlayerRow[] {
   const map = new Map<string, PlayerRow>();
 
   // Initialize from roster
@@ -128,7 +128,16 @@ function buildPlayerStats(events: GameEvent[], roster: Player[], team: Team): Pl
 // goals against. No separate "SAVE" event needed; this just reads the
 // same shot/goal data already being tracked, from the opposing team's
 // perspective.
-function computeGoalieStats(events: GameEvent[], history: { number: string; since: number }[], goalieTeam: Team, roster: Player[]) {
+export interface GoalieStintStats {
+  name: string;
+  number: string;
+  shotsAgainst: number;
+  goalsAgainst: number;
+  saves: number;
+  savePct: number | null;
+}
+
+export function computeGoalieStats(events: GameEvent[], history: { number: string; since: number }[], goalieTeam: Team, roster: Player[]): GoalieStintStats[] {
   if (history.length === 0) return [];
   const opposingTeam = goalieTeam === Team.HOME ? Team.AWAY : Team.HOME;
   const relevantEvents = events.filter(e => e.team === opposingTeam && (e.type === EventType.SHOT || e.type === EventType.GOAL));
