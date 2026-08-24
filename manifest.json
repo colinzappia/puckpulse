@@ -1,10 +1,9 @@
-
 {
   "short_name": "Top Cheese",
   "name": "Top Cheese Hockey: Live Analytics",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/3133/3133619.png",
+      "src": "/Top_Cheese_Hockey_logo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
