@@ -8,6 +8,11 @@
 import { supabase } from '../lib/supabaseClient';
 import { GameEvent, Player } from '../types';
  
+export interface GoalieStint {
+  number: string;
+  since: number;
+}
+
 export interface SavedGameReport {
   id: string;
   userId: string;
@@ -21,6 +26,11 @@ export interface SavedGameReport {
   events: GameEvent[];
   homeRoster: Player[];
   awayRoster: Player[];
+  // Optional: older saved games (before this field existed) won't have
+  // this data. Anything reading it must fall back gracefully rather than
+  // assume it's always present.
+  goalieHistoryHome: GoalieStint[];
+  goalieHistoryAway: GoalieStint[];
   isShared: boolean;
   playedAt: string;
   createdAt: string;
@@ -40,6 +50,8 @@ export async function saveGameReport(
     events: GameEvent[];
     homeRoster: Player[];
     awayRoster: Player[];
+    goalieHistoryHome: GoalieStint[];
+    goalieHistoryAway: GoalieStint[];
     isShared: boolean;
   }
 ): Promise<SavedGameReport> {
@@ -57,6 +69,8 @@ export async function saveGameReport(
       events: data.events,
       home_roster: data.homeRoster,
       away_roster: data.awayRoster,
+      goalie_history_home: data.goalieHistoryHome,
+      goalie_history_away: data.goalieHistoryAway,
       is_shared: data.isShared,
       played_at: new Date().toISOString(),
     })
@@ -125,9 +139,10 @@ function mapReport(row: Record<string, unknown>): SavedGameReport {
     events: (row.events as GameEvent[]) || [],
     homeRoster: (row.home_roster as Player[]) || [],
     awayRoster: (row.away_roster as Player[]) || [],
+    goalieHistoryHome: (row.goalie_history_home as GoalieStint[]) || [],
+    goalieHistoryAway: (row.goalie_history_away as GoalieStint[]) || [],
     isShared: (row.is_shared as boolean) || false,
     playedAt: row.played_at as string,
     createdAt: row.created_at as string,
   };
 }
- 
