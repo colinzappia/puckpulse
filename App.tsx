@@ -853,7 +853,9 @@ const App: React.FC = () => {
         awayScore: getStatsForRange(Team.AWAY, 'total').goals,
         homeLogo, awayLogo,
         periods: currentPeriod,
-        events, homeRoster, awayRoster, isShared,
+        events, homeRoster, awayRoster,
+        goalieHistoryHome, goalieHistoryAway,
+        isShared,
       });
       toast.success('Game saved to history!');
     } catch (e) {
