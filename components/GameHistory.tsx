@@ -15,6 +15,8 @@ import {
   toggleReportShared,
 } from '../services/gameReportService';
 import { GameEvent, EventType, Team } from '../types';
+import SeasonStats from './SeasonStats';
+import PlayerShareCard from './PlayerShareCard';
 
 interface Props {
   isOpen: boolean;
@@ -40,13 +42,14 @@ function formatDate(iso: string) {
 
 export default function GameHistory({ isOpen, onClose, onLoadGame, onDownloadReport }: Props) {
   const { user } = useUser();
-  const [tab, setTab] = useState<'mine' | 'shared'>('mine');
+  const [tab, setTab] = useState<'mine' | 'shared' | 'season'>('mine');
   const [myReports, setMyReports] = useState<SavedGameReport[]>([]);
   const [sharedReports, setSharedReports] = useState<SavedGameReport[]>([]);
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<SavedGameReport | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [toggling, setToggling] = useState<string | null>(null);
+  const [shareTarget, setShareTarget] = useState<{ team: Team; number: string } | null>(null);
 
   useEffect(() => {
     if (!isOpen || !user) return;
@@ -161,6 +164,31 @@ export default function GameHistory({ isOpen, onClose, onLoadGame, onDownloadRep
               ))}
             </div>
 
+            {/* Share a player's stats */}
+            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8, fontWeight: 600 }}>Share a player's stats</div>
+            <select
+              defaultValue=""
+              onChange={e => {
+                if (!e.target.value) return;
+                const [teamStr, number] = e.target.value.split('|');
+                setShareTarget({ team: teamStr === 'home' ? Team.HOME : Team.AWAY, number });
+                e.target.value = '';
+              }}
+              style={{ width: '100%', background: '#0f1620', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '10px 12px', color: '#fff', fontSize: 12, fontWeight: 600, marginBottom: 16 }}
+            >
+              <option value="">Pick a player to generate a shareable card…</option>
+              <optgroup label={selected.homeName}>
+                {selected.homeRoster.map(p => (
+                  <option key={`home-${p.number}`} value={`home|${p.number}`}>#{p.number} {p.name}</option>
+                ))}
+              </optgroup>
+              <optgroup label={selected.awayName}>
+                {selected.awayRoster.map(p => (
+                  <option key={`away-${p.number}`} value={`away|${p.number}`}>#{p.number} {p.name}</option>
+                ))}
+              </optgroup>
+            </select>
+
             {/* Share toggle (own reports only) */}
             {canEdit && (
               <div onClick={() => handleToggleShared(selected)}
@@ -205,10 +233,15 @@ export default function GameHistory({ isOpen, onClose, onLoadGame, onDownloadRep
           <button style={S.tab(tab === 'shared')} onClick={() => setTab('shared')}>
             Shared {sharedReports.length > 0 && `(${sharedReports.length})`}
           </button>
+          <button style={S.tab(tab === 'season')} onClick={() => setTab('season')}>
+            📅 Season
+          </button>
         </div>
 
         <div style={S.body}>
-          {loading ? (
+          {tab === 'season' ? (
+            <SeasonStats reports={myReports} />
+          ) : loading ? (
             <div style={{ textAlign: 'center', padding: '40px 0', color: 'rgba(255,255,255,0.25)', fontSize: 13 }}>Loading…</div>
           ) : reports.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px 0', color: 'rgba(255,255,255,0.25)', fontSize: 13, lineHeight: 1.7 }}>
@@ -241,6 +274,15 @@ export default function GameHistory({ isOpen, onClose, onLoadGame, onDownloadRep
           )}
         </div>
       </div>
+
+      {shareTarget && selected && (
+        <PlayerShareCard
+          report={selected}
+          team={shareTarget.team}
+          playerNumber={shareTarget.number}
+          onClose={() => setShareTarget(null)}
+        />
+      )}
     </>
   );
 }
