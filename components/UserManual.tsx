@@ -28,7 +28,7 @@ const sections: ManualCategory[] = [
     subsections: [
       {
         title: 'Setting team names',
-        content: 'Tap the "Roster Setup" button in the top right corner. Enter your home and away team names. The app automatically displays the team nickname (last word of the name) on the rink screen — so a team entered as "City Nickname" will display just the nickname on the toggle buttons and shot counters. You can also upload team logos by tapping the logo placeholder and selecting an image from your device.'
+        content: 'Tap the "Roster Setup" button in the top right corner. Enter your home and away team names. The app automatically shows a nickname on the rink screen\'s toggle buttons and filters — everything after the first word of the team name, so "Ottawa 67\'s" shows as "67\'s" and "Vegas Golden Knights" shows as "Golden Knights."\n\nThis guess can\'t always be right — a name like "Ottawa West Golden Knights" would guess "West Golden Knights," missing that "Ottawa West" is a two-word region name. For exactly this case, there\'s a separate Nickname field right below Team Name — pre-filled with the automatic guess, but fully editable. Type your own and it\'s used everywhere instead, from then on.\n\nYou can also upload team logos by tapping the logo placeholder and selecting an image from your device.'
       },
       {
         title: 'Paste Roster Import',
@@ -134,7 +134,7 @@ const sections: ManualCategory[] = [
       },
       {
         title: 'Undoing an event',
-        content: 'Made a mistake? Hover over (or long-press on mobile) any event in the Tactical Feed — a row of small icons appears on the right, including a trash icon. Tap it to remove that event from both the log and the rink map.'
+        content: 'Made a mistake? Hover over (or long-press on mobile) any event in the Tactical Feed — a row of small icons appears on the right, including a trash icon. Tap it to remove that event from both the log and the rink map.\n\nFor quicker fixes, the toolbar next to the rink also has its own Undo button — removes just the most recent event, one tap, no need to find it in the feed.\n\nRight next to Undo is Clear, for wiping the whole rink at once if you need a true fresh start mid-game. Because this removes every event logged so far, it always asks you to confirm first — your rosters and team names are untouched either way.'
       }
     ]
   },
@@ -168,7 +168,7 @@ const sections: ManualCategory[] = [
       },
       {
         title: 'Using filters',
-        content: 'The filter bar below the rink lets you show or hide each event type independently. Tap "Isolate" to hide everything at once, then tap individual event types back on one at a time — or "Show All" to bring everything back.\n\nSHOT, ZONE ENTRIES, and BREAKOUTS each have an extra ▾ next to them — tap it to slide out finer sub-filters:\n\n• Shot — Result (On Net / Attempt) and Strength (PP / PK), combinable.\n• Zone Entries — Type (Carry / Dump / Pass / Denied, pick any combination) and Retrieval (For / Against, for dump-ins).\n• Breakouts — Result (Controlled / Failed).\n\nTapping a main chip itself always resets its sub-filters back to showing everything of that type.'
+        content: 'The filter bar below the rink has two extra toggles alongside the event filters:\n\n• Period toggle — shows just the current period by default ("Period 2 Only"); tap it to switch to "All Periods" and see every event from the whole game overlaid on the rink at once.\n\n• Home/Away isolation — two buttons showing each team\'s nickname. Tap one to show only that team\'s events on the rink; tap it again to go back to showing both.\n\nBelow that, the filter bar lets you show or hide each event type independently. Tap "Isolate" to hide everything at once, then tap individual event types back on one at a time — or "Show All" to bring everything back.\n\nSHOT, ZONE ENTRIES, and BREAKOUTS each have an extra ▾ next to them — tap it to slide out finer sub-filters:\n\n• Shot — Result (On Net / Attempt) and Strength (PP / PK), combinable.\n• Zone Entries — Type (Carry / Dump / Pass / Denied, pick any combination) and Retrieval (For / Against, for dump-ins).\n• Breakouts — Result (Controlled / Failed).\n\nTapping a main chip itself always resets its sub-filters back to showing everything of that type.'
       },
     ]
   },
@@ -187,7 +187,7 @@ const sections: ManualCategory[] = [
       },
       {
         title: 'Team nickname display',
-        content: 'The rink screen shows your team\'s nickname (the last word of the team name) on the Home/Away toggle buttons and shot counters to keep the layout clean on mobile. For example, a team named "City Nickname" would display as "Nickname". The full team name still appears everywhere else in the app.'
+        content: 'The rink screen shows your team\'s nickname — everything after the first word of the team name — on the active-team toggle and the Home/Away isolation filter buttons, to keep the layout clean on mobile. If the automatic guess isn\'t right for your team name, set an exact nickname yourself in Roster Setup (see "Setting team names"). The full team name still appears everywhere else in the app.'
       }
     ]
   },
@@ -238,6 +238,14 @@ const sections: ManualCategory[] = [
       {
         title: 'Sharing a game report',
         content: 'In the game detail view, toggle "Share with plan" to make the report visible to everyone on your plan in the Shared tab. Toggle it off to make it private again. Only the person who saved the game can share or delete it.'
+      },
+      {
+        title: 'Season Stats',
+        content: 'A "📅 Season" tab sits alongside My Games and Shared in Game History — a cumulative rollup across every game you\'ve saved, not just one at a time.\n\nThe app guesses which team is "yours" automatically (whichever name shows up most often across your saved games, since your opponent changes every game but your own team doesn\'t) — with a dropdown to pick a different team if it guesses wrong.\n\nYou\'ll see season totals for every skater — games played, goals, assists, points, shots, hits, penalties, blocks, and +/- — tap any column header to sort by it. Below that, a season save-percentage trend shows one tile per game.\n\nIf you have a starting goalie set for games saved after this feature was added, you\'ll also see a proper Season Goalie Totals table with real per-goalie save percentage, correctly split across any mid-game swaps. Games saved before this existed still count toward the overall trend, just not broken out by individual goalie — the panel tells you clearly which is which rather than guessing.'
+      },
+      {
+        title: 'Sharing a single player\'s stats',
+        content: 'From any saved game\'s detail view, use the "Share a player\'s stats" dropdown to pick any player from either roster. A clean card appears with their name, team, opponent, date, and key stats — tap "Download Image" to save it as a real PNG file, ready to send in a team group chat or hand off to parents.\n\nIf the download fails, it\'s almost always because of the team logo — try again, or remove the logo and re-save the game if it keeps happening.'
       }
     ]
   },
@@ -280,6 +288,10 @@ const sections: ManualCategory[] = [
       {
         title: 'Auto-resume on a new device',
         content: 'If you\'re already part of an active session — whether you created it or joined earlier — opening the app fresh on a different device (like moving from your office computer to a tablet on the bench) will prompt you to resume automatically. You won\'t need to re-enter the session code.\n\nA "Resume active session?" screen shows the matchup, the session code, and your role — tap "Resume session" to jump straight back in, or "Not now" if you\'d rather start something else. This check happens once each time you open the app, and only appears if nothing is currently active.'
+      },
+      {
+        title: 'What happens if you lose connection mid-session',
+        content: 'Arena WiFi drops — it happens. If your connection cuts out during a Live Session, a banner appears letting you know: your own logging keeps working completely normally, it just won\'t sync to the other device until you\'re back online.\n\nThe moment your connection returns, two things happen automatically: anything you logged while offline gets sent through, and the app pulls in anything the other device logged during the gap — with a confirmation showing exactly how many events were caught up. You don\'t need to do anything yourself; just keep tracking.'
       },
       {
         title: 'Roles explained',
