@@ -1,7 +1,7 @@
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
  
-  const { teamName, pasteText, rosterUrl: rawRosterUrl } = req.body;
+  const { teamName, pasteText, rosterUrl: rawRosterUrl, imageBase64, imageMediaType } = req.body;
   if (!teamName) return res.status(400).json({ status: 'ERROR', reason: 'Team name required' });
  
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -25,17 +25,26 @@ RULES: Only extract players from the text below. Extract jersey number, full nam
 PASTED TEXT:
 ${pasteText}
 Respond with ONLY valid JSON, no markdown, no explanation: {"status":"OK","players":[{"number":"15","name":"Player Name","position":"C","line":"1"}]}`
+    : imageBase64
+      ? `You are a hockey roster parser. The attached image is a photo or screenshot of a roster or lineup sheet. Read it carefully — it may be photographed at an angle, have glare, or be handwritten. Extract ALL players belonging to "${teamName}" (if the image shows more than one team, only extract players from "${teamName}" — ignore the opposing team). Extract each player's jersey number, full name, and position. Position: map to C, LW, RW, D, or G only. Line assignment: Forwards get 1,2,3,4. Defense get P1,P2,P3. Goalies get G1,G2. If jersey number missing use "00". No duplicates. ${NAME_RULE} ${NUMBER_RULE}
+Respond with ONLY valid JSON, no markdown, no explanation: {"status":"OK","players":[{"number":"15","name":"Player Name","position":"C","line":"1"}]}`
     : isPdfUrl
       ? `You are a hockey roster parser. The attached document is a roster or game lineup sheet. Extract ALL players belonging to "${teamName}" (if the document lists more than one team, only extract players from "${teamName}" — ignore the opposing team). Extract each player's jersey number, full name, and position. Position: map to C, LW, RW, D, or G only. Line assignment: Forwards get 1,2,3,4. Defense get P1,P2,P3. Goalies get G1,G2. No duplicates. ${NAME_RULE} ${NUMBER_RULE}
 Respond with ONLY valid JSON, no markdown, no explanation: {"status":"OK","players":[{"number":"15","name":"Player Name","position":"C","line":"1"}]}`
       : `You are a hockey roster expert. Find the current roster for the "${teamName}" hockey team. Extract all players with their jersey number, full name, and position (C, LW, RW, D, or G). Assign lines: forwards to 1-4, defense to P1-P3, goalies to G1-G2. ${NAME_RULE}
 Respond with ONLY valid JSON, no markdown, no explanation: {"status":"OK","players":[{"number":"15","name":"Player Name","position":"C","line":"1"}]}`;
  
-  // When we have an actual PDF to read, attach it directly as a document
-  // block so the model reads the real file instead of guessing from
-  // general knowledge (which is what was happening before — rosterUrl was
-  // being captured but never actually sent to the AI).
-  const content = isPdfUrl
+  // When we have an actual PDF to read, or a photographed/screenshotted
+  // roster image, attach it directly as a document/image block so the
+  // model reads the real source instead of guessing from general
+  // knowledge (which is what was happening before — rosterUrl was being
+  // captured but never actually sent to the AI).
+  const content = imageBase64
+    ? [
+        { type: 'image', source: { type: 'base64', media_type: imageMediaType || 'image/jpeg', data: imageBase64 } },
+        { type: 'text', text: promptText }
+      ]
+    : isPdfUrl
     ? [
         { type: 'document', source: { type: 'url', url: rosterUrl } },
         { type: 'text', text: promptText }
@@ -51,7 +60,7 @@ Respond with ONLY valid JSON, no markdown, no explanation: {"status":"OK","playe
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: isPdfUrl ? 'claude-sonnet-4-5' : 'claude-haiku-4-5',
+        model: (isPdfUrl || imageBase64) ? 'claude-sonnet-4-5' : 'claude-haiku-4-5',
         max_tokens: 2000,
         messages: [{ role: 'user', content }]
       })
@@ -90,4 +99,3 @@ Respond with ONLY valid JSON, no markdown, no explanation: {"status":"OK","playe
     return res.status(200).json({ status: 'ERROR', players: [], reason: `Exception: ${err.message}` });
   }
 }
- 
