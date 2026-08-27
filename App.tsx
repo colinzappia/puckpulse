@@ -1720,6 +1720,8 @@ const App: React.FC = () => {
     'patrickdelislehoude@cunet.carleton.ca',
     'jboyd@ontariohockeyleague.com',
     'boydjam@gmail.com',
+    'andrewmercer@rogers.com',
+    'pstoykewych@ottawa67s.com',
   ];
   const userEmail = currentUser?.primaryEmailAddress?.emailAddress?.toLowerCase() || user?.primaryEmailAddress?.emailAddress?.toLowerCase() || '';
   const isAdmin = ADMIN_EMAILS.includes(userEmail);
