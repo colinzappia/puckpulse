@@ -11,15 +11,17 @@ interface SyncParams {
   teamName: string;
   rosterUrl?: string;
   pasteText?: string;
+  imageBase64?: string;
+  imageMediaType?: string;
 }
 
-export async function fetchRosterByAI({ teamName, rosterUrl, pasteText }: SyncParams): Promise<AIRosterResponse> {
+export async function fetchRosterByAI({ teamName, rosterUrl, pasteText, imageBase64, imageMediaType }: SyncParams): Promise<AIRosterResponse> {
   if (!navigator.onLine) return { status: 'ERROR', players: [], reason: 'Roster sync requires an internet connection. Please add players manually while offline.' };
   try {
     const response = await fetch('/api/ai-roster', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ teamName, rosterUrl, pasteText })
+      body: JSON.stringify({ teamName, rosterUrl, pasteText, imageBase64, imageMediaType })
     });
     const data = await response.json();
     return data;
