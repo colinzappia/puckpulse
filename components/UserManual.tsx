@@ -35,6 +35,10 @@ const sections: ManualCategory[] = [
         content: 'The fastest and most reliable way to load a roster. Go to any league website (Pointstreak, HockeyDB, your league site, etc.), select the roster table with your finger or mouse, and copy it. Then in Roster Setup, paste the text into the paste area and tap Import Roster. The AI reads the raw text and builds your lineup in seconds. Works on any device, any league, any website.\n\nNames are automatically normalized to "First Last" order even if the source listed them as "Last, First" — you never need to manually fix that.\n\nAfter importing, you\'ll be prompted to save the roster to your Team Library for quick reuse in future games.'
       },
       {
+        title: 'Photo Roster Import',
+        content: 'No website to copy from? Snap a photo of a printed roster sheet, or screenshot one from anywhere, and tap "Upload Roster Photo" in Roster Setup. This reads the actual image directly — it\'s not a bolt-on scanner, so it holds up reasonably well against angled photos, glare, or even handwritten lineup sheets, not just clean digital screenshots.\n\nBuilds your lineup the same way as pasting text does — jersey numbers, names normalized to "First Last" order, and positions all extracted automatically, with the same save-to-Team-Library prompt afterward.\n\nPhotos are automatically resized before uploading, so there\'s no need to crop or shrink an image yourself first — just make sure the roster is reasonably legible in the shot.'
+      },
+      {
         title: 'Manual roster entry',
         content: 'You can also add players one at a time. Tap "Add Player", enter their jersey number, full name, and position. Assign them to a line or pairing (1–4 for forwards, P1–P3 for defense, G1–G2 for goalies).'
       },
