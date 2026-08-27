@@ -1490,6 +1490,38 @@ const App: React.FC = () => {
     }
   };
 
+  // Phone camera photos are routinely 3-10MB+ — once base64-encoded for
+  // the request body, that can exceed serverless function request-size
+  // limits entirely before the image ever reaches the AI. A roster photo
+  // only needs to be legible, not full camera resolution, so downscale
+  // and re-compress it client-side first.
+  const resizeImageForUpload = (file: File, maxDimension = 1800, quality = 0.85): Promise<{ base64: string; mediaType: string }> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+        let { width, height } = img;
+        if (width > maxDimension || height > maxDimension) {
+          const scale = maxDimension / Math.max(width, height);
+          width = Math.round(width * scale);
+          height = Math.round(height * scale);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { reject(new Error('Could not process image')); return; }
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+        const base64 = dataUrl.split(',')[1];
+        resolve({ base64, mediaType: 'image/jpeg' });
+      };
+      img.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error('Could not load that image')); };
+      img.src = objectUrl;
+    });
+  };
+
   // Reads a photographed or screenshotted roster sheet directly — same
   // underlying AI parsing as the paste-text flow, just with an image
   // instead of copied text. Handles handwritten/angled/glare-affected
@@ -1503,14 +1535,7 @@ const App: React.FC = () => {
     setIsPasteSyncing(true);
     setSyncMessage('Reading roster photo...');
     try {
-      const dataUrl: string = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-      const [header, base64] = dataUrl.split(',');
-      const mediaType = header.match(/data:(.*?);base64/)?.[1] || file.type || 'image/jpeg';
+      const { base64, mediaType } = await resizeImageForUpload(file);
 
       const result = await fetchRosterByAI({ teamName, imageBase64: base64, imageMediaType: mediaType });
       if (result.status === 'ERROR') throw new Error(result.reason || 'Could not parse roster');
