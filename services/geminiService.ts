@@ -23,7 +23,21 @@ export async function fetchRosterByAI({ teamName, rosterUrl, pasteText, imageBas
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ teamName, rosterUrl, pasteText, imageBase64, imageMediaType })
     });
-    const data = await response.json();
+
+    // The server can be rejected before our own handler code even runs
+    // (e.g. a request-size limit on serverless functions) — that comes
+    // back as a plain-text error, not JSON. Detect that case specifically
+    // rather than letting a raw JSON.parse failure surface to the user.
+    if (response.status === 413) {
+      return { status: 'ERROR', players: [], reason: 'That image is too large to upload. Try a smaller photo, or crop it closer to just the roster.' };
+    }
+    const raw = await response.text();
+    let data: AIRosterResponse;
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      return { status: 'ERROR', players: [], reason: `Server returned an unexpected response (${response.status}). Try again, or use a smaller image.` };
+    }
     return data;
   } catch (err: any) {
     return { status: 'ERROR', players: [], reason: err.message };
