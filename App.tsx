@@ -1490,6 +1490,48 @@ const App: React.FC = () => {
     }
   };
 
+  // Reads a photographed or screenshotted roster sheet directly — same
+  // underlying AI parsing as the paste-text flow, just with an image
+  // instead of copied text. Handles handwritten/angled/glare-affected
+  // photos reasonably well since a real vision model reads the image,
+  // not a bolt-on OCR pass.
+  const handleImageRosterSync = async (team: Team, file: File | null) => {
+    if (!file) return;
+    const isHome = team === Team.HOME;
+    const teamName = isHome ? homeName : awayName;
+    if (!teamName.trim()) { alert('Please enter a team name first.'); return; }
+    setIsPasteSyncing(true);
+    setSyncMessage('Reading roster photo...');
+    try {
+      const dataUrl: string = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      const [header, base64] = dataUrl.split(',');
+      const mediaType = header.match(/data:(.*?);base64/)?.[1] || file.type || 'image/jpeg';
+
+      const result = await fetchRosterByAI({ teamName, imageBase64: base64, imageMediaType: mediaType });
+      if (result.status === 'ERROR') throw new Error(result.reason || 'Could not parse roster');
+      const players: Player[] = (result.players || []).map((p: any) => ({
+        number: p.number || '00', name: normalizeName(p.name), position: p.position || 'F',
+        line: p.line || (p.position === 'G' ? 'G1' : p.position === 'D' ? 'P1' : '1'),
+      }));
+      if (players.length === 0) throw new Error('No players found in that photo — try a clearer, straighter shot.');
+      const sortedPlayers = sortByNumber(players);
+      if (isHome) setHomeRoster(sortedPlayers);
+      else setAwayRoster(sortedPlayers);
+      setSyncMessage('');
+      setSavePrompt({ teamName: teamName.trim(), roster: sortedPlayers, logo: isHome ? homeLogo : awayLogo, side: isHome ? 'home' : 'away' });
+    } catch (err: any) {
+      alert(`Roster Photo Error: ${err.message}`);
+    } finally {
+      setIsPasteSyncing(false);
+      setSyncMessage('');
+    }
+  };
+
   const handleGenerateInsights = async () => {
     setIsGeneratingInsights(true);
     try {
@@ -2687,6 +2729,14 @@ const App: React.FC = () => {
                     <button onClick={() => handlePasteSync(team)} disabled={isPasteSyncing || !(isHome ? pasteRosterHome : pasteRosterAway).trim()} className={`w-full py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isPasteSyncing || !(isHome ? pasteRosterHome : pasteRosterAway).trim() ? 'bg-slate-800 text-slate-600' : 'bg-cyan-600 text-white hover:bg-cyan-500 shadow-lg border border-cyan-400/30'}`}>
                       {isPasteSyncing ? <span className="flex items-center justify-center gap-2"><span className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{animationDelay:'0ms'}}/><span className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{animationDelay:'150ms'}}/><span className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{animationDelay:'300ms'}}/></span> : '📋 Import Roster'}
                     </button>
+                  </section>
+                  <section className="space-y-4 p-5 bg-white/5 rounded-[2.5rem] border border-white/5">
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">📷 Photo / Screenshot Roster</h4>
+                    <p className="text-[9px] text-slate-500 px-1">Snap a photo of a printed roster sheet, or screenshot one from anywhere — even handwritten lineups usually work.</p>
+                    <label className={`w-full py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center cursor-pointer ${isPasteSyncing ? 'bg-slate-800 text-slate-600' : 'bg-cyan-600 text-white hover:bg-cyan-500 shadow-lg border border-cyan-400/30'}`}>
+                      {isPasteSyncing ? <span className="flex items-center justify-center gap-2"><span className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{animationDelay:'0ms'}}/><span className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{animationDelay:'150ms'}}/><span className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{animationDelay:'300ms'}}/></span> : '📷 Upload Roster Photo'}
+                      <input type="file" accept="image/*" disabled={isPasteSyncing} className="hidden" onChange={e => { handleImageRosterSync(team, e.target.files?.[0] || null); e.target.value = ''; }} />
+                    </label>
                   </section>
                   <section className="space-y-4">
                     <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-500 px-1">Manual Player Entry</h4>
