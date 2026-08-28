@@ -1055,6 +1055,7 @@ const App: React.FC = () => {
   const [lastEvent, setLastEvent] = useState<{type: EventType; playerNumber: string; team: Team} | null>(null);
   const [plotFlash, setPlotFlash] = useState(false);
   const [showEndGame, setShowEndGame] = useState(false);
+  const [showEndGameConfirm, setShowEndGameConfirm] = useState(false);
   const [pendingGoal, setPendingGoal] = useState<{x: number; y: number; team: Team; playerNumber: string} | null>(null);
   const [pendingFaceoff, setPendingFaceoff] = useState<{x: number; y: number} | null>(null);
   const [pendingEntry, setPendingEntry] = useState<{x: number; y: number} | null>(null);
@@ -1646,7 +1647,7 @@ const App: React.FC = () => {
   };
   const handleExportExcel = () => downloadExcelReport(prepareExportData());
   const handleExportHTML = () => downloadHTMLExport(prepareExportData());
-  const handleEndGame = () => setShowEndGame(true);
+  const handleEndGame = () => setShowEndGameConfirm(true);
   const handleConfirmEndGame = async () => {
     if (user) {
       try { await endAllActiveSessionsForUser(user.id); } catch (e) { console.error(e); }
@@ -2922,6 +2923,20 @@ const App: React.FC = () => {
           <div className="flex gap-3">
             <button onClick={() => setShowClearConfirm(false)} className="flex-1 py-3 border border-white/10 hover:border-white/20 text-white font-bold rounded-xl text-sm transition-colors">Cancel</button>
             <button onClick={handleClearEvents} className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white font-black rounded-xl text-sm transition-colors">Clear Everything</button>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {showEndGameConfirm && (
+      <div className="fixed inset-0 z-[400] bg-black/80 backdrop-blur-sm flex items-center justify-center px-4">
+        <div className="bg-[#0f1620] border border-white/10 rounded-2xl p-8 max-w-sm w-full shadow-2xl text-center">
+          <div className="text-4xl mb-4">🏒</div>
+          <h3 className="text-white font-black text-xl mb-2">End the Game?</h3>
+          <p className="text-slate-400 text-sm mb-6">This will take you to the game summary, where you can export or save your reports before finishing up.</p>
+          <div className="flex gap-3">
+            <button onClick={() => setShowEndGameConfirm(false)} className="flex-1 py-3 border border-white/10 hover:border-white/20 text-white font-bold rounded-xl text-sm transition-colors">Keep Tracking</button>
+            <button onClick={() => { setShowEndGameConfirm(false); setShowEndGame(true); }} className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white font-black rounded-xl text-sm transition-colors">Yes, End Game</button>
           </div>
         </div>
       </div>
