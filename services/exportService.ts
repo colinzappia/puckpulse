@@ -519,5 +519,29 @@ export function downloadExcelReport(data: ExportData) {
   const wsZone = XLSX.utils.aoa_to_sheet(zoneData);
   XLSX.utils.book_append_sheet(wb, wsZone, "Zone Play");
 
+  // 7. Shot Locations — raw coordinates for building a native Excel
+  // scatter chart. A literal picture of the rink diagram can't be
+  // embedded here: SheetJS's free library (what this app uses) doesn't
+  // support inserting images or charts — that's a paid "Pro" feature
+  // only. This is the practical alternative: select the X/Y columns
+  // below and use Excel's Insert > Chart > Scatter to build your own
+  // real, interactive rink chart — filterable and recolorable, not a
+  // static picture.
+  const shotEvents = data.events.filter(e => e.coordinates && (e.type === EventType.SHOT || e.type === EventType.GOAL));
+  if (shotEvents.length > 0) {
+    const shotHeader = ["Period", "Team", "Result", "Player #", "X", "Y"];
+    const shotRows = shotEvents.sort((x, y) => x.period - y.period).map(e => [
+      e.period,
+      e.team === Team.HOME ? data.homeName : data.awayName,
+      e.type === EventType.GOAL ? 'Goal' : (e.metadata?.onNet === false ? 'Attempt' : 'On Net'),
+      e.playerNumber || 'N/A',
+      e.coordinates!.x,
+      e.coordinates!.y,
+    ]);
+    const noteRow = ["Tip: select the X and Y columns above, then Insert > Chart > Scatter to build your own rink shot chart in Excel.", "", "", "", "", ""];
+    const wsShots = XLSX.utils.aoa_to_sheet([shotHeader, ...shotRows, [], noteRow]);
+    XLSX.utils.book_append_sheet(wb, wsShots, "Shot Locations");
+  }
+
   XLSX.writeFile(wb, `TopCheeseHockey-Data-${data.homeName}-vs-${data.awayName}.xlsx`);
 }
