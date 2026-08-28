@@ -161,7 +161,7 @@ export function computeGoalieStats(events: GameEvent[], history: { number: strin
   });
 }
 
-function computeZonePlayStats(events: GameEvent[], team: Team) {
+export function computeZonePlayStats(events: GameEvent[], team: Team) {
   const teamEvents = events.filter(e => e.team === team);
 
   const carry = teamEvents.filter(e => e.type === EventType.ZONE_ENTRY_CARRY).length;
