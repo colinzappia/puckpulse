@@ -32,6 +32,19 @@ interface GoalieHubProps {
 const IMG_W = 1408;
 const IMG_H = 768;
 
+// The actual net frame's boundary within the image, measured directly
+// from the red frame's pixel bounds. A tap landing outside this box
+// missed the net entirely — it shouldn't count as a shot faced (or
+// affect save percentage) any more than a real shot sailing wide would.
+const NET_X_MIN = 286;
+const NET_X_MAX = 1121;
+const NET_Y_MIN = 94;
+const NET_Y_MAX = 623;
+
+function isOnNet(x: number, y: number): boolean {
+  return x >= NET_X_MIN && x <= NET_X_MAX && y >= NET_Y_MIN && y <= NET_Y_MAX;
+}
+
 const NetDiagram: React.FC<{
   marks: NetMark[];
   positiveValue: string;
@@ -62,14 +75,17 @@ const NetDiagram: React.FC<{
     >
       <image href="/goalie-net.png" xlinkHref="/goalie-net.png" x={0} y={0} width={IMG_W} height={IMG_H} />
       {marks.map((m, i) => {
+        const isAttempt = m.outcome === 'attempt';
         const isPositive = m.outcome === positiveValue;
-        const color = isPositive ? '#22c55e' : '#ef4444';
+        const color = isAttempt ? '#94a3b8' : (isPositive ? '#22c55e' : '#ef4444');
         const size = 11;
         const s = size * 0.55;
         return (
           <g key={i}>
-            <circle cx={m.x} cy={m.y} r={size} fill={color} className="drop-shadow-lg" />
-            {isPositive ? (
+            <circle cx={m.x} cy={m.y} r={size} fill={color} className="drop-shadow-lg" opacity={isAttempt ? 0.85 : 1} />
+            {isAttempt ? (
+              <circle cx={m.x} cy={m.y} r={s * 0.35} fill="#ffffff" />
+            ) : isPositive ? (
               <path
                 d={`M ${m.x - s * 0.55} ${m.y - s * 0.05} L ${m.x - s * 0.1} ${m.y + s * 0.45} L ${m.x + s * 0.6} ${m.y - s * 0.5}`}
                 fill="none" stroke="#ffffff" strokeWidth={size * 0.3} strokeLinecap="round" strokeLinejoin="round"
@@ -114,6 +130,7 @@ const NetPanel: React.FC<{
 
   const positiveCount = marks.filter(m => m.outcome === positiveValue).length;
   const negativeCount = marks.filter(m => m.outcome === negativeValue).length;
+  const attemptCount = marks.filter(m => m.outcome === 'attempt').length;
   const total = positiveCount + negativeCount;
   const pct = total > 0 ? `.${Math.round((positiveCount / total) * 1000)}` : '—';
 
@@ -153,8 +170,8 @@ const NetPanel: React.FC<{
         </button>
       </div>
 
-      <NetDiagram marks={marks} positiveValue={positiveValue} onTap={(x, y) => onAdd(x, y, mode)} />
-      <p className="text-slate-600 text-[11px] text-center mt-2">Tap anywhere in the net to log a shot placement</p>
+      <NetDiagram marks={marks} positiveValue={positiveValue} onTap={(x, y) => onAdd(x, y, isOnNet(x, y) ? mode : 'attempt')} />
+      <p className="text-slate-600 text-[11px] text-center mt-2">Tap the net to log a shot — taps outside the frame count as a missed net, not a shot faced</p>
 
       <div className="flex items-center gap-3 mt-4">
         <div className="flex-1 bg-white/5 rounded-xl py-2.5 text-center">
@@ -169,6 +186,12 @@ const NetPanel: React.FC<{
           <p className="text-cyan-400 text-xl font-black">{pct}</p>
           <p className="text-slate-500 text-[9px] font-bold uppercase tracking-wider mt-0.5">{pctLabel}</p>
         </div>
+        {attemptCount > 0 && (
+          <div className="flex-1 bg-white/5 rounded-xl py-2.5 text-center">
+            <p className="text-slate-400 text-xl font-black">{attemptCount}</p>
+            <p className="text-slate-500 text-[9px] font-bold uppercase tracking-wider mt-0.5">Missed Net</p>
+          </div>
+        )}
       </div>
     </div>
   );
