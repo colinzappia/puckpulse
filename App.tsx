@@ -866,7 +866,7 @@ const App: React.FC = () => {
     }
   };
 
-  const handleDownloadFromHistory = (report: SavedGameReport, format: 'pdf' | 'excel' | 'html') => {
+  const handleDownloadFromHistory = async (report: SavedGameReport, format: 'pdf' | 'excel' | 'html') => {
     const maxPeriod = Math.max(...report.events.map(e => e.period), report.periods);
     const data = {
       homeName: report.homeName, awayName: report.awayName,
@@ -881,7 +881,13 @@ const App: React.FC = () => {
       homeRoster: report.homeRoster,
       awayRoster: report.awayRoster,
     };
-    if (format === 'pdf') downloadPDFReport(data);
+    if (format === 'pdf') {
+      try {
+        await downloadPDFReport(data);
+      } catch (err: any) {
+        toast.error(err?.message || 'Could not generate the PDF.');
+      }
+    }
     else if (format === 'excel') downloadExcelReport(data);
     else if (format === 'html') downloadHTMLExport(data);
   };
@@ -1629,7 +1635,13 @@ const App: React.FC = () => {
     return { homeName, awayName, homeLogo, awayLogo, events, stats: { home: getStatsForRange(Team.HOME), away: getStatsForRange(Team.AWAY) }, summaries, maxPeriod, homeRoster, awayRoster };
   };
 
-  const handleExportPDF = () => downloadPDFReport(prepareExportData());
+  const handleExportPDF = async () => {
+    try {
+      await downloadPDFReport(prepareExportData());
+    } catch (err: any) {
+      toast.error(err?.message || 'Could not generate the PDF.');
+    }
+  };
   const handleExportExcel = () => downloadExcelReport(prepareExportData());
   const handleExportHTML = () => downloadHTMLExport(prepareExportData());
   const handleEndGame = () => setShowEndGame(true);
