@@ -1023,19 +1023,19 @@ const App: React.FC = () => {
   // Goalie Hub net-placement marks — purely visual, per-team, reset whenever
   // that team's goalie changes (initial pick or a mid-game swap), since a
   // new goalie shouldn't inherit the outgoing goalie's shot chart.
-  const [netMarksHome, setNetMarksHome] = useState<{ x: number; y: number; outcome: 'save' | 'goal' }[]>(() => {
+  const [netMarksHome, setNetMarksHome] = useState<{ x: number; y: number; outcome: 'save' | 'goal' | 'attempt' }[]>(() => {
     try { const v = sessionStorage.getItem('tch_netMarksHome'); return v ? JSON.parse(v) : []; } catch { return []; }
   });
-  const [netMarksAway, setNetMarksAway] = useState<{ x: number; y: number; outcome: 'save' | 'goal' }[]>(() => {
+  const [netMarksAway, setNetMarksAway] = useState<{ x: number; y: number; outcome: 'save' | 'goal' | 'attempt' }[]>(() => {
     try { const v = sessionStorage.getItem('tch_netMarksAway'); return v ? JSON.parse(v) : []; } catch { return []; }
   });
   // Shots FOR — this team's own shooting placement against the opposing
   // net. Separate from the shots-against/goalie marks above: not tied to
   // any specific goalie, so it doesn't reset on a goalie swap.
-  const [shotsForHome, setShotsForHome] = useState<{ x: number; y: number; outcome: 'goal' | 'missed' }[]>(() => {
+  const [shotsForHome, setShotsForHome] = useState<{ x: number; y: number; outcome: 'goal' | 'missed' | 'attempt' }[]>(() => {
     try { const v = sessionStorage.getItem('tch_shotsForHome'); return v ? JSON.parse(v) : []; } catch { return []; }
   });
-  const [shotsForAway, setShotsForAway] = useState<{ x: number; y: number; outcome: 'goal' | 'missed' }[]>(() => {
+  const [shotsForAway, setShotsForAway] = useState<{ x: number; y: number; outcome: 'goal' | 'missed' | 'attempt' }[]>(() => {
     try { const v = sessionStorage.getItem('tch_shotsForAway'); return v ? JSON.parse(v) : []; } catch { return []; }
   });
   const {
@@ -1373,7 +1373,7 @@ const App: React.FC = () => {
     setMarks([]);
   }, []);
 
-  const addNetMark = useCallback((team: Team, x: number, y: number, outcome: 'save' | 'goal') => {
+  const addNetMark = useCallback((team: Team, x: number, y: number, outcome: 'save' | 'goal' | 'attempt') => {
     const setMarks = team === Team.HOME ? setNetMarksHome : setNetMarksAway;
     setMarks(prev => [...prev, { x, y, outcome }]);
   }, []);
@@ -1388,7 +1388,7 @@ const App: React.FC = () => {
     setMarks([]);
   }, []);
 
-  const addShotFor = useCallback((team: Team, x: number, y: number, outcome: 'goal' | 'missed') => {
+  const addShotFor = useCallback((team: Team, x: number, y: number, outcome: 'goal' | 'missed' | 'attempt') => {
     const setMarks = team === Team.HOME ? setShotsForHome : setShotsForAway;
     setMarks(prev => [...prev, { x, y, outcome }]);
   }, []);
