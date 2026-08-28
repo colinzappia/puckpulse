@@ -880,6 +880,8 @@ const App: React.FC = () => {
       maxPeriod,
       homeRoster: report.homeRoster,
       awayRoster: report.awayRoster,
+      goalieHistoryHome: report.goalieHistoryHome || [],
+      goalieHistoryAway: report.goalieHistoryAway || [],
     };
     if (format === 'pdf') {
       try {
@@ -1632,7 +1634,7 @@ const App: React.FC = () => {
 
   const prepareExportData = () => {
     const maxPeriod = Math.max(...events.map(e => e.period), currentPeriod);
-    return { homeName, awayName, homeLogo, awayLogo, events, stats: { home: getStatsForRange(Team.HOME), away: getStatsForRange(Team.AWAY) }, summaries, maxPeriod, homeRoster, awayRoster };
+    return { homeName, awayName, homeLogo, awayLogo, events, stats: { home: getStatsForRange(Team.HOME), away: getStatsForRange(Team.AWAY) }, summaries, maxPeriod, homeRoster, awayRoster, goalieHistoryHome, goalieHistoryAway };
   };
 
   const handleExportPDF = async () => {
