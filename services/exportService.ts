@@ -154,12 +154,10 @@ export async function downloadPDFReport(data: ExportData) {
 
       <div style="display: flex; gap: 20px; margin-bottom: 40px;">
         <div style="flex: 1; padding: 20px; background: #f8f8f8; border-radius: 15px; text-align: center;">
-          ${data.homeLogo ? `<img src="${data.homeLogo}" crossorigin="anonymous" style="height:40px; object-fit:contain; margin-bottom:8px;" />` : ''}
           <div style="font-size: 10px; font-weight: 900; color: #666; text-transform: uppercase;">${data.homeName}</div>
           <div style="font-size: 48px; font-weight: 900;">${data.stats.home.goals}</div>
         </div>
         <div style="flex: 1; padding: 20px; background: #f8f8f8; border-radius: 15px; text-align: center;">
-          ${data.awayLogo ? `<img src="${data.awayLogo}" crossorigin="anonymous" style="height:40px; object-fit:contain; margin-bottom:8px;" />` : ''}
           <div style="font-size: 10px; font-weight: 900; color: #666; text-transform: uppercase;">${data.awayName}</div>
           <div style="font-size: 48px; font-weight: 900;">${data.stats.away.goals}</div>
         </div>
@@ -191,13 +189,11 @@ export async function downloadPDFReport(data: ExportData) {
   try {
     // html2pdf can be a function or have a default property depending on how it's bundled
     const exporter = typeof html2pdf === 'function' ? html2pdf : (html2pdf as any).default;
-    if (exporter) {
-      await exporter().set(opt).from(reportContainer).save();
-    } else {
-      console.error("html2pdf library not found or incorrectly imported");
-    }
-  } catch (err) {
+    if (!exporter) throw new Error('PDF library failed to load — try refreshing the page.');
+    await exporter().set(opt).from(reportContainer).save();
+  } catch (err: any) {
     console.error("PDF Generation Error:", err);
+    throw new Error(err?.message || 'Could not generate the PDF. Please try again.');
   } finally {
     document.body.removeChild(reportContainer);
   }
@@ -315,10 +311,9 @@ export function downloadExcelReport(data: ExportData) {
   XLSX.utils.book_append_sheet(wb, wsSummary, "Overview");
 
   // 2. Full Game Log
-  const logHeader = ["Period", "Time", "Team", "Event", "Player #", "Zone", "Notes"];
+  const logHeader = ["Period", "Team", "Event", "Player #", "Zone", "Notes"];
   const logRows = data.events.sort((a,b) => a.timestamp - b.timestamp).map(e => [
     e.period,
-    e.gameTime,
     e.team === Team.HOME ? data.homeName : data.awayName,
     e.type,
     e.playerNumber || "N/A",
