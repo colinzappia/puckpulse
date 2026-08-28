@@ -15,6 +15,7 @@ import {
   toggleReportShared,
 } from '../services/gameReportService';
 import { GameEvent, EventType, Team } from '../types';
+import { buildPlayerStats } from './playerstats';
 import SeasonStats from './SeasonStats';
 import PlayerShareCard from './PlayerShareCard';
 
@@ -25,12 +26,21 @@ interface Props {
   onDownloadReport: (report: SavedGameReport, format: 'pdf' | 'excel' | 'html') => void;
 }
 
-function getStats(events: GameEvent[], team: Team) {
-  const te = events.filter(e => e.team === team);
+function getStats(events: GameEvent[], roster: any[], team: Team) {
+  const rows = buildPlayerStats(events, roster, team);
+  const goals = rows.reduce((s, r) => s + r.goals, 0);
+  const shotsOnNet = rows.reduce((s, r) => s + r.shotsOnNet, 0);
+  const hits = rows.reduce((s, r) => s + r.hits, 0);
+  const blocks = rows.reduce((s, r) => s + r.blocks, 0);
+  const faceoffWins = rows.reduce((s, r) => s + r.faceoffWins, 0);
+  const faceoffLosses = rows.reduce((s, r) => s + r.faceoffLosses, 0);
+  const foTotal = faceoffWins + faceoffLosses;
+  const teamEvents = events.filter(e => e.team === team);
+  const pim = teamEvents.filter(e => e.type === EventType.PENALTY).reduce((s, e) => s + (Number(e.metadata?.minutes) || 0), 0);
   return {
-    goals: te.filter(e => e.type === EventType.GOAL).length,
-    shots: te.filter(e => e.type === EventType.SHOT || e.type === EventType.GOAL).length,
-    penalties: te.filter(e => e.type === EventType.PENALTY).length,
+    goals, shots: shotsOnNet, hits, blocks, pim,
+    shootingPct: shotsOnNet > 0 ? (goals / shotsOnNet) * 100 : null,
+    faceoffPct: foTotal > 0 ? (faceoffWins / foTotal) * 100 : null,
   };
 }
 
@@ -97,8 +107,8 @@ export default function GameHistory({ isOpen, onClose, onLoadGame, onDownloadRep
 
   // Detail view
   if (selected) {
-    const homeStats = getStats(selected.events, Team.HOME);
-    const awayStats = getStats(selected.events, Team.AWAY);
+    const homeStats = getStats(selected.events, selected.homeRoster, Team.HOME);
+    const awayStats = getStats(selected.events, selected.awayRoster, Team.AWAY);
     const canEdit = selected.userId === user?.id;
 
     return (
@@ -136,15 +146,18 @@ export default function GameHistory({ isOpen, onClose, onLoadGame, onDownloadRep
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 12 }}>
               {[
                 { label: 'Shots', home: homeStats.shots, away: awayStats.shots },
-                { label: 'Goals', home: homeStats.goals, away: awayStats.goals },
-                { label: 'Penalties', home: homeStats.penalties, away: awayStats.penalties },
+                { label: 'Shooting %', home: homeStats.shootingPct !== null ? `${homeStats.shootingPct.toFixed(0)}%` : '—', away: awayStats.shootingPct !== null ? `${awayStats.shootingPct.toFixed(0)}%` : '—' },
+                { label: 'Faceoff %', home: homeStats.faceoffPct !== null ? `${homeStats.faceoffPct.toFixed(0)}%` : '—', away: awayStats.faceoffPct !== null ? `${awayStats.faceoffPct.toFixed(0)}%` : '—' },
+                { label: 'Hits', home: homeStats.hits, away: awayStats.hits },
+                { label: 'Blocked Shots', home: homeStats.blocks, away: awayStats.blocks },
+                { label: 'Penalty Min.', home: homeStats.pim, away: awayStats.pim },
               ].map(s => (
                 <div key={s.label} style={{ background: '#0f1620', border: '0.5px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 8px', textAlign: 'center' }}>
-                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginBottom: 6 }}>{s.label}</div>
+                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', marginBottom: 6, textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.04em' }}>{s.label}</div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 16, fontWeight: 700, color: '#60a5fa' }}>{s.home}</span>
+                    <span style={{ fontSize: 15, fontWeight: 700, color: '#60a5fa' }}>{s.home}</span>
                     <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)' }}>–</span>
-                    <span style={{ fontSize: 16, fontWeight: 700, color: '#f87171' }}>{s.away}</span>
+                    <span style={{ fontSize: 15, fontWeight: 700, color: '#f87171' }}>{s.away}</span>
                   </div>
                 </div>
               ))}
