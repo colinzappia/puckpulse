@@ -14,6 +14,8 @@ import html2pdf from 'html2pdf.js';
 
 interface GoalieStint { number: string; since: number; }
 
+interface NetMark { x: number; y: number; outcome: string; }
+
 interface ExportData {
   homeName: string;
   awayName: string;
@@ -27,6 +29,13 @@ interface ExportData {
   awayRoster: Player[];
   goalieHistoryHome?: GoalieStint[];
   goalieHistoryAway?: GoalieStint[];
+  // Goalie Hub net-placement data — only available for a live game's
+  // export, not one downloaded from Game History, since this data was
+  // never persisted alongside saved games.
+  netMarksHome?: NetMark[];
+  netMarksAway?: NetMark[];
+  shotsForHome?: NetMark[];
+  shotsForAway?: NetMark[];
 }
 
 // ── Design tokens — shared across PDF and HTML so they stay visually consistent ──
@@ -80,6 +89,34 @@ const renderRinkSVG = (periodEvents: GameEvent[]) => {
       <line x1="${goalLineOffset}" y1="35" x2="${goalLineOffset}" y2="390" stroke="#f00" stroke-width="2" />
       <line x1="${rinkWidth - goalLineOffset}" y1="35" x2="${rinkWidth - goalLineOffset}" y2="390" stroke="#f00" stroke-width="2" />
       ${eventCircles}
+    </svg>
+  `;
+};
+
+// A simple SVG net frame + marks, deliberately not the real goalie-net.png
+// image — avoids any image-loading/CORS complexity in a canvas-captured
+// PDF context, matching the same "pure SVG, no raster image" approach
+// already used for the rink diagram above.
+const renderNetSVG = (marks: NetMark[], positiveOutcome: string) => {
+  const W = 700, H = 420;
+  const markMarkup = marks.map(m => {
+    const isPositive = m.outcome === positiveOutcome;
+    const color = isPositive ? '#22c55e' : '#ef4444';
+    const cx = (m.x / 1408) * W;
+    const cy = (m.y / 768) * H;
+    const s = 7;
+    const symbol = isPositive
+      ? `<path d="M ${cx - s * 0.6} ${cy} L ${cx - s * 0.1} ${cy + s * 0.5} L ${cx + s * 0.7} ${cy - s * 0.55}" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" />`
+      : `<line x1="${cx - s * 0.5}" y1="${cy - s * 0.5}" x2="${cx + s * 0.5}" y2="${cy + s * 0.5}" stroke="#fff" stroke-width="2.5" stroke-linecap="round" /><line x1="${cx - s * 0.5}" y1="${cy + s * 0.5}" x2="${cx + s * 0.5}" y2="${cy - s * 0.5}" stroke="#fff" stroke-width="2.5" stroke-linecap="round" />`;
+    return `<circle cx="${cx}" cy="${cy}" r="${s}" fill="${color}" /> ${symbol}`;
+  }).join('');
+
+  return `
+    <svg viewBox="0 0 ${W} ${H}" style="width:100%; height:auto; background:#0a1628; border-radius:16px; border:2px solid #333;">
+      <rect x="60" y="30" width="${W - 120}" height="${H - 90}" rx="20" fill="none" stroke="#dc2626" stroke-width="6" />
+      ${Array.from({ length: 3 }, (_, i) => `<line x1="${60 + ((W - 120) / 3) * (i + 1)}" y1="30" x2="${60 + ((W - 120) / 3) * (i + 1)}" y2="${H - 60}" stroke="#666" stroke-width="1" stroke-dasharray="3,3" />`).join('')}
+      ${Array.from({ length: 2 }, (_, i) => `<line x1="60" y1="${30 + ((H - 90) / 3) * (i + 1)}" x2="${W - 60}" y2="${30 + ((H - 90) / 3) * (i + 1)}" stroke="#666" stroke-width="1" stroke-dasharray="3,3" />`).join('')}
+      ${markMarkup}
     </svg>
   `;
 };
@@ -266,6 +303,20 @@ function renderGoalieTable(teamName: string, color: string, s: ReturnType<typeof
     </table>`;
 }
 
+function renderNetSection(teamName: string, netMarks: NetMark[] | undefined, shotsFor: NetMark[] | undefined) {
+  const hasAgainst = netMarks && netMarks.length > 0;
+  const hasFor = shotsFor && shotsFor.length > 0;
+  if (!hasAgainst && !hasFor) return '';
+  return `
+    <div style="margin-bottom:24px;">
+      <p style="font-size:11px; font-weight:700; color:${MUTED}; text-transform:uppercase; margin:0 0 10px;">${teamName} — Net Shot Charts</p>
+      <div style="display:flex; gap:16px;">
+        ${hasAgainst ? `<div style="flex:1;"><p style="font-size:9px; font-weight:700; color:${MUTED}; text-transform:uppercase; margin:0 0 6px;">Shots Against (green = save)</p>${renderNetSVG(netMarks!, 'save')}</div>` : ''}
+        ${hasFor ? `<div style="flex:1;"><p style="font-size:9px; font-weight:700; color:${MUTED}; text-transform:uppercase; margin:0 0 6px;">Shots For (green = goal)</p>${renderNetSVG(shotsFor!, 'goal')}</div>` : ''}
+      </div>
+    </div>`;
+}
+
 function renderZonePlaySection(homeName: string, awayName: string, h: ReturnType<typeof computeTeamReportStats>, a: ReturnType<typeof computeTeamReportStats>) {
   if (!h.zonePlay && !a.zonePlay) return '';
   const zp = h.zonePlay || a.zonePlay;
@@ -355,6 +406,8 @@ function buildReportHTML(data: ExportData, forPdf: boolean) {
       <h2 style="font-size:15px; font-weight:900; text-transform:uppercase; letter-spacing:0.04em; border-left:4px solid ${INK}; padding-left:10px; margin:24px 0 16px;">Goaltending</h2>
       ${renderGoalieTable(data.homeName, HOME_COLOR, h)}
       ${renderGoalieTable(data.awayName, AWAY_COLOR, a)}
+      ${renderNetSection(data.homeName, data.netMarksHome, data.shotsForHome)}
+      ${renderNetSection(data.awayName, data.netMarksAway, data.shotsForAway)}
 
       <h2 style="font-size:15px; font-weight:900; text-transform:uppercase; letter-spacing:0.04em; border-left:4px solid ${INK}; padding-left:10px; margin:8px 0 16px;">Special Teams &amp; Zone Play</h2>
       <div style="display:flex; justify-content:center; margin-bottom:32px;">${renderZonePlaySection(data.homeName, data.awayName, h, a)}</div>
@@ -541,6 +594,22 @@ export function downloadExcelReport(data: ExportData) {
     const noteRow = ["Tip: select the X and Y columns above, then Insert > Chart > Scatter to build your own rink shot chart in Excel.", "", "", "", "", ""];
     const wsShots = XLSX.utils.aoa_to_sheet([shotHeader, ...shotRows, [], noteRow]);
     XLSX.utils.book_append_sheet(wb, wsShots, "Shot Locations");
+  }
+
+  // 8. Net Shot Locations — Goalie Hub coordinates, same scatter-chart
+  // approach. Only present for a live game's export — this data isn't
+  // saved alongside a game in History, so it won't appear when
+  // downloading a report from a past saved game.
+  const netHeader = ["Team", "Diagram", "Result", "X", "Y"];
+  const netRows: (string | number)[][] = [];
+  (data.netMarksHome || []).forEach(m => netRows.push([data.homeName, 'Shots Against', m.outcome, m.x, m.y]));
+  (data.netMarksAway || []).forEach(m => netRows.push([data.awayName, 'Shots Against', m.outcome, m.x, m.y]));
+  (data.shotsForHome || []).forEach(m => netRows.push([data.homeName, 'Shots For', m.outcome, m.x, m.y]));
+  (data.shotsForAway || []).forEach(m => netRows.push([data.awayName, 'Shots For', m.outcome, m.x, m.y]));
+  if (netRows.length > 0) {
+    const netNoteRow = ["Tip: select the X and Y columns above, then Insert > Chart > Scatter to build your own net shot chart in Excel.", "", "", "", ""];
+    const wsNet = XLSX.utils.aoa_to_sheet([netHeader, ...netRows, [], netNoteRow]);
+    XLSX.utils.book_append_sheet(wb, wsNet, "Net Shot Locations");
   }
 
   XLSX.writeFile(wb, `TopCheeseHockey-Data-${data.homeName}-vs-${data.awayName}.xlsx`);
