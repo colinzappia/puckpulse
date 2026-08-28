@@ -257,7 +257,7 @@ function renderPlayerStatsTable(teamName: string, color: string, s: ReturnType<t
 
   return `
     <h3 style="font-size:13px; font-weight:900; text-transform:uppercase; letter-spacing:0.05em; color:${color}; margin:0 0 8px; padding-left:10px; border-left:4px solid ${color};">${teamName}</h3>
-    <table style="width:100%; border-collapse:collapse; font-size:11.5px; margin-bottom:24px;">
+    <table style="width:100%; border-collapse:collapse; font-size:11.5px; margin-bottom:24px; page-break-inside: avoid;">
       <thead>
         <tr style="background:${INK};">
           <th style="padding:7px 10px; text-align:left; color:#fff; font-weight:700;">Player</th>
@@ -289,7 +289,7 @@ function renderGoalieTable(teamName: string, color: string, s: ReturnType<typeof
     </tr>`).join('');
   return `
     <h3 style="font-size:13px; font-weight:900; text-transform:uppercase; letter-spacing:0.05em; color:${color}; margin:0 0 8px; padding-left:10px; border-left:4px solid ${color};">${teamName} Goaltending</h3>
-    <table style="width:100%; border-collapse:collapse; font-size:11.5px; margin-bottom:24px;">
+    <table style="width:100%; border-collapse:collapse; font-size:11.5px; margin-bottom:24px; page-break-inside: avoid;">
       <thead>
         <tr style="background:${INK};">
           <th style="padding:7px 10px; text-align:left; color:#fff; font-weight:700;">Goalie</th>
@@ -399,20 +399,22 @@ function buildReportHTML(data: ExportData, forPdf: boolean) {
       <h2 style="font-size:15px; font-weight:900; text-transform:uppercase; letter-spacing:0.04em; border-left:4px solid ${INK}; padding-left:10px; margin:0 0 16px;">Team Comparison</h2>
       <div style="display:flex; justify-content:center; margin-bottom:32px;">${renderTeamComparisonTable(data.homeName, data.awayName, h, a)}</div>
 
-      <h2 style="font-size:15px; font-weight:900; text-transform:uppercase; letter-spacing:0.04em; border-left:4px solid ${INK}; padding-left:10px; margin:0 0 16px; ${forPdf ? 'page-break-before: always; padding-top:20px;' : ''}">Player Stats</h2>
+      <h2 style="font-size:15px; font-weight:900; text-transform:uppercase; letter-spacing:0.04em; border-left:4px solid ${INK}; padding-left:10px; margin:24px 0 16px;">Player Stats</h2>
       ${renderPlayerStatsTable(data.homeName, HOME_COLOR, h)}
       ${renderPlayerStatsTable(data.awayName, AWAY_COLOR, a)}
 
+      ${(h.goalieStints.length > 0 || a.goalieStints.length > 0) ? `
       <h2 style="font-size:15px; font-weight:900; text-transform:uppercase; letter-spacing:0.04em; border-left:4px solid ${INK}; padding-left:10px; margin:24px 0 16px;">Goaltending</h2>
       ${renderGoalieTable(data.homeName, HOME_COLOR, h)}
-      ${renderGoalieTable(data.awayName, AWAY_COLOR, a)}
+      ${renderGoalieTable(data.awayName, AWAY_COLOR, a)}` : ''}
       ${renderNetSection(data.homeName, data.netMarksHome, data.shotsForHome)}
       ${renderNetSection(data.awayName, data.netMarksAway, data.shotsForAway)}
 
+      ${(h.zonePlay || a.zonePlay) ? `
       <h2 style="font-size:15px; font-weight:900; text-transform:uppercase; letter-spacing:0.04em; border-left:4px solid ${INK}; padding-left:10px; margin:8px 0 16px;">Special Teams &amp; Zone Play</h2>
-      <div style="display:flex; justify-content:center; margin-bottom:32px;">${renderZonePlaySection(data.homeName, data.awayName, h, a)}</div>
+      <div style="display:flex; justify-content:center; margin-bottom:32px;">${renderZonePlaySection(data.homeName, data.awayName, h, a)}</div>` : ''}
 
-      <h2 style="font-size:15px; font-weight:900; text-transform:uppercase; letter-spacing:0.04em; border-left:4px solid ${INK}; padding-left:10px; margin:0 0 16px; ${forPdf ? 'page-break-before: always; padding-top:20px;' : ''}">Period Breakdown</h2>
+      <h2 style="font-size:15px; font-weight:900; text-transform:uppercase; letter-spacing:0.04em; border-left:4px solid ${INK}; padding-left:10px; margin:24px 0 16px;">Period Breakdown</h2>
       ${periodSections}
     </div>`;
 }
