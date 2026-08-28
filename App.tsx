@@ -878,6 +878,8 @@ const App: React.FC = () => {
       },
       summaries: { total: 'Game imported from history.' },
       maxPeriod,
+      homeRoster: report.homeRoster,
+      awayRoster: report.awayRoster,
     };
     if (format === 'pdf') downloadPDFReport(data);
     else if (format === 'excel') downloadExcelReport(data);
@@ -1624,7 +1626,7 @@ const App: React.FC = () => {
 
   const prepareExportData = () => {
     const maxPeriod = Math.max(...events.map(e => e.period), currentPeriod);
-    return { homeName, awayName, homeLogo, awayLogo, events, stats: { home: getStatsForRange(Team.HOME), away: getStatsForRange(Team.AWAY) }, summaries, maxPeriod };
+    return { homeName, awayName, homeLogo, awayLogo, events, stats: { home: getStatsForRange(Team.HOME), away: getStatsForRange(Team.AWAY) }, summaries, maxPeriod, homeRoster, awayRoster };
   };
 
   const handleExportPDF = () => downloadPDFReport(prepareExportData());
