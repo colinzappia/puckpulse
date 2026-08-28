@@ -1,4 +1,5 @@
 import { GameEvent, EventType, Team, TeamStats, Player } from '../types';
+import { buildPlayerStats } from '../components/playerstats';
 const getPeriodLabel = (p: number): string => {
   if (p === 1) return '1st';
   if (p === 2) return '2nd';
@@ -20,6 +21,8 @@ interface ExportData {
   stats: { home: TeamStats; away: TeamStats };
   summaries: Record<string, string>;
   maxPeriod: number;
+  homeRoster: Player[];
+  awayRoster: Player[];
 }
 
 const getEventColor = (type: EventType) => {
@@ -69,6 +72,44 @@ const renderRinkSVG = (periodEvents: GameEvent[]) => {
   `;
 };
 
+const renderPlayerStatsTable = (events: GameEvent[], roster: Player[], team: Team, teamName: string) => {
+  const rows = buildPlayerStats(events, roster, team).filter(r => r.total > 0 || r.position === 'G');
+  if (rows.length === 0) return '';
+  const sorted = [...rows].sort((a, b) => (b.goals + b.assists) - (a.goals + a.assists));
+
+  const dataRows = sorted.map(r => `
+    <tr>
+      <td style="padding:6px 8px; border-bottom:1px solid #eee; font-weight:700;">#${r.number} ${r.name}</td>
+      <td style="padding:6px 8px; border-bottom:1px solid #eee; text-align:center;">${r.goals}</td>
+      <td style="padding:6px 8px; border-bottom:1px solid #eee; text-align:center;">${r.assists}</td>
+      <td style="padding:6px 8px; border-bottom:1px solid #eee; text-align:center;">${r.shotsOnNet}</td>
+      <td style="padding:6px 8px; border-bottom:1px solid #eee; text-align:center;">${r.hits}</td>
+      <td style="padding:6px 8px; border-bottom:1px solid #eee; text-align:center;">${r.penalties}</td>
+      <td style="padding:6px 8px; border-bottom:1px solid #eee; text-align:center;">${r.faceoffWins}-${r.faceoffLosses}</td>
+      <td style="padding:6px 8px; border-bottom:1px solid #eee; text-align:center;">${r.blocks}</td>
+      <td style="padding:6px 8px; border-bottom:1px solid #eee; text-align:center; font-weight:700; color:${r.plusMinus > 0 ? '#16a34a' : r.plusMinus < 0 ? '#dc2626' : '#666'};">${r.plusMinus > 0 ? '+' : ''}${r.plusMinus}</td>
+    </tr>`).join('');
+
+  return `
+    <h3 style="font-size: 14px; text-transform: uppercase; margin: 0 0 10px;">${teamName}</h3>
+    <table style="width:100%; border-collapse:collapse; font-size:11px; margin-bottom:30px;">
+      <thead>
+        <tr style="background:#f4f4f4;">
+          <th style="padding:6px 8px; text-align:left;">Player</th>
+          <th style="padding:6px 8px;">G</th>
+          <th style="padding:6px 8px;">A</th>
+          <th style="padding:6px 8px;">SOG</th>
+          <th style="padding:6px 8px;">HIT</th>
+          <th style="padding:6px 8px;">PEN</th>
+          <th style="padding:6px 8px;">FO</th>
+          <th style="padding:6px 8px;">BLK</th>
+          <th style="padding:6px 8px;">+/-</th>
+        </tr>
+      </thead>
+      <tbody>${dataRows}</tbody>
+    </table>`;
+};
+
 export async function downloadPDFReport(data: ExportData) {
   const dateStr = new Date().toLocaleDateString();
   const timeStr = new Date().toLocaleTimeString();
@@ -93,9 +134,10 @@ export async function downloadPDFReport(data: ExportData) {
   }
 
   const reportContainer = document.createElement('div');
-  reportContainer.style.position = 'absolute';
-  reportContainer.style.left = '-9999px';
+  reportContainer.style.position = 'fixed';
+  reportContainer.style.left = '0';
   reportContainer.style.top = '0';
+  reportContainer.style.zIndex = '-9999';
   reportContainer.style.width = '800px'; // Fixed width for consistent rendering
   
   reportContainer.innerHTML = `
@@ -112,10 +154,12 @@ export async function downloadPDFReport(data: ExportData) {
 
       <div style="display: flex; gap: 20px; margin-bottom: 40px;">
         <div style="flex: 1; padding: 20px; background: #f8f8f8; border-radius: 15px; text-align: center;">
+          ${data.homeLogo ? `<img src="${data.homeLogo}" crossorigin="anonymous" style="height:40px; object-fit:contain; margin-bottom:8px;" />` : ''}
           <div style="font-size: 10px; font-weight: 900; color: #666; text-transform: uppercase;">${data.homeName}</div>
           <div style="font-size: 48px; font-weight: 900;">${data.stats.home.goals}</div>
         </div>
         <div style="flex: 1; padding: 20px; background: #f8f8f8; border-radius: 15px; text-align: center;">
+          ${data.awayLogo ? `<img src="${data.awayLogo}" crossorigin="anonymous" style="height:40px; object-fit:contain; margin-bottom:8px;" />` : ''}
           <div style="font-size: 10px; font-weight: 900; color: #666; text-transform: uppercase;">${data.awayName}</div>
           <div style="font-size: 48px; font-weight: 900;">${data.stats.away.goals}</div>
         </div>
@@ -125,6 +169,10 @@ export async function downloadPDFReport(data: ExportData) {
       <div style="background: #fdfdfd; padding: 20px; border-radius: 15px; border: 1px dashed #ccc; font-size: 13px; line-height: 1.6; margin-bottom: 40px;">
         ${data.summaries['total']}
       </div>
+
+      <h2 style="font-size: 18px; text-transform: uppercase; border-left: 4px solid #111; padding-left: 10px; margin-bottom: 20px; page-break-before: always; padding-top: 40px;">Player Stats</h2>
+      ${renderPlayerStatsTable(data.events, data.homeRoster, Team.HOME, data.homeName)}
+      ${renderPlayerStatsTable(data.events, data.awayRoster, Team.AWAY, data.awayName)}
 
       ${periodSections}
     </div>
@@ -211,10 +259,12 @@ export function downloadHTMLExport(data: ExportData) {
 
         <div style="display: flex; gap: 20px; margin-bottom: 40px;">
           <div style="flex: 1; padding: 20px; background: #f8f8f8; border-radius: 15px; text-align: center;">
+            ${data.homeLogo ? `<img src="${data.homeLogo}" style="height:40px; object-fit:contain; margin-bottom:8px;" />` : ''}
             <div style="font-size: 10px; font-weight: 900; color: #666; text-transform: uppercase;">${data.homeName}</div>
             <div style="font-size: 48px; font-weight: 900;">${data.stats.home.goals}</div>
           </div>
           <div style="flex: 1; padding: 20px; background: #f8f8f8; border-radius: 15px; text-align: center;">
+            ${data.awayLogo ? `<img src="${data.awayLogo}" style="height:40px; object-fit:contain; margin-bottom:8px;" />` : ''}
             <div style="font-size: 10px; font-weight: 900; color: #666; text-transform: uppercase;">${data.awayName}</div>
             <div style="font-size: 48px; font-weight: 900;">${data.stats.away.goals}</div>
           </div>
@@ -224,6 +274,10 @@ export function downloadHTMLExport(data: ExportData) {
         <div style="background: #fdfdfd; padding: 20px; border-radius: 15px; border: 1px dashed #ccc; font-size: 13px; line-height: 1.6; margin-bottom: 40px;">
           ${data.summaries['total']}
         </div>
+
+        <h2 style="font-size: 18px; text-transform: uppercase; border-left: 4px solid #111; padding-left: 10px; margin-bottom: 20px;">Player Stats</h2>
+        ${renderPlayerStatsTable(data.events, data.homeRoster, Team.HOME, data.homeName)}
+        ${renderPlayerStatsTable(data.events, data.awayRoster, Team.AWAY, data.awayName)}
 
         ${periodSections}
       </div>
@@ -274,17 +328,20 @@ export function downloadExcelReport(data: ExportData) {
   const wsLog = XLSX.utils.aoa_to_sheet([logHeader, ...logRows]);
   XLSX.utils.book_append_sheet(wb, wsLog, "Game Log");
 
-  // 3. Home Roster
-  const homeRosterHeader = ["Number", "Name", "Position"];
-  const homeRosterRows = data.stats.home.roster.map(p => [p.number, p.name, p.position]);
-  const wsHomeRoster = XLSX.utils.aoa_to_sheet([homeRosterHeader, ...homeRosterRows]);
-  XLSX.utils.book_append_sheet(wb, wsHomeRoster, `${data.homeName.slice(0, 20)} Roster`);
+  // 3. Home Player Stats
+  const statsHeader = ["Number", "Name", "Position", "Goals", "Assists", "Shots on Net", "Shots Missed", "Hits", "Penalties", "Faceoff Wins", "Faceoff Losses", "Blocks", "+/-"];
+  const homeStatsRows = buildPlayerStats(data.events, data.homeRoster, Team.HOME).map(r => [
+    r.number, r.name, r.position, r.goals, r.assists, r.shotsOnNet, r.shotsMissed, r.hits, r.penalties, r.faceoffWins, r.faceoffLosses, r.blocks, r.plusMinus
+  ]);
+  const wsHomeStats = XLSX.utils.aoa_to_sheet([statsHeader, ...homeStatsRows]);
+  XLSX.utils.book_append_sheet(wb, wsHomeStats, `${data.homeName.slice(0, 20)} Stats`);
 
-  // 4. Away Roster
-  const awayRosterHeader = ["Number", "Name", "Position"];
-  const awayRosterRows = data.stats.away.roster.map(p => [p.number, p.name, p.position]);
-  const wsAwayRoster = XLSX.utils.aoa_to_sheet([awayRosterHeader, ...awayRosterRows]);
-  XLSX.utils.book_append_sheet(wb, wsAwayRoster, `${data.awayName.slice(0, 20)} Roster`);
+  // 4. Away Player Stats
+  const awayStatsRows = buildPlayerStats(data.events, data.awayRoster, Team.AWAY).map(r => [
+    r.number, r.name, r.position, r.goals, r.assists, r.shotsOnNet, r.shotsMissed, r.hits, r.penalties, r.faceoffWins, r.faceoffLosses, r.blocks, r.plusMinus
+  ]);
+  const wsAwayStats = XLSX.utils.aoa_to_sheet([statsHeader, ...awayStatsRows]);
+  XLSX.utils.book_append_sheet(wb, wsAwayStats, `${data.awayName.slice(0, 20)} Stats`);
 
   XLSX.writeFile(wb, `TopCheeseHockey-Data-${data.homeName}-vs-${data.awayName}.xlsx`);
 }
