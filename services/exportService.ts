@@ -365,15 +365,24 @@ function buildReportHTML(data: ExportData, forPdf: boolean) {
 }
 
 export async function downloadPDFReport(data: ExportData) {
+  // IMPORTANT: the report container itself must stay in completely normal
+  // document flow — no position:fixed/absolute or z-index tricks on it
+  // directly. Verified empirically: html2canvas measures a
+  // position:fixed OR position:absolute element as having zero height
+  // when cloning the document for rendering, producing a blank capture,
+  // regardless of z-index. Hiding it via a wrapping element instead (zero
+  // height, overflow hidden) keeps the report's own layout/auto-sizing
+  // completely normal while still keeping it off-screen.
   const reportContainer = document.createElement('div');
-  reportContainer.style.position = 'fixed';
-  reportContainer.style.left = '0';
-  reportContainer.style.top = '0';
-  reportContainer.style.zIndex = '-9999';
   reportContainer.style.width = '800px';
   reportContainer.style.background = '#fff';
   reportContainer.innerHTML = buildReportHTML(data, true);
-  document.body.appendChild(reportContainer);
+
+  const hiddenWrapper = document.createElement('div');
+  hiddenWrapper.style.height = '0';
+  hiddenWrapper.style.overflow = 'hidden';
+  hiddenWrapper.appendChild(reportContainer);
+  document.body.appendChild(hiddenWrapper);
 
   const opt = {
     margin: 0,
@@ -391,7 +400,7 @@ export async function downloadPDFReport(data: ExportData) {
     console.error("PDF Generation Error:", err);
     throw new Error(err?.message || 'Could not generate the PDF. Please try again.');
   } finally {
-    document.body.removeChild(reportContainer);
+    document.body.removeChild(hiddenWrapper);
   }
 }
 
