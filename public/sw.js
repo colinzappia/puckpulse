@@ -1,9 +1,10 @@
-const CACHE_NAME = 'tch-v2';
+const CACHE_NAME = 'tch-v3';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/Top_Cheese_Hockey_logo.png',
   '/colin-67s.jpg',
+  '/goalie-net.jpg',
   '/terms.html',
   '/privacy.html',
   '/manifest.json',
