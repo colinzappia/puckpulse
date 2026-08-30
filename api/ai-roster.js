@@ -26,10 +26,34 @@ PASTED TEXT:
 ${pasteText}
 Respond with ONLY valid JSON, no markdown, no explanation: {"status":"OK","players":[{"number":"15","name":"Player Name","position":"C","line":"1"}]}`
     : imageBase64
-      ? `You are a hockey roster parser. The attached image is a photo or screenshot of a roster or lineup sheet. Read it carefully — it may be photographed at an angle, have glare, or be handwritten. Extract ALL players belonging to "${teamName}" (if the image shows more than one team, only extract players from "${teamName}" — ignore the opposing team). Extract each player's jersey number, full name, and position. Position: map to C, LW, RW, D, or G only. Line assignment: Forwards get 1,2,3,4. Defense get P1,P2,P3. Goalies get G1,G2. If jersey number missing use "00". No duplicates. ${NAME_RULE} ${NUMBER_RULE}
+      ? `You are a hockey roster parser. The attached image is a photo or screenshot of a team's game-day lineup sheet. These sheets typically have TWO separate parts, often side by side:
+(1) A roster list — jersey numbers and player names.
+(2) A separate "Lines and Defensemen Duos" (or similarly labeled) table showing forward lines (Line 1-5, with LW/C/RW columns) and defense pairings (Def 1-4, with LD/RD columns), by jersey number — plus sometimes a goalie Starting/Substitute row.
+
+Read the image carefully — it may be photographed at an angle, have glare, or be handwritten. A player's name struck through means they're scratched/not dressed — exclude them entirely.
+
+Extract every dressed player belonging to "${teamName}" (if the image shows more than one team, only extract "${teamName}" — ignore the opposing team's roster).
+
+For EACH player, determine their real position and line by finding their jersey number in the lines/pairings table — do not guess or distribute players evenly:
+- Number appears under LW, C, or RW for a specific Line row → position is LW/C/RW accordingly, "line" is that row's number as a string (Line 2 → "2").
+- Number appears under LD or RD for a specific Def row → position is "D", "line" is "P" plus that row's number (Def 1 → "P1").
+- Number appears in a goalie Starting/Substitute row → position is "G", "line" is "G1" for starting, "G2" for substitute/backup.
+- Number is on the roster but never appears anywhere in the lines/pairings table (e.g. an extra skater not yet slotted in) → position "F", line "1" as a reasonable default the coach can correct later.
+
+Extract jersey number and full name for every player. If jersey number missing use "00". No duplicates. ${NAME_RULE} ${NUMBER_RULE}
 Respond with ONLY valid JSON, no markdown, no explanation: {"status":"OK","players":[{"number":"15","name":"Player Name","position":"C","line":"1"}]}`
     : isPdfUrl
-      ? `You are a hockey roster parser. The attached document is a roster or game lineup sheet. Extract ALL players belonging to "${teamName}" (if the document lists more than one team, only extract players from "${teamName}" — ignore the opposing team). Extract each player's jersey number, full name, and position. Position: map to C, LW, RW, D, or G only. Line assignment: Forwards get 1,2,3,4. Defense get P1,P2,P3. Goalies get G1,G2. No duplicates. ${NAME_RULE} ${NUMBER_RULE}
+      ? `You are a hockey roster parser. The attached document is a team's game-day lineup sheet. These sheets typically have TWO separate parts: (1) a roster list of jersey numbers and player names, and (2) a separate "Lines and Defensemen Duos" (or similarly labeled) table showing forward lines (Line 1-5, with LW/C/RW columns) and defense pairings (Def 1-4, with LD/RD columns), by jersey number — plus sometimes a goalie Starting/Substitute row. A player's name struck through means they're scratched/not dressed — exclude them entirely.
+
+Extract every dressed player belonging to "${teamName}" (if the document lists more than one team, only extract "${teamName}" — ignore the opposing team's roster).
+
+For EACH player, determine their real position and line by finding their jersey number in the lines/pairings table — do not guess or distribute players evenly:
+- Number appears under LW, C, or RW for a specific Line row → position is LW/C/RW accordingly, "line" is that row's number as a string (Line 2 → "2").
+- Number appears under LD or RD for a specific Def row → position is "D", "line" is "P" plus that row's number (Def 1 → "P1").
+- Number appears in a goalie Starting/Substitute row → position is "G", "line" is "G1" for starting, "G2" for substitute/backup.
+- Number is on the roster but never appears anywhere in the lines/pairings table → position "F", line "1" as a reasonable default the coach can correct later.
+
+Extract jersey number and full name for every player. No duplicates. ${NAME_RULE} ${NUMBER_RULE}
 Respond with ONLY valid JSON, no markdown, no explanation: {"status":"OK","players":[{"number":"15","name":"Player Name","position":"C","line":"1"}]}`
       : `You are a hockey roster expert. Find the current roster for the "${teamName}" hockey team. Extract all players with their jersey number, full name, and position (C, LW, RW, D, or G). Assign lines: forwards to 1-4, defense to P1-P3, goalies to G1-G2. ${NAME_RULE}
 Respond with ONLY valid JSON, no markdown, no explanation: {"status":"OK","players":[{"number":"15","name":"Player Name","position":"C","line":"1"}]}`;
