@@ -73,7 +73,7 @@ const NetDiagram: React.FC<{
       className="w-full rounded-xl cursor-crosshair touch-none"
       style={{ background: '#0a1628' }}
     >
-      <image href="/goalie-net.png" xlinkHref="/goalie-net.png" x={0} y={0} width={IMG_W} height={IMG_H} />
+      <image href="/goalie-net.jpg" xlinkHref="/goalie-net.jpg" x={0} y={0} width={IMG_W} height={IMG_H} />
       {marks.map((m, i) => {
         const isAttempt = m.outcome === 'attempt';
         const isPositive = m.outcome === positiveValue;
