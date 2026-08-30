@@ -290,7 +290,7 @@ const GoalieHub: React.FC<GoalieHubProps> = ({
           return (
             <div className="max-w-[1700px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 md:divide-x md:divide-white/10">
               <div className="w-full">{leftPanel}</div>
-              <div className="w-full md:pl-10">{rightPanel}</div>
+              <div className="w-full">{rightPanel}</div>
             </div>
           );
         })()}
