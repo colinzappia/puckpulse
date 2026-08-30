@@ -32,16 +32,21 @@ Respond with ONLY valid JSON, no markdown, no explanation: {"status":"OK","playe
 
 Read the image carefully — it may be photographed at an angle, have glare, or be handwritten. A player's name struck through means they're scratched/not dressed — exclude them entirely.
 
-Extract every dressed player belonging to "${teamName}" (if the image shows more than one team, only extract "${teamName}" — ignore the opposing team's roster).
+Do this in two explicit steps. Do not skip step 1 or merge it into step 2 — the lines/pairings table has small text in a dense grid, and reading it as its own careful pass (rather than while also cross-referencing the roster) is what prevents mismatches.
 
-For EACH player, determine their real position and line by finding their jersey number in the lines/pairings table — do not guess or distribute players evenly:
-- Number appears under LW, C, or RW for a specific Line row → position is LW/C/RW accordingly, "line" is that row's number as a string (Line 2 → "2").
-- Number appears under LD or RD for a specific Def row → position is "D", "line" is "P" plus that row's number (Def 1 → "P1").
-- Number appears in a goalie Starting/Substitute row → position is "G", "line" is "G1" for starting, "G2" for substitute/backup.
-- Number is on the roster but never appears anywhere in the lines/pairings table (e.g. an extra skater not yet slotted in) → position "F", line "1" as a reasonable default the coach can correct later.
+STEP 1 — Transcribe the lines/pairings table exactly as printed, cell by cell, into a "linesTable" field structured like this, using null for any genuinely empty cell:
+{"line1":{"LW":"12","C":"29","RW":"34"},"line2":{"LW":"11","C":"37","RW":"17"},"line3":{...},"line4":{...},"line5":{...},"def1":{"LD":"8","RD":"23"},"def2":{...},"def3":{...},"def4":{...},"goalie":{"starting":"1","substitute":"32"}}
+Include every line/def row visible, even if some cells in it are empty (use null for those specific cells only).
 
-Extract jersey number and full name for every player. If jersey number missing use "00". No duplicates. ${NAME_RULE} ${NUMBER_RULE}
-Respond with ONLY valid JSON, no markdown, no explanation: {"status":"OK","players":[{"number":"15","name":"Player Name","position":"C","line":"1"}]}`
+STEP 2 — Build the player list using ONLY the linesTable you just transcribed in step 1 to assign position and line, matching each roster player's jersey number against it:
+- Number matches a Line row's LW/C/RW cell → position is LW/C/RW accordingly, "line" is that row's number as a string (line2 → "2").
+- Number matches a Def row's LD/RD cell → position is "D", "line" is "P" plus that row's number (def1 → "P1").
+- Number matches the goalie starting/substitute → position is "G", "line" is "G1" for starting, "G2" for substitute.
+- Number appears on the roster but does not match anywhere in your own linesTable → position "F", line "1" as a fallback. If you find yourself using this fallback for more than one or two players, stop and re-check step 1 — it likely means a transcription mistake there, not that those players are truly unlisted.
+
+Extract every dressed player belonging to "${teamName}" (if the image shows more than one team, only extract "${teamName}" — ignore the opposing team's roster). Extract jersey number and full name for every player. If jersey number missing use "00". No duplicates. ${NAME_RULE} ${NUMBER_RULE}
+
+Respond with ONLY valid JSON, no markdown, no explanation. Include your step 1 linesTable so it's clear which cells you actually read: {"status":"OK","linesTable":{"line1":{"LW":"12","C":"29","RW":"34"}},"players":[{"number":"15","name":"Player Name","position":"C","line":"1"}]}`
     : isPdfUrl
       ? `You are a hockey roster parser. The attached document is a team's game-day lineup sheet. These sheets typically have TWO separate parts: (1) a roster list of jersey numbers and player names, and (2) a separate "Lines and Defensemen Duos" (or similarly labeled) table showing forward lines (Line 1-5, with LW/C/RW columns) and defense pairings (Def 1-4, with LD/RD columns), by jersey number — plus sometimes a goalie Starting/Substitute row. A player's name struck through means they're scratched/not dressed — exclude them entirely.
 
@@ -85,7 +90,7 @@ Respond with ONLY valid JSON, no markdown, no explanation: {"status":"OK","playe
       },
       body: JSON.stringify({
         model: (isPdfUrl || imageBase64) ? 'claude-sonnet-4-5' : 'claude-haiku-4-5',
-        max_tokens: 2000,
+        max_tokens: 3000,
         messages: [{ role: 'user', content }]
       })
     });
