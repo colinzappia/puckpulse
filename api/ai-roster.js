@@ -16,7 +16,7 @@ export default async function handler(req, res) {
     : rawRosterUrl;
   const isPdfUrl = !!rosterUrl && /\.pdf(\?|#|$)/i.test(rosterUrl);
  
-  const NAME_RULE = `Name format: always output names as "First Last" (first name first). If the source text has names as "Last, First" (e.g. "Smith, John"), flip them to "First Last" (e.g. "John Smith") in your output — never keep the "Last, First" order.`;
+  const NAME_RULE = `Name format: always output names as "First Last" (first name first). If the source text has names as "Last, First" (e.g. "Smith, John"), flip them to "First Last" (e.g. "John Smith") in your output — never keep the "Last, First" order. If any part of a name is genuinely illegible in the image (heavy glare, blur, cut off), transcribe the letters you can actually make out rather than substituting a different plausible-sounding name — an imperfect but faithful reading is far more useful than a confident guess that happens to be wrong.`;
   const NUMBER_RULE = `Jersey number: use ONLY each player's actual jersey/sweater number. Many lineup sheets also show a row number or lineup order (1, 2, 3, 4... simply counting down the list) in a separate column from the real jersey number (often labeled "#" or "No.", and NOT sequential — it can be any value and players are not necessarily listed in ascending jersey-number order). Never use the row/list position as the jersey number — only the number actually worn on the sweater.`;
  
   const promptText = pasteText
