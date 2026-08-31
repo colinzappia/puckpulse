@@ -856,6 +856,7 @@ const App: React.FC = () => {
         periods: currentPeriod,
         events, homeRoster, awayRoster,
         goalieHistoryHome, goalieHistoryAway,
+        netMarksHome, netMarksAway, shotsForHome, shotsForAway,
         isShared,
       });
       toast.success('Game saved to history!');
@@ -882,6 +883,10 @@ const App: React.FC = () => {
       awayRoster: report.awayRoster,
       goalieHistoryHome: report.goalieHistoryHome || [],
       goalieHistoryAway: report.goalieHistoryAway || [],
+      netMarksHome: report.netMarksHome || [],
+      netMarksAway: report.netMarksAway || [],
+      shotsForHome: report.shotsForHome || [],
+      shotsForAway: report.shotsForAway || [],
     };
     if (format === 'pdf') {
       try {
