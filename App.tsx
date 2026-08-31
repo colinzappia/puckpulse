@@ -2742,12 +2742,12 @@ const App: React.FC = () => {
                       <div className="flex-1 space-y-4">
                         <div className="space-y-1">
                           <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Team Name</label>
-                          <input className="w-full bg-black/60 border border-white/10 p-3 rounded-xl text-xs font-black text-white outline-none focus:border-white/20" value={name} onChange={e => isHome ? setHomeName(e.target.value) : setAwayName(e.target.value)} placeholder="E.G. BRUINS" />
+                          <input className="w-full bg-black/60 border border-white/10 p-3 rounded-xl text-xs font-black text-white uppercase outline-none focus:border-white/20" value={name} onChange={e => isHome ? setHomeName(e.target.value) : setAwayName(e.target.value)} placeholder="E.G. BRUINS" />
                         </div>
                         <div className="space-y-1">
                           <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Nickname (shown on toggles &amp; filters)</label>
                           <input
-                            className="w-full bg-black/60 border border-white/10 p-3 rounded-xl text-xs font-black text-white outline-none focus:border-white/20"
+                            className="w-full bg-black/60 border border-white/10 p-3 rounded-xl text-xs font-black text-white uppercase outline-none focus:border-white/20"
                             value={isHome ? homeNickname : awayNickname}
                             onChange={e => isHome ? setHomeNickname(e.target.value) : setAwayNickname(e.target.value)}
                             placeholder={teamNickname(name, '', isHome ? 'Home' : 'Away')}
@@ -2760,7 +2760,7 @@ const App: React.FC = () => {
                         </div>
                         <div className="space-y-1">
                           <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Logo URL</label>
-                          <input className="w-full bg-black/60 border border-white/10 p-3 rounded-xl text-[10px] text-blue-400 font-bold outline-none focus:border-white/20" value={logo} onChange={e => isHome ? setHomeLogo(e.target.value) : setAwayLogo(e.target.value)} placeholder="HTTPS://IMAGE.URL/LOGO.PNG" />
+                          <input className="w-full bg-black/60 border border-white/10 p-3 rounded-xl text-[10px] text-blue-400 font-bold uppercase outline-none focus:border-white/20" value={logo} onChange={e => isHome ? setHomeLogo(e.target.value) : setAwayLogo(e.target.value)} placeholder="HTTPS://IMAGE.URL/LOGO.PNG" />
                         </div>
                       </div>
                     </div>
@@ -2768,7 +2768,7 @@ const App: React.FC = () => {
                   <section className="space-y-4 p-5 bg-white/5 rounded-[2.5rem] border border-white/5">
                     <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">📋 Paste Roster</h4>
                     <p className="text-[9px] text-slate-500 px-1">Go to any roster website, select and copy the player list, then paste it here.</p>
-                    <textarea className="w-full bg-black/40 border border-white/10 p-3.5 rounded-xl text-[10px] text-slate-300 font-mono outline-none focus:border-cyan-500/40 resize-none" rows={6} placeholder="Paste copied roster text here..." value={isHome ? pasteRosterHome : pasteRosterAway} onChange={e => isHome ? setPasteRosterHome(e.target.value) : setPasteRosterAway(e.target.value)} />
+                    <textarea className="w-full bg-black/40 border border-white/10 p-3.5 rounded-xl text-[10px] text-slate-300 font-mono uppercase outline-none focus:border-cyan-500/40 resize-none" rows={6} placeholder="Paste copied roster text here..." value={isHome ? pasteRosterHome : pasteRosterAway} onChange={e => isHome ? setPasteRosterHome(e.target.value) : setPasteRosterAway(e.target.value)} />
                     <button onClick={() => handlePasteSync(team)} disabled={isPasteSyncing || !(isHome ? pasteRosterHome : pasteRosterAway).trim()} className={`w-full py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isPasteSyncing || !(isHome ? pasteRosterHome : pasteRosterAway).trim() ? 'bg-slate-800 text-slate-600' : 'bg-cyan-600 text-white hover:bg-cyan-500 shadow-lg border border-cyan-400/30'}`}>
                       {isPasteSyncing ? <span className="flex items-center justify-center gap-2"><span className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{animationDelay:'0ms'}}/><span className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{animationDelay:'150ms'}}/><span className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{animationDelay:'300ms'}}/></span> : '📋 Import Roster'}
                     </button>
@@ -2787,7 +2787,7 @@ const App: React.FC = () => {
                       <div className="grid grid-cols-4 gap-2">
                         <div className="col-span-1 space-y-1">
                           <label className="text-[8px] font-black text-slate-600 uppercase tracking-widest ml-1">Number</label>
-                          <input className="w-full bg-black/60 border border-white/10 rounded-xl py-3 text-center text-xs font-black text-white outline-none focus:border-white/30" placeholder="#" value={manualData.number} onChange={e => setManualData({...manualData, number: e.target.value})} />
+                          <input className="w-full bg-black/60 border border-white/10 rounded-xl py-3 text-center text-xs font-black text-white uppercase outline-none focus:border-white/30" placeholder="#" value={manualData.number} onChange={e => setManualData({...manualData, number: e.target.value})} />
                         </div>
                         <div className="col-span-3 space-y-1">
                           <label className="text-[8px] font-black text-slate-600 uppercase tracking-widest ml-1">Full Name</label>
@@ -2820,7 +2820,7 @@ const App: React.FC = () => {
                     <div className="space-y-2">
                       {roster.map((p, idx) => (
                         <div key={`${team}-p-${idx}`} className="flex items-center gap-2 bg-white/5 p-2 rounded-2xl border border-white/5 hover:border-white/20 transition-all group">
-                          <input className={`w-12 bg-black/40 border border-white/10 rounded-xl py-2 text-center text-[12px] font-black outline-none focus:border-white/30 ${isHome ? 'text-blue-400' : 'text-red-400'}`} value={p.number} onChange={e => handleUpdatePlayerInline(team, idx, 'number', e.target.value)} />
+                          <input className={`w-12 bg-black/40 border border-white/10 rounded-xl py-2 text-center text-[12px] font-black uppercase outline-none focus:border-white/30 ${isHome ? 'text-blue-400' : 'text-red-400'}`} value={p.number} onChange={e => handleUpdatePlayerInline(team, idx, 'number', e.target.value)} />
                           <input className="flex-1 bg-transparent border-none outline-none text-[11px] font-bold text-white uppercase px-1" value={p.name} onChange={e => handleUpdatePlayerInline(team, idx, 'name', e.target.value)} placeholder="PLAYER NAME" />
                           <select className="bg-black/40 text-[9px] font-black text-slate-500 rounded-lg px-2 py-1.5 border-none appearance-none outline-none cursor-pointer" value={p.position} onChange={e => handleUpdatePlayerInline(team, idx, 'position', e.target.value)}>
                             <option value="LW">LW</option><option value="RW">RW</option><option value="C">C</option><option value="LD">LD</option><option value="RD">RD</option><option value="D">D</option><option value="G">G</option>
