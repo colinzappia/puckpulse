@@ -202,7 +202,7 @@ const sections: ManualCategory[] = [
     subsections: [
       {
         title: 'End Game button',
-        content: 'When the final buzzer sounds, tap the red End Game button in the header. A summary screen appears showing the final score, shots, total events, and faceoffs tracked.\n\nTap "Download Report" to automatically generate and download your PDF game summary report. You can also download Excel and HTML versions from the same screen.'
+        content: 'When the final buzzer sounds, tap the red End Game button in the header. You\'ll be asked to confirm first — a quick "End the Game?" popup, so an accidental tap doesn\'t send you into the summary screen unintentionally. Confirm, and the full summary screen appears showing the final score, shots, total events, and faceoffs tracked.\n\nTap "Download Report" to automatically generate and download your PDF game summary report. You can also download Excel and HTML versions from the same screen.'
       },
       {
         title: 'Player Stats',
@@ -210,7 +210,7 @@ const sections: ManualCategory[] = [
       },
       {
         title: 'Goalie Hub',
-        content: 'Tap the 🥅 Goalie Hub button next to Player Stats to open a purely visual net-placement tracker — completely separate from the rink log, and from the shot/save/goal events you tap on the rink itself. Nothing logged here affects your Player Stats, exports, or the main event feed; it\'s just a shot chart.\n\nSwitch between Home and Away at the top, same as Player Stats. Each team shows two net diagrams side by side (stacked on a phone):\n\n• Shots Against — tracks your own goalie. Choose "Tap net = Save" or "Tap net = Goal", then tap anywhere in the net to place a mark exactly where you tapped. Requires a starting goalie to be set first (★ in Roster Setup) — otherwise it\'ll prompt you to set one.\n\n• Shots For — tracks that team\'s own shots on the opposing net. Choose "Tap net = Goal" or "Tap net = Missed". This one doesn\'t need a goalie set, since it\'s tracking your shooters, not your goalie.\n\nEach diagram has its own Undo (removes just the last mark) and Clear (wipes that diagram only) — the two diagrams never affect each other. Marks are colour-coded green for the positive outcome and red for the negative one, with a live tally (and percentage) below each net.'
+        content: 'Tap the 🥅 Goalie Hub button next to Player Stats to open a visual net-placement tracker — completely separate from the rink log, and from the shot/save/goal events you tap on the rink itself. Nothing logged here affects your Player Stats or the main event feed; it\'s its own shot chart. It does appear in your exported PDF and HTML reports, and it\'s saved to History along with everything else once you save the game.\n\nSwitch between Home and Away at the top, same as Player Stats. Each team shows two net diagrams side by side (stacked on a phone):\n\n• Shots Against — tracks your own goalie. Choose "Tap net = Save" or "Tap net = Goal", then tap anywhere in the net to place a mark exactly where you tapped. Requires a starting goalie to be set first (★ in Roster Setup) — otherwise it\'ll prompt you to set one.\n\n• Shots For — tracks that team\'s own shots on the opposing net. Choose "Tap net = Goal" or "Tap net = Missed". This one doesn\'t need a goalie set, since it\'s tracking your shooters, not your goalie.\n\nOnly a shot that actually lands inside the net frame counts toward the shots and save-percentage totals — the same way a real shot sailing wide wouldn\'t count as a shot on goal. Tap outside the frame, in the white area around it, and it\'s tracked separately as a "Missed Net" (shown as a small grey marker) rather than being forced into a save or a goal. A 4th stat card showing that count only appears once you\'ve actually logged one, so it stays out of the way on a clean sheet.\n\nEach diagram has its own Undo (removes just the last mark) and Clear (wipes that diagram only) — the two diagrams never affect each other. Marks are colour-coded green for the positive outcome and red for the negative one, with a live tally (and percentage) below each net.'
       },
       {
         title: 'Starting a new game',
@@ -237,7 +237,7 @@ const sections: ManualCategory[] = [
       },
       {
         title: 'Re-downloading reports',
-        content: 'Tap any saved game to open its detail view. From there you can download a fresh PDF, Excel, or HTML report at any time — even weeks after the game was played.'
+        content: 'Tap any saved game to open its detail view. From there you can download a fresh PDF, Excel, or HTML report at any time — even weeks after the game was played.\n\nOne small caveat: Goalie Hub net shot charts only appear in reports for games saved after that feature was added. Games saved before then will show everything else normally, just without the net charts, since that data wasn\'t being kept yet at the time.'
       },
       {
         title: 'Sharing a game report',
