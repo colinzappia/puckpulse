@@ -13,6 +13,12 @@ export interface GoalieStint {
   since: number;
 }
 
+export interface NetMark {
+  x: number;
+  y: number;
+  outcome: string;
+}
+
 export interface SavedGameReport {
   id: string;
   userId: string;
@@ -31,6 +37,12 @@ export interface SavedGameReport {
   // assume it's always present.
   goalieHistoryHome: GoalieStint[];
   goalieHistoryAway: GoalieStint[];
+  // Same caveat — only present for games saved after this field was
+  // added. Goalie Hub net-placement data, kept for report exports.
+  netMarksHome: NetMark[];
+  netMarksAway: NetMark[];
+  shotsForHome: NetMark[];
+  shotsForAway: NetMark[];
   isShared: boolean;
   playedAt: string;
   createdAt: string;
@@ -52,6 +64,10 @@ export async function saveGameReport(
     awayRoster: Player[];
     goalieHistoryHome: GoalieStint[];
     goalieHistoryAway: GoalieStint[];
+    netMarksHome: NetMark[];
+    netMarksAway: NetMark[];
+    shotsForHome: NetMark[];
+    shotsForAway: NetMark[];
     isShared: boolean;
   }
 ): Promise<SavedGameReport> {
@@ -71,6 +87,10 @@ export async function saveGameReport(
       away_roster: data.awayRoster,
       goalie_history_home: data.goalieHistoryHome,
       goalie_history_away: data.goalieHistoryAway,
+      net_marks_home: data.netMarksHome,
+      net_marks_away: data.netMarksAway,
+      shots_for_home: data.shotsForHome,
+      shots_for_away: data.shotsForAway,
       is_shared: data.isShared,
       played_at: new Date().toISOString(),
     })
@@ -141,6 +161,10 @@ function mapReport(row: Record<string, unknown>): SavedGameReport {
     awayRoster: (row.away_roster as Player[]) || [],
     goalieHistoryHome: (row.goalie_history_home as GoalieStint[]) || [],
     goalieHistoryAway: (row.goalie_history_away as GoalieStint[]) || [],
+    netMarksHome: (row.net_marks_home as NetMark[]) || [],
+    netMarksAway: (row.net_marks_away as NetMark[]) || [],
+    shotsForHome: (row.shots_for_home as NetMark[]) || [],
+    shotsForAway: (row.shots_for_away as NetMark[]) || [],
     isShared: (row.is_shared as boolean) || false,
     playedAt: row.played_at as string,
     createdAt: row.created_at as string,
