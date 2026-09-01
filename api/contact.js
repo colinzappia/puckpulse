@@ -17,7 +17,12 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Email sending is not configured yet. Please email us directly instead.' });
   }
 
-  // Send email via Resend (free tier: 3000 emails/month)
+  // Send email via Resend (free tier: 3000 emails/month).
+  // Sending from Resend's own verified testing address rather than
+  // noreply@topcheesehockey.com — sending from your own domain requires
+  // DNS verification in Resend first, and this avoids that dependency
+  // entirely. Replies still go to whoever filled out the form, since
+  // reply_to is set below, so this only affects the visible "From" name.
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
@@ -25,7 +30,7 @@ export default async function handler(req, res) {
       'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
     },
     body: JSON.stringify({
-      from: 'Top Cheese Hockey <noreply@topcheesehockey.com>',
+      from: 'Top Cheese Hockey <onboarding@resend.dev>',
       to: 'hello@topcheesehockey.com',
       subject: `Contact Form: ${name}`,
       html: `
@@ -42,7 +47,7 @@ export default async function handler(req, res) {
   if (!response.ok) {
     const error = await response.json();
     console.error('Resend error:', error);
-    return res.status(500).json({ error: 'Failed to send message. Please try again.' });
+    return res.status(500).json({ error: `Failed to send message: ${error?.message || 'unknown error'}. Please try again or email us directly.` });
   }
 
   return res.status(200).json({ success: true });
