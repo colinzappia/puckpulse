@@ -785,6 +785,7 @@ const App: React.FC = () => {
   });
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [userPlan, setUserPlan] = useState<string | null>(null);
   const [checkingSubscription, setCheckingSubscription] = useState(false);
   const [legalPage, setLegalPage] = useState<'terms' | 'privacy' | null>(null);
   const [showPlayerStats, setShowPlayerStats] = useState(false);
@@ -824,7 +825,7 @@ const App: React.FC = () => {
           body: JSON.stringify({ userId, email: user.primaryEmailAddress.emailAddress }),
         });
         const data = await response.json();
-        if (data.isSubscribed) setIsSubscribed(true);
+        if (data.isSubscribed) { setIsSubscribed(true); setUserPlan(data.plan || 'Basic'); }
       } catch (err) {
         console.error('Subscription check failed:', err);
       } finally {
@@ -1061,6 +1062,7 @@ const App: React.FC = () => {
   const [plotFlash, setPlotFlash] = useState(false);
   const [showEndGame, setShowEndGame] = useState(false);
   const [showEndGameConfirm, setShowEndGameConfirm] = useState(false);
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   const [pendingGoal, setPendingGoal] = useState<{x: number; y: number; team: Team; playerNumber: string} | null>(null);
   const [pendingFaceoff, setPendingFaceoff] = useState<{x: number; y: number} | null>(null);
   const [pendingEntry, setPendingEntry] = useState<{x: number; y: number} | null>(null);
@@ -1815,6 +1817,9 @@ const App: React.FC = () => {
   ];
   const userEmail = currentUser?.primaryEmailAddress?.emailAddress?.toLowerCase() || user?.primaryEmailAddress?.emailAddress?.toLowerCase() || '';
   const isAdmin = ADMIN_EMAILS.includes(userEmail);
+  // Faceoffs, Zone Entries, and Breakouts are Pro+ features. Admins always
+  // get full access regardless of plan — this must never restrict them.
+  const isBasicPlan = !isAdmin && userPlan === 'Basic';
 
   if (checkingSubscription && !isAdmin) {
     return (
@@ -2188,10 +2193,11 @@ const App: React.FC = () => {
                       {toolbarButtons.map(btn => (
                         <button key={btn.type} onClick={() => setMapPlotType(btn.type)} className={`px-3 py-2 rounded-xl text-[10px] font-black uppercase transition-all flex items-center justify-center shadow-lg active:scale-90 shrink-0 ${mapPlotType === btn.type ? `${btn.color} text-white ring-2 ring-white/20` : 'bg-white/5 text-slate-500 hover:bg-white/10'}`}>{btn.label}</button>
                       ))}
-                      <button onClick={() => setMapPlotType(mapPlotType === EventType.FACEOFF_WIN || mapPlotType === EventType.FACEOFF_LOSS ? EventType.SHOT : EventType.FACEOFF_WIN)} className={`px-3 py-2 rounded-xl text-[10px] font-black uppercase transition-all flex items-center justify-center shadow-lg active:scale-90 border shrink-0 ${mapPlotType === EventType.FACEOFF_WIN || mapPlotType === EventType.FACEOFF_LOSS ? 'bg-yellow-500 text-black border-yellow-300 ring-2 ring-yellow-300/40' : 'bg-yellow-600/20 text-yellow-400 border-yellow-500/30 hover:bg-yellow-600/40'}`}>Faceoffs</button>
-                      <button onClick={() => { const zoneEntryTypes = [EventType.ZONE_ENTRY_CARRY, EventType.ZONE_ENTRY_DUMP, EventType.ZONE_ENTRY_PASS, EventType.ZONE_ENTRY_DENIED]; setMapPlotType(zoneEntryTypes.includes(mapPlotType) ? EventType.SHOT : EventType.ZONE_ENTRY_CARRY); }} className={`px-3 py-2 rounded-xl text-[10px] font-black uppercase transition-all flex items-center justify-center shadow-lg active:scale-90 border shrink-0 ${[EventType.ZONE_ENTRY_CARRY, EventType.ZONE_ENTRY_DUMP, EventType.ZONE_ENTRY_PASS, EventType.ZONE_ENTRY_DENIED].includes(mapPlotType) ? 'bg-indigo-500 text-white border-indigo-300 ring-2 ring-indigo-300/40' : 'bg-indigo-600/20 text-indigo-400 border-indigo-500/30 hover:bg-indigo-600/40'}`}>Zone Entries</button>
-                      <button onClick={() => setMapPlotType(mapPlotType === EventType.BREAKOUT ? EventType.SHOT : EventType.BREAKOUT)} className={`px-3 py-2 rounded-xl text-[10px] font-black uppercase transition-all flex items-center justify-center shadow-lg active:scale-90 border shrink-0 ${mapPlotType === EventType.BREAKOUT ? 'text-white ring-2' : ''}`} style={mapPlotType === EventType.BREAKOUT ? { background: '#65a30d', borderColor: '#a3e635', boxShadow: '0 4px 14px rgba(132,204,22,0.3)' } : { background: 'rgba(132,204,22,0.15)', color: '#a3e635', borderColor: 'rgba(132,204,22,0.35)' }}>Breakouts</button>
+                      <button onClick={() => isBasicPlan ? setShowUpgradePrompt(true) : setMapPlotType(mapPlotType === EventType.FACEOFF_WIN || mapPlotType === EventType.FACEOFF_LOSS ? EventType.SHOT : EventType.FACEOFF_WIN)} className={`px-3 py-2 rounded-xl text-[10px] font-black uppercase transition-all flex items-center justify-center shadow-lg active:scale-90 border shrink-0 ${isBasicPlan ? 'bg-white/5 text-slate-600 border-white/10' : mapPlotType === EventType.FACEOFF_WIN || mapPlotType === EventType.FACEOFF_LOSS ? 'bg-yellow-500 text-black border-yellow-300 ring-2 ring-yellow-300/40' : 'bg-yellow-600/20 text-yellow-400 border-yellow-500/30 hover:bg-yellow-600/40'}`}>{isBasicPlan && '🔒 '}Faceoffs</button>
+                      <button onClick={() => { if (isBasicPlan) { setShowUpgradePrompt(true); return; } const zoneEntryTypes = [EventType.ZONE_ENTRY_CARRY, EventType.ZONE_ENTRY_DUMP, EventType.ZONE_ENTRY_PASS, EventType.ZONE_ENTRY_DENIED]; setMapPlotType(zoneEntryTypes.includes(mapPlotType) ? EventType.SHOT : EventType.ZONE_ENTRY_CARRY); }} className={`px-3 py-2 rounded-xl text-[10px] font-black uppercase transition-all flex items-center justify-center shadow-lg active:scale-90 border shrink-0 ${isBasicPlan ? 'bg-white/5 text-slate-600 border-white/10' : [EventType.ZONE_ENTRY_CARRY, EventType.ZONE_ENTRY_DUMP, EventType.ZONE_ENTRY_PASS, EventType.ZONE_ENTRY_DENIED].includes(mapPlotType) ? 'bg-indigo-500 text-white border-indigo-300 ring-2 ring-indigo-300/40' : 'bg-indigo-600/20 text-indigo-400 border-indigo-500/30 hover:bg-indigo-600/40'}`}>{isBasicPlan && '🔒 '}Zone Entries</button>
+                      <button onClick={() => isBasicPlan ? setShowUpgradePrompt(true) : setMapPlotType(mapPlotType === EventType.BREAKOUT ? EventType.SHOT : EventType.BREAKOUT)} className={`px-3 py-2 rounded-xl text-[10px] font-black uppercase transition-all flex items-center justify-center shadow-lg active:scale-90 border shrink-0 ${isBasicPlan ? 'bg-white/5 text-slate-600 border-white/10' : mapPlotType === EventType.BREAKOUT ? 'text-white ring-2' : ''}`} style={isBasicPlan ? {} : mapPlotType === EventType.BREAKOUT ? { background: '#65a30d', borderColor: '#a3e635', boxShadow: '0 4px 14px rgba(132,204,22,0.3)' } : { background: 'rgba(132,204,22,0.15)', color: '#a3e635', borderColor: 'rgba(132,204,22,0.35)' }}>{isBasicPlan && '🔒 '}Breakouts</button>
                     </div>
+                    {isBasicPlan && <p className="text-center text-[9px] text-slate-600 mt-1.5">🔒 Faceoffs, Zone Entries &amp; Breakouts are Pro features</p>}
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     {playerNumber && (
@@ -2653,7 +2659,16 @@ const App: React.FC = () => {
             )}
           </div>
           <div className="lg:col-span-4 flex flex-col gap-6">
-            <CenterAnalytics events={events} rosters={{ home: homeRoster, away: awayRoster }} homeName={homeName} awayName={awayName} isRosterSwapped={isRosterSwapped} />
+            {isBasicPlan ? (
+              <div className="rounded-[2rem] border border-white/10 bg-slate-900/40 p-8 text-center flex flex-col items-center justify-center gap-3">
+                <span className="text-4xl">🔒</span>
+                <p className="text-white font-black text-sm">Faceoff Hub is a Pro feature</p>
+                <p className="text-slate-500 text-xs">Upgrade to unlock faceoff win/loss tracking, matchups, and zone breakdowns.</p>
+                <button onClick={() => setShowUpgradePrompt(true)} className="mt-2 px-5 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-colors">Upgrade to Pro</button>
+              </div>
+            ) : (
+              <CenterAnalytics events={events} rosters={{ home: homeRoster, away: awayRoster }} homeName={homeName} awayName={awayName} isRosterSwapped={isRosterSwapped} />
+            )}
           </div>
         </div>
       </main>
@@ -2942,6 +2957,20 @@ const App: React.FC = () => {
           <div className="flex gap-3">
             <button onClick={() => setShowEndGameConfirm(false)} className="flex-1 py-3 border border-white/10 hover:border-white/20 text-white font-bold rounded-xl text-sm transition-colors">Keep Tracking</button>
             <button onClick={() => { setShowEndGameConfirm(false); setShowEndGame(true); }} className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white font-black rounded-xl text-sm transition-colors">Yes, End Game</button>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {showUpgradePrompt && (
+      <div className="fixed inset-0 z-[400] bg-black/80 backdrop-blur-sm flex items-center justify-center px-4">
+        <div className="bg-[#0f1620] border border-white/10 rounded-2xl p-8 max-w-sm w-full shadow-2xl text-center">
+          <div className="text-4xl mb-4">🔒</div>
+          <h3 className="text-white font-black text-xl mb-2">That's a Pro feature</h3>
+          <p className="text-slate-400 text-sm mb-6">Faceoffs, Zone Entries, and Breakouts are available on the Pro plan and up. Upgrade any time — your current game and data stay exactly as they are.</p>
+          <div className="flex gap-3">
+            <button onClick={() => setShowUpgradePrompt(false)} className="flex-1 py-3 border border-white/10 hover:border-white/20 text-white font-bold rounded-xl text-sm transition-colors">Not Now</button>
+            <button onClick={() => { setShowUpgradePrompt(false); handleManageSubscription(); }} className="flex-1 py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-black rounded-xl text-sm transition-colors">Upgrade</button>
           </div>
         </div>
       </div>
