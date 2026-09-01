@@ -2755,7 +2755,6 @@ const App: React.FC = () => {
                             className="w-full bg-black/60 border border-white/10 p-3 rounded-xl text-xs font-black text-white uppercase outline-none focus:border-white/20"
                             value={isHome ? homeNickname : awayNickname}
                             onChange={e => isHome ? setHomeNickname(e.target.value) : setAwayNickname(e.target.value)}
-                            placeholder={teamNickname(name, '', isHome ? 'Home' : 'Away')}
                           />
                           <p className="text-[9px] text-slate-600 ml-1">
                             {(isHome ? homeNickname : awayNickname).trim()
