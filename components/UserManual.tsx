@@ -366,6 +366,13 @@ const VideoEmbed: React.FC<{ videoId: string }> = ({ videoId }) => {
 
 const UserManual: React.FC<UserManualProps> = ({ isOpen, onClose, onReplayTour }) => {
   const [activeSection, setActiveSection] = useState('setup');
+  const contentRef = React.useRef<HTMLDivElement>(null);
+
+  // Switching sections should always start at the top of the new content,
+  // not wherever the scroll happened to be left from the previous one.
+  React.useEffect(() => {
+    contentRef.current?.scrollTo({ top: 0 });
+  }, [activeSection]);
 
   usePageMeta(
     'User Manual | Top Cheese Hockey',
@@ -431,7 +438,7 @@ const UserManual: React.FC<UserManualProps> = ({ isOpen, onClose, onReplayTour }
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto px-6 sm:px-10 py-8">
+        <div ref={contentRef} className="flex-1 overflow-y-auto px-6 sm:px-10 py-8">
           <div className="max-w-2xl">
             <div className="flex items-center gap-3 mb-6">
               <span className="text-3xl">{current.icon}</span>
