@@ -59,7 +59,7 @@ const AboutPage: React.FC<AboutPageProps> = ({ onClose, onContact }) => {
                 Sitting that close to the action, I started thinking about how I could capture more meaningful data during games to make my broadcasts sharper. I built a basic tracking system for myself — and realized quickly that what I had was far more useful than just for TV commentary.
               </p>
               <p>
-                I brought the idea to coaches and people around the game. The response was unanimous: this was exactly the kind of tool they needed on the bench, and nothing like it existed at an accessible price point.
+                I brought the idea to coaches and people around the game. The response was unanimous: this was exactly the kind of tool they needed on the bench to help them take the guess work out of coaching. Live, in-game data, to share with their team and to help guide their strategies.
               </p>
               <p>
                 Top Cheese Hockey was born.
