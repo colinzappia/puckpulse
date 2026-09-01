@@ -352,7 +352,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onContact, onAdvert
             <span className="mx-2">·</span>
           </>
         )}
-        <Link to="/contact" className="hover:text-slate-400 transition-colors">Support</Link>
+        <Link to="/contact" className="hover:text-slate-400 transition-colors">Contact Us</Link>
         <span className="mx-2">·</span>
         <Link to="/about" className="hover:text-slate-300 transition-colors">About</Link>
         <span className="mx-2">·</span>
