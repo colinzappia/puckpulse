@@ -248,12 +248,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onContact, onAdvert
           {[
             {
               name: 'Basic', price: '$9.99', period: '/ month', desc: 'Perfect for individual coaches tracking one team.',
-              features: ['Live rink event tracking', 'Manual roster entry', 'Basic play-by-play log', 'Faceoff Hub', 'PDF & Excel exports'],
+              features: ['Live rink event tracking', 'AI Roster Sync (paste, photo & PDF import)', 'Basic play-by-play log', 'PDF & Excel exports'],
               featured: false,
             },
             {
               name: 'Pro', price: '$14.99', period: '/ month', desc: 'Full AI power for the serious coaching staff.',
-              features: ['Everything in Basic', 'AI Roster Sync', 'Live AI Tactical Intel', 'HTML report exports', 'Line management tools', 'Priority support'],
+              features: ['Everything in Basic', 'Faceoff Hub', 'Zone Entries & Breakouts tracking', 'Live AI Tactical Intel', 'HTML report exports', 'Line management tools', 'Priority support'],
               featured: true,
             },
             {
