@@ -9,6 +9,14 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'All fields are required' });
   }
 
+  if (!process.env.RESEND_API_KEY) {
+    // This is a distinct, checkable failure from an actual send failure —
+    // logged clearly so it's not confused with a Resend-side problem
+    // (bad domain verification, rate limit, etc.) when debugging.
+    console.error('Contact form error: RESEND_API_KEY is not set in the environment.');
+    return res.status(500).json({ error: 'Email sending is not configured yet. Please email us directly instead.' });
+  }
+
   // Send email via Resend (free tier: 3000 emails/month)
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
