@@ -32,7 +32,7 @@ const ContactPage: React.FC<ContactPageProps> = ({ onClose }) => {
       });
       const data = await response.json();
       if (data.success) setSent(true);
-      else setError(data.error || 'Something went wrong. Please try again.');
+      else setError((data.error || 'Something went wrong.') + ' You can also email us directly at hello@topcheesehockey.com.');
     } catch {
       setError('Could not send message. Please email us directly at hello@topcheesehockey.com');
     } finally {
