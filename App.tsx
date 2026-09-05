@@ -1203,13 +1203,40 @@ const App: React.FC = () => {
     }
   }, [isCurrentlySwapped]);
 
+  // Point-in-polygon test (ray casting) — used to check whether a shot
+  // location falls inside the high or medium danger zone shapes below.
+  const isInPolygon = (px: number, py: number, poly: [number, number][]): boolean => {
+    let inside = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      const [xi, yi] = poly[i];
+      const [xj, yj] = poly[j];
+      const intersects = (yi > py) !== (yj > py) && px < ((xj - xi) * (py - yi)) / (yj - yi) + xi;
+      if (intersects) inside = !inside;
+    }
+    return inside;
+  };
+
+  // High/medium danger zone shapes, anchored to the same real rink
+  // markings already drawn on the rink (faceoff dots at x=31/169,
+  // y=20.5/64.5, matching CIRCLE_DOTS in RinkChart.tsx) rather than
+  // arbitrary distances — this is the standard "home plate" shot quality
+  // model used across hockey analytics (e.g. war-on-ice's High-Danger
+  // Area / Danger Area convention), not something invented for this app.
+  // Defined for the left goal (x=11); mirrored across x=100 for the right.
+  const HIGH_DANGER_LEFT: [number, number][] = [
+    [11, 27], [31, 20.5], [31, 64.5], [11, 58],
+  ];
+  const MEDIUM_DANGER_LEFT: [number, number][] = [
+    [11, 18], [31, 10], [46, 20.5], [46, 64.5], [31, 75], [11, 67],
+  ];
+  const mirrorPoly = (poly: [number, number][]): [number, number][] => poly.map(([x, y]) => [200 - x, y]);
+
   const getShotQuality = (x: number, y: number, team: Team): 'high' | 'medium' | 'low' => {
     const attackingLeft = (team === Team.HOME && !isCurrentlySwapped) || (team === Team.AWAY && isCurrentlySwapped);
-    const goalX = attackingLeft ? 11 : 189;
-    const distFromGoal = Math.abs(x - goalX);
-    const distFromCenter = Math.abs(y - 42.5);
-    if (distFromGoal < 30 && distFromCenter < 15) return 'high';
-    if (distFromGoal < 55 && distFromCenter < 25) return 'medium';
+    const highZone = attackingLeft ? HIGH_DANGER_LEFT : mirrorPoly(HIGH_DANGER_LEFT);
+    const mediumZone = attackingLeft ? MEDIUM_DANGER_LEFT : mirrorPoly(MEDIUM_DANGER_LEFT);
+    if (isInPolygon(x, y, highZone)) return 'high';
+    if (isInPolygon(x, y, mediumZone)) return 'medium';
     return 'low';
   };
 
