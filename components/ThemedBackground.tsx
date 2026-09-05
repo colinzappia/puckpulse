@@ -83,7 +83,7 @@ interface ThemedBackgroundProps {
 const ThemedBackground: React.FC<ThemedBackgroundProps> = ({ children, className = '', intensity = 'full' }) => {
   const isSubtle = intensity === 'subtle';
   const blobOpacityMult = isSubtle ? 0.45 : 1;
-  const xoOpacity = isSubtle ? 0.35 : 1;
+  const xoOpacity = isSubtle ? 0.28 : 0.6;
   const scratchOpacity = isSubtle ? 0.28 : 0.5;
 
   return (
@@ -123,21 +123,21 @@ const ThemedBackground: React.FC<ThemedBackgroundProps> = ({ children, className
         <div
           className="absolute rounded-full"
           style={{
-            width: 820, height: 820, background: '#1d4ed8', opacity: 0.32 * blobOpacityMult, top: -300, left: -240,
+            width: 820, height: 820, background: '#1d4ed8', opacity: 0.22 * blobOpacityMult, top: -300, left: -240,
             filter: 'blur(90px)', animation: 'tchFloat1 11s ease-in-out infinite',
           }}
         />
         <div
           className="absolute rounded-full"
           style={{
-            width: 680, height: 680, background: '#b91c1c', opacity: 0.28 * blobOpacityMult, top: 20, right: -220,
+            width: 680, height: 680, background: '#b91c1c', opacity: 0.19 * blobOpacityMult, top: 20, right: -220,
             filter: 'blur(90px)', animation: 'tchFloat2 13s ease-in-out infinite',
           }}
         />
         <div
           className="absolute rounded-full"
           style={{
-            width: 560, height: 560, background: '#ca8a04', opacity: 0.22 * blobOpacityMult, bottom: -260, left: '32%',
+            width: 560, height: 560, background: '#ca8a04', opacity: 0.15 * blobOpacityMult, bottom: -260, left: '32%',
             filter: 'blur(90px)', animation: 'tchFloat3 12s ease-in-out infinite',
           }}
         />
@@ -176,6 +176,12 @@ const ThemedBackground: React.FC<ThemedBackgroundProps> = ({ children, className
         @keyframes tchFloat2 { 0%,100%{transform:translate(0,0) scale(1);} 50%{transform:translate(-80px,90px) scale(1.1);} }
         @keyframes tchFloat3 { 0%,100%{transform:translate(0,0) scale(1);} 50%{transform:translate(70px,-80px) scale(1.05);} }
       `}</style>
+
+      {/* Uniform darkening scrim, above all decorative layers but below
+          content — lifts text contrast consistently everywhere, rather
+          than relying on wherever the animated blobs and scattered X/O
+          graphics happen to drift underneath a given piece of text. */}
+      <div className="fixed inset-0 z-[1] pointer-events-none bg-black/25" />
 
       {/* Page content sits above all background layers */}
       <div className="relative z-10">
