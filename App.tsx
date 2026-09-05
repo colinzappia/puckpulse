@@ -6,6 +6,7 @@ import Header from './components/Header'; // v2
 import RinkChart from './components/RinkChart';
 import PlayByPlay from './components/PlayByPlay';
 import CenterAnalytics from './components/CenterAnalytics';
+import SupportChatWidget from './components/SupportChatWidget';
 import UserManual from './components/UserManual';
 import LandingPage from './components/LandingPage';
 import AdBanner from './components/AdBanner';
@@ -1769,21 +1770,23 @@ const App: React.FC = () => {
 
   // Standalone public pages — accessible regardless of landing/auth/subscription
   // state, so Google (and anonymous visitors) can actually reach them instead
-  // of hitting the sign-in wall.
+  // of hitting the sign-in wall. The support chat widget is deliberately only
+  // shown on these public pages, not inside the live tracking app below —
+  // see SupportChatWidget.tsx for why.
   if (location.pathname === '/about') {
-    return <AboutPage onClose={() => navigate('/')} onContact={() => navigate('/contact')} />;
+    return <><AboutPage onClose={() => navigate('/')} onContact={() => navigate('/contact')} /><SupportChatWidget /></>;
   }
   if (location.pathname === '/manual') {
-    return <UserManual isOpen={true} onClose={() => navigate('/')} onReplayTour={() => { navigate('/'); setShowTour(true); }} />;
+    return <><UserManual isOpen={true} onClose={() => navigate('/')} onReplayTour={() => { navigate('/'); setShowTour(true); }} /><SupportChatWidget /></>;
   }
   if (location.pathname === '/contact') {
-    return <ContactPage onClose={() => navigate('/')} />;
+    return <><ContactPage onClose={() => navigate('/')} /><SupportChatWidget /></>;
   }
   if (location.pathname === '/advertise' && ADS_ENABLED) {
-    return <AdvertisePage isOpen={true} onClose={() => navigate('/')} />;
+    return <><AdvertisePage isOpen={true} onClose={() => navigate('/')} /><SupportChatWidget /></>;
   }
 
-  if (showLanding) return <LandingPage onLaunch={handleLaunch} onContact={() => navigate('/contact')} onAdvertise={ADS_ENABLED ? () => navigate('/advertise') : undefined} onAbout={() => navigate('/about')} />;
+  if (showLanding) return <><LandingPage onLaunch={handleLaunch} onContact={() => navigate('/contact')} onAdvertise={ADS_ENABLED ? () => navigate('/advertise') : undefined} onAbout={() => navigate('/about')} /><SupportChatWidget /></>;
 
   // Show loading screen while Clerk is initialising — prevents blank page flash
   if (!authLoaded) return (
