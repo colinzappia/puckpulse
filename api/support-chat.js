@@ -1,4 +1,5 @@
 import { manualSections } from '../data/manualContent.js';
+import { companyInfo } from '../data/companyInfo.js';
 
 // Flattens the shared manual content into plain reference text for the
 // system prompt. Importing directly from the same file the in-app manual
@@ -23,6 +24,7 @@ const SYSTEM_PROMPT = `You are the AI support assistant for Top Cheese Hockey (t
 Your job is to answer questions about the product accurately, using ONLY the reference material below. Do not invent features, pricing, or behavior that isn't described here.
 
 ${PRICING_REFERENCE}
+${companyInfo}
 
 FULL USER MANUAL (your primary knowledge source):
 ${buildManualReference()}
