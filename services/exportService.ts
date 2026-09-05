@@ -1,5 +1,5 @@
 import { GameEvent, EventType, Team, TeamStats, Player } from '../types';
-import { buildPlayerStats, computeGoalieStats, computeZonePlayStats } from '../components/playerstats';
+import { buildPlayerStats, computeGoalieStats, computeZonePlayStats, computeShotQualityStats } from '../components/playerstats';
 const getPeriodLabel = (p: number): string => {
   if (p === 1) return '1st';
   if (p === 2) return '2nd';
@@ -144,6 +144,7 @@ function computeTeamReportStats(events: GameEvent[], roster: Player[], team: Tea
   const pkShots = rows.reduce((s, r) => s + r.pkShots, 0);
 
   const zonePlay = computeZonePlayStats(events, team);
+  const shotQuality = computeShotQualityStats(events, team);
 
   let goalieStints: ReturnType<typeof computeGoalieStats> = [];
   let teamSaves = 0, teamShotsAgainst = 0, teamGoalsAgainst = 0;
@@ -168,7 +169,7 @@ function computeTeamReportStats(events: GameEvent[], roster: Player[], team: Tea
   return {
     rows, goals, assists, shotsOnNet, shotsMissed, hits, blocks, faceoffWins, faceoffLosses, faceoffPct, shootingPct,
     pim, penaltyCount: penaltyEvents.length, ppGoals, ppShots, pkShots,
-    zonePlay, goalieStints, teamSaves, teamShotsAgainst, teamGoalsAgainst, teamSvPct,
+    zonePlay, shotQuality, goalieStints, teamSaves, teamShotsAgainst, teamGoalsAgainst, teamSvPct,
     periodGoals,
   };
 }
@@ -200,6 +201,7 @@ function renderTeamComparisonTable(homeName: string, awayName: string, h: Return
         ${row('Shots on Net', h.shotsOnNet, a.shotsOnNet)}
         ${row('Shooting %', pct(h.shootingPct), pct(a.shootingPct))}
         ${row('Save %', svPct(h.teamSvPct), svPct(a.teamSvPct))}
+        ${row('High-Danger Chances', h.shotQuality.high, a.shotQuality.high)}
         ${row('Hits', h.hits, a.hits)}
         ${row('Blocked Shots', h.blocks, a.blocks)}
         ${row('Penalty Minutes', h.pim, a.pim)}
@@ -508,6 +510,9 @@ export function downloadExcelReport(data: ExportData) {
     ["Shots on Net", h.shotsOnNet, a.shotsOnNet],
     ["Shooting %", h.shootingPct !== null ? `${(h.shootingPct * 100).toFixed(1)}%` : '—', a.shootingPct !== null ? `${(a.shootingPct * 100).toFixed(1)}%` : '—'],
     ["Save %", h.teamSvPct !== null ? svPct(h.teamSvPct) : '—', a.teamSvPct !== null ? svPct(a.teamSvPct) : '—'],
+    ["High-Danger Chances", h.shotQuality.high, a.shotQuality.high],
+    ["Medium-Danger Chances", h.shotQuality.medium, a.shotQuality.medium],
+    ["Low-Danger Chances", h.shotQuality.low, a.shotQuality.low],
     ["Hits", h.hits, a.hits],
     ["Blocked Shots", h.blocks, a.blocks],
     ["Penalty Minutes", h.pim, a.pim],
