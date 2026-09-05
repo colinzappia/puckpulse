@@ -39,7 +39,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onContact, onAdvert
           Simple Live Tracking. Smarter Coaching.
         </div>
 
-        <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black leading-tight tracking-tight mb-4">
+        <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black leading-tight tracking-tight mb-4" style={{ textShadow: '0 2px 20px rgba(0,0,0,0.6)' }}>
           The coaching edge<br />
           your bench <span className="tch-gradient-text">deserves</span>
         </h1>
