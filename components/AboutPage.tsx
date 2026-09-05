@@ -53,7 +53,7 @@ const AboutPage: React.FC<AboutPageProps> = ({ onClose, onContact }) => {
             <h2 className="text-3xl font-black text-white mb-5">It started between the benches.</h2>
             <div className="space-y-4 text-slate-300 text-base leading-relaxed">
               <p>
-                For the past 10 seasons I've been the colour analyst on Rogers TV for Ottawa 67's home telecasts — positioned right between the two benches, watching the game unfold up close from puck drop to final buzzer.
+                For the past 10 seasons I've been the colour analyst on Rogers TV for Ottawa 67's home telecasts — positioned right between the two benches, watching the game unfold up close from puck drop to final buzzer. As of the 2026/27 season, I'm also calling play-by-play alongside colour commentary for those broadcasts.
               </p>
               <p>
                 Sitting that close to the action, I started thinking about how I could capture more meaningful data during games to make my broadcasts sharper. I built a basic tracking system for myself — and realized quickly that what I had was far more useful than just for TV commentary.
