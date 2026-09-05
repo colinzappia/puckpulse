@@ -48,7 +48,7 @@ const AboutPage: React.FC<AboutPageProps> = ({ onClose, onContact }) => {
 
         {/* Origin story */}
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div>
+          <div className="bg-black/30 backdrop-blur-sm border border-white/5 rounded-3xl p-8">
             <p className="text-xs font-black text-cyan-400 uppercase tracking-[0.3em] mb-3">The Story</p>
             <h2 className="text-3xl font-black text-white mb-5">It started between the benches.</h2>
             <div className="space-y-4 text-slate-300 text-base leading-relaxed">
@@ -98,7 +98,7 @@ const AboutPage: React.FC<AboutPageProps> = ({ onClose, onContact }) => {
         </section>
 
         {/* Mission */}
-        <section className="text-center max-w-3xl mx-auto">
+        <section className="text-center max-w-3xl mx-auto bg-black/30 backdrop-blur-sm border border-white/5 rounded-3xl p-8 sm:p-12">
           <p className="text-xs font-black text-cyan-400 uppercase tracking-[0.3em] mb-3">The Mission</p>
           <h2 className="text-3xl sm:text-4xl font-black text-white mb-6 leading-tight">
             Every coach deserves the same information the pros have.
