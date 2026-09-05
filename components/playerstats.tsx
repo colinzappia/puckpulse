@@ -161,6 +161,15 @@ export function computeGoalieStats(events: GameEvent[], history: { number: strin
   });
 }
 
+export function computeShotQualityStats(events: GameEvent[], team: Team) {
+  const teamShots = events.filter(e => e.team === team && (e.type === EventType.SHOT || e.type === EventType.GOAL));
+  const high = teamShots.filter(e => e.metadata?.shotQuality === 'high').length;
+  const medium = teamShots.filter(e => e.metadata?.shotQuality === 'medium').length;
+  const low = teamShots.filter(e => e.metadata?.shotQuality === 'low').length;
+  const total = high + medium + low;
+  return { high, medium, low, total };
+}
+
 export function computeZonePlayStats(events: GameEvent[], team: Team) {
   const teamEvents = events.filter(e => e.team === team);
 
@@ -220,6 +229,7 @@ const PlayerStats: React.FC<PlayerStatsProps> = ({
   const activeHistory = (activeTeam === 'home' ? goalieHistoryHome : goalieHistoryAway) || [];
   const goalieStints = computeGoalieStats(events, activeHistory, activeGoalieTeam, activeRoster);
   const zonePlay = computeZonePlayStats(events, activeGoalieTeam);
+  const shotQuality = computeShotQualityStats(events, activeGoalieTeam);
 
   const totalEvents = events.filter(e => e.team === (activeTeam === 'home' ? Team.HOME : Team.AWAY)).length;
 
@@ -273,6 +283,19 @@ const PlayerStats: React.FC<PlayerStatsProps> = ({
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {shotQuality.total > 0 && (
+          <div className="max-w-5xl mx-auto mb-4 bg-red-500/5 border border-red-500/20 rounded-2xl px-5 py-3 flex flex-wrap items-center gap-x-6 gap-y-3">
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="text-[10px] font-black uppercase tracking-wider text-red-400 shrink-0">Shot Quality</span>
+              <div className="flex items-center gap-3 text-center">
+                <div><p className="text-base font-black text-red-400">{shotQuality.high}</p><p className="text-[8px] font-bold text-slate-500 uppercase">High</p></div>
+                <div><p className="text-base font-black text-amber-400">{shotQuality.medium}</p><p className="text-[8px] font-bold text-slate-500 uppercase">Medium</p></div>
+                <div><p className="text-base font-black text-blue-400">{shotQuality.low}</p><p className="text-[8px] font-bold text-slate-500 uppercase">Low</p></div>
+              </div>
+            </div>
           </div>
         )}
 
