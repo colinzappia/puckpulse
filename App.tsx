@@ -7,6 +7,8 @@ import RinkChart from './components/RinkChart';
 import PlayByPlay from './components/PlayByPlay';
 import CenterAnalytics from './components/CenterAnalytics';
 import SupportChatWidget from './components/SupportChatWidget';
+import WatchSession from './components/WatchSession';
+import TeamManagement from './components/TeamManagement';
 import UserManual from './components/UserManual';
 import LandingPage from './components/LandingPage';
 import AdBanner from './components/AdBanner';
@@ -787,6 +789,7 @@ const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [userPlan, setUserPlan] = useState<string | null>(null);
+  const [isViaTeam, setIsViaTeam] = useState(false);
   const [checkingSubscription, setCheckingSubscription] = useState(false);
   const [legalPage, setLegalPage] = useState<'terms' | 'privacy' | null>(null);
   const [showPlayerStats, setShowPlayerStats] = useState(false);
@@ -826,7 +829,7 @@ const App: React.FC = () => {
           body: JSON.stringify({ userId, email: user.primaryEmailAddress.emailAddress }),
         });
         const data = await response.json();
-        if (data.isSubscribed) { setIsSubscribed(true); setUserPlan(data.plan || 'Basic'); }
+        if (data.isSubscribed) { setIsSubscribed(true); setUserPlan(data.plan || 'Basic'); setIsViaTeam(!!data.viaTeam); }
       } catch (err) {
         console.error('Subscription check failed:', err);
       } finally {
@@ -1064,6 +1067,7 @@ const App: React.FC = () => {
   const [showEndGame, setShowEndGame] = useState(false);
   const [showEndGameConfirm, setShowEndGameConfirm] = useState(false);
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
+  const [showTeamManagement, setShowTeamManagement] = useState(false);
   const [pendingGoal, setPendingGoal] = useState<{x: number; y: number; team: Team; playerNumber: string} | null>(null);
   const [pendingFaceoff, setPendingFaceoff] = useState<{x: number; y: number} | null>(null);
   const [pendingEntry, setPendingEntry] = useState<{x: number; y: number} | null>(null);
@@ -1812,6 +1816,13 @@ const App: React.FC = () => {
   if (location.pathname === '/advertise' && ADS_ENABLED) {
     return <><AdvertisePage isOpen={true} onClose={() => navigate('/')} /><SupportChatWidget /></>;
   }
+  // Public spectator view — deliberately placed before the subscription
+  // gate below. Anyone with a game's share code can watch live, read-only,
+  // with no account and no payment required.
+  if (location.pathname.startsWith('/watch/')) {
+    const watchCode = decodeURIComponent(location.pathname.replace('/watch/', ''));
+    return <WatchSession code={watchCode} onClose={() => navigate('/')} />;
+  }
 
   if (showLanding) return <><LandingPage onLaunch={handleLaunch} onContact={() => navigate('/contact')} onAdvertise={ADS_ENABLED ? () => navigate('/advertise') : undefined} onAbout={() => navigate('/about')} /><SupportChatWidget /></>;
 
@@ -1851,6 +1862,10 @@ const App: React.FC = () => {
   // Faceoffs, Zone Entries, and Breakouts are Pro+ features. Admins always
   // get full access regardless of plan — this must never restrict them.
   const isBasicPlan = !isAdmin && userPlan === 'Basic';
+  // Only an actual Team-plan subscriber with their own subscription can
+  // manage the team — someone accessing via a team invite (isViaTeam)
+  // is a member, not the owner, and shouldn't see team management at all.
+  const isTeamOwner = userPlan === 'Team' && !isViaTeam;
 
   if (checkingSubscription && !isAdmin) {
     return (
@@ -2922,6 +2937,12 @@ const App: React.FC = () => {
       {!isAdmin && (
         <button onClick={handleManageSubscription} className="text-xs font-bold text-slate-400 hover:text-white transition-colors px-4 py-1.5 rounded-full border border-white/10 hover:border-white/20">⚙ Manage Subscription</button>
       )}
+      {isTeamOwner && (
+        <>
+          <span className="text-slate-600">·</span>
+          <button onClick={() => setShowTeamManagement(true)} className="text-xs font-bold text-slate-400 hover:text-white transition-colors px-4 py-1.5 rounded-full border border-white/10 hover:border-white/20">👥 Manage Team</button>
+        </>
+      )}
     </div>
 
     {/* Goal line popup via portal */}
@@ -3005,6 +3026,10 @@ const App: React.FC = () => {
           </div>
         </div>
       </div>
+    )}
+
+    {showTeamManagement && (
+      <TeamManagement ownerEmail={userEmail} onClose={() => setShowTeamManagement(false)} />
     )}
 
     <PlayerStats isOpen={showPlayerStats} onClose={() => setShowPlayerStats(false)} events={events} homeRoster={homeRoster} awayRoster={awayRoster} homeName={homeName} awayName={awayName} goalieHistoryHome={goalieHistoryHome} goalieHistoryAway={goalieHistoryAway} />
