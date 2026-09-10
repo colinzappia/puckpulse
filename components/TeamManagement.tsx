@@ -98,7 +98,7 @@ export default function TeamManagement({ ownerEmail, onClose }: Props) {
           <span style={{ fontSize: 22, color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }} onClick={onClose}>×</span>
         </div>
         <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, marginBottom: 20 }}>
-          {slotsUsed} of {MAX_MEMBERS} additional seats used. Anyone you add here gets full access under your subscription — no separate payment needed from them.
+          {slotsUsed} of {MAX_MEMBERS} additional seats used. Adding someone sends them an email explaining how to activate their access — no separate payment needed from them.
         </p>
 
         <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
