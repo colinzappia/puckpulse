@@ -276,6 +276,10 @@ export const manualSections = [
         content: 'Tap "Share this game live" below the header. Review the game details (home and away teams must be set up first), then tap "Create session & get code." You\'ll receive a unique 7-character code like TCH-4829. Share this code — or the link — with your team before the game starts.'
       },
       {
+        title: 'Sharing with parents & spectators',
+        content: 'Once a session is created, you\'ll see a second, separate link below your own session code — topcheesehockey.com/watch/[code] — with a "Copy" option. This is different from the coach link: anyone with this link can watch the score and a live feed of goals and penalties update in real time, with no account and no payment required at all.\n\nIt\'s read-only and completely separate from your actual coaching tools — spectators never see rosters, stats, or anything else, just the scoreboard and event feed, refreshing automatically every few seconds. Text it to parents, post it in a team group chat, whatever\'s easiest.'
+      },
+      {
         title: 'Joining a session',
         content: 'Tap "Join session" below the header and enter the code provided by the session admin. Your role (Logger or Viewer) will be assigned automatically. You\'ll land directly in the live game view — no additional setup needed.'
       },
@@ -298,6 +302,33 @@ export const manualSections = [
       {
         title: 'Ending or leaving a session',
         content: 'Tap the ⋯ button in the session banner:\n\n• "Leave session" — removes you from the session but keeps it running for everyone else.\n\n• "End session for everyone" (admin only) — closes the session for all users. All events that were logged are preserved and can still be exported.'
+      }
+    ]
+  },
+  {
+    id: 'team-plan',
+    icon: '👥',
+    title: 'Team Plan & Seats',
+    subsections: [
+      {
+        title: 'What the Team plan includes',
+        content: 'The Team plan lets one subscription cover up to 5 people total — you, plus up to 4 additional people you invite. Anyone you add gets full access to the app under your subscription, with no separate payment from them at all. This is different from a Live Session: a Live Session is for collaboratively tracking one specific game together, while Team plan seats are about who has ongoing access to the app itself.'
+      },
+      {
+        title: 'Inviting someone to your team (owner only)',
+        content: 'If you have your own active Team plan subscription, you\'ll see a "👥 Manage Team" button near the bottom of the screen — this only appears for the actual subscription owner, not for people you\'ve invited.\n\nTap it, type in the email address of the person you want to add, and tap "Add." They\'ll immediately receive an email explaining how to activate their access. You can add up to 4 people this way; the screen shows how many of your seats are currently used.'
+      },
+      {
+        title: 'How an invited team member activates their access',
+        content: 'Being added to a team doesn\'t skip account creation entirely — it skips having to pay. The person you invite still needs to sign up (or sign in) at topcheesehockey.com themselves, using the exact same email address the invite was sent to. That match is what connects them to your team; signing up with a different email won\'t work.\n\nOnce they\'re signed in with the correct email, they get full access automatically — nothing else to configure on either side.'
+      },
+      {
+        title: 'Removing someone from your team',
+        content: 'In the Manage Team screen, tap "Remove" next to anyone you want to take off your team. Their access ends immediately, and that seat becomes available for someone else.'
+      },
+      {
+        title: 'What happens if the owner\'s subscription lapses',
+        content: 'Team member access is always checked live against the owner\'s actual subscription status — it\'s never a one-time grant. If the owner\'s subscription is cancelled or lapses, every invited member loses access at the same time, automatically.'
       }
     ]
   },
