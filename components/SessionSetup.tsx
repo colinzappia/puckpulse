@@ -118,6 +118,27 @@ export default function SessionSetup({
               </div>
             </div>
 
+            <div style={{ ...S.card, marginBottom: 16 }}>
+              <div style={S.sl}>For parents & spectators — no account needed</div>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 10 }}>
+                Share this link so anyone can watch the score and live updates — free, no sign up.
+              </div>
+              <div
+                onClick={() => {
+                  navigator.clipboard.writeText(`https://topcheesehockey.com/watch/${session.code}`);
+                }}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  fontSize: 12, color: '#4ade80', padding: '10px 14px',
+                  background: 'rgba(74,222,128,0.08)', borderRadius: 10,
+                  border: '0.5px solid rgba(74,222,128,0.25)', cursor: 'pointer',
+                }}
+              >
+                <span>topcheesehockey.com/watch/{session.code}</span>
+                <span style={{ fontSize: 10, fontWeight: 700, opacity: 0.8 }}>COPY</span>
+              </div>
+            </div>
+
             <div style={S.card}>
               <div style={S.sl}>Game</div>
               <div style={{ fontSize: 14, fontWeight: 600, color: '#fff' }}>
