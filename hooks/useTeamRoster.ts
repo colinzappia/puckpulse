@@ -141,7 +141,8 @@ export function useTeamRoster({ user }: UseTeamRosterParams) {
       else setAwayLogo(url);
     } catch (err) {
       console.error(err);
-      toast.error('Logo upload failed — try again.');
+      const message = err instanceof Error ? err.message : 'Logo upload failed — try again.';
+      toast.error(message);
     } finally {
       setLogoUploading(prev => ({ ...prev, [key]: false }));
     }
