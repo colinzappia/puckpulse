@@ -81,6 +81,43 @@ export default async function handler(req, res) {
 
     if (insertError) throw insertError;
 
+    // Send the invite email, but don't let a failure here undo the
+    // invite itself — the person is already added to the team in the
+    // database regardless of whether this notification goes through.
+    // The owner can always tell them directly if the email doesn't land.
+    if (process.env.RESEND_API_KEY) {
+      try {
+        const emailResponse = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+          },
+          body: JSON.stringify({
+            from: 'Top Cheese Hockey <noreply@topcheesehockey.com>',
+            to: normalizedMember,
+            subject: `You've been added to a Top Cheese Hockey team`,
+            html: `
+              <h2>You're in! 🏒</h2>
+              <p><strong>${normalizedOwner}</strong> has added you to their team on Top Cheese Hockey — you now have full access, no separate subscription needed.</p>
+              <p><strong>One important step:</strong> to activate your access, you need to sign up (or sign in) at <a href="https://topcheesehockey.com">topcheesehockey.com</a> using this exact email address: <strong>${normalizedMember}</strong></p>
+              <p>Signing up with a different email won't connect to the team, so make sure to use this one.</p>
+              <p>Once you're signed in with this email, you'll have full access automatically — nothing else to set up.</p>
+              <p style="color:#666; font-size:13px; margin-top:24px;">If you weren't expecting this, you can safely ignore this email.</p>
+            `,
+          }),
+        });
+        if (!emailResponse.ok) {
+          const emailError = await emailResponse.json();
+          console.error('Team invite email failed to send:', emailError);
+        }
+      } catch (emailErr) {
+        console.error('Team invite email error:', emailErr);
+      }
+    } else {
+      console.error('Team invite: RESEND_API_KEY not set, skipping invite email.');
+    }
+
     return res.status(200).json({ success: true });
   } catch (err) {
     console.error('Team invite error:', err);
