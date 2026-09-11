@@ -1,5 +1,6 @@
 import { GameEvent, EventType, Team, TeamStats, Player } from '../types';
 import { buildPlayerStats, computeGoalieStats, computeZonePlayStats, computeShotQualityStats } from '../components/playerstats';
+import { NET_IMG_W, NET_IMG_H, NET_X_MIN, NET_X_MAX, NET_Y_MIN, NET_Y_MAX, describeNetZone } from '../data/goalieNet';
 const getPeriodLabel = (p: number): string => {
   if (p === 1) return '1st';
   if (p === 2) return '2nd';
@@ -14,7 +15,7 @@ import html2pdf from 'html2pdf.js';
 
 interface GoalieStint { number: string; since: number; }
 
-interface NetMark { x: number; y: number; outcome: string; }
+interface NetMark { x: number; y: number; outcome: string; period?: number; }
 
 interface ExportData {
   homeName: string;
@@ -100,20 +101,14 @@ const renderRinkSVG = (periodEvents: GameEvent[]) => {
 // already used for the rink diagram above.
 //
 // Mark coordinates (m.x, m.y) are stored in the LIVE Goalie Hub's image-pixel
-// space (0-1408 x, 0-768 y — see components/GoalieHub.tsx's IMG_W/IMG_H), and
-// its on/off-net decision is made against that component's NET_X_MIN/MAX,
-// NET_Y_MIN/MAX (the red frame's actual pixel bounds, 286-1121 x, 94-623 y).
-// The frame rect drawn below MUST occupy the same proportional position
-// within this SVG's viewBox that the real frame occupies within that image
-// — otherwise a mark placed outside the real net (correctly, in the live
-// UI) can still land inside this differently-proportioned rect and render
-// as if it were on net. Keep these two in sync with GoalieHub.tsx.
-const NET_IMG_W = 1408;
-const NET_IMG_H = 768;
-const NET_X_MIN = 286;
-const NET_X_MAX = 1121;
-const NET_Y_MIN = 94;
-const NET_Y_MAX = 623;
+// space, and its on/off-net decision is made against the net frame's actual
+// pixel bounds — both come from data/goalieNet.ts, the single shared source
+// for both this file and components/GoalieHub.tsx. The frame rect drawn
+// below MUST occupy the same proportional position within this SVG's
+// viewBox that the real frame occupies within that image — otherwise a
+// mark placed outside the real net (correctly, in the live UI) can still
+// land inside this differently-proportioned rect and render as if it were
+// on net. That's exactly the bug this shared file was extracted to prevent.
 
 const renderNetSVG = (marks: NetMark[], positiveOutcome: string) => {
   const W = 700, H = 420;
@@ -362,6 +357,40 @@ function renderNetStatTiles(marks: NetMark[], positiveValue: string, positiveLab
     </div>`;
 }
 
+// A compact by-period breakdown, in the same spirit as renderNetStatTiles
+// but split by the period each tap happened in. Only renders when marks
+// span two or more distinct periods — with everything in one period the
+// overall tiles above already say the same thing, so a one-row "table"
+// would just be clutter. Marks with no period on them (recorded before
+// this field existed) are left out of the breakdown but still count in
+// the overall tiles/diagram above.
+function renderNetPeriodTable(marks: NetMark[], positiveValue: string, positiveLabel: string, negativeLabel: string, pctLabel: string) {
+  const periods = Array.from(new Set(marks.filter(m => m.period !== undefined).map(m => m.period as number))).sort((a, b) => a - b);
+  if (periods.length < 2) return '';
+  const rows = periods.map(p => {
+    const { positiveCount, negativeCount, pct } = computeNetTallies(marks.filter(m => m.period === p), positiveValue);
+    return `
+      <tr>
+        <td style="padding:5px 8px; font-weight:700; border-bottom:1px solid ${BORDER};">${getPeriodLabel(p)}</td>
+        <td style="padding:5px 8px; text-align:center; border-bottom:1px solid ${BORDER};">${positiveCount}</td>
+        <td style="padding:5px 8px; text-align:center; border-bottom:1px solid ${BORDER};">${negativeCount}</td>
+        <td style="padding:5px 8px; text-align:center; font-weight:900; border-bottom:1px solid ${BORDER};">${pct}</td>
+      </tr>`;
+  }).join('');
+  return `
+    <table style="width:100%; border-collapse:collapse; font-size:10px; margin-top:8px;">
+      <thead>
+        <tr style="background:#f8fafc;">
+          <th style="padding:5px 8px; text-align:left; font-weight:700; color:${MUTED};">Period</th>
+          <th style="padding:5px 8px; font-weight:700; color:${MUTED};">${positiveLabel}</th>
+          <th style="padding:5px 8px; font-weight:700; color:${MUTED};">${negativeLabel}</th>
+          <th style="padding:5px 8px; font-weight:700; color:${MUTED};">${pctLabel}</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
 function renderNetSection(teamName: string, netMarks: NetMark[] | undefined, shotsFor: NetMark[] | undefined) {
   const hasAgainst = netMarks && netMarks.length > 0;
   const hasFor = shotsFor && shotsFor.length > 0;
@@ -371,8 +400,8 @@ function renderNetSection(teamName: string, netMarks: NetMark[] | undefined, sho
       <p style="font-size:11px; font-weight:700; color:${MUTED}; text-transform:uppercase; margin:0 0 2px;">${teamName} — Net Shot Charts</p>
       <p style="font-size:9.5px; color:${MUTED}; margin:0 0 10px; text-transform:none;">From Goalie Hub taps — tracked separately from the rink log above, so these totals won't necessarily match the Goaltending table</p>
       <div style="display:flex; gap:16px;">
-        ${hasAgainst ? `<div style="flex:1;"><p style="font-size:9px; font-weight:700; color:${MUTED}; text-transform:uppercase; margin:0 0 6px;">Shots Against (green = save)</p>${renderNetSVG(netMarks!, 'save')}${renderNetStatTiles(netMarks!, 'save', 'Saves', 'Goals', 'SV%')}</div>` : ''}
-        ${hasFor ? `<div style="flex:1;"><p style="font-size:9px; font-weight:700; color:${MUTED}; text-transform:uppercase; margin:0 0 6px;">Shots For (green = goal)</p>${renderNetSVG(shotsFor!, 'goal')}${renderNetStatTiles(shotsFor!, 'goal', 'Goals', 'Missed', 'Shoot%')}</div>` : ''}
+        ${hasAgainst ? `<div style="flex:1;"><p style="font-size:9px; font-weight:700; color:${MUTED}; text-transform:uppercase; margin:0 0 6px;">Shots Against (green = save)</p>${renderNetSVG(netMarks!, 'save')}${renderNetStatTiles(netMarks!, 'save', 'Saves', 'Goals', 'SV%')}${renderNetPeriodTable(netMarks!, 'save', 'Saves', 'Goals', 'SV%')}</div>` : ''}
+        ${hasFor ? `<div style="flex:1;"><p style="font-size:9px; font-weight:700; color:${MUTED}; text-transform:uppercase; margin:0 0 6px;">Shots For (green = goal)</p>${renderNetSVG(shotsFor!, 'goal')}${renderNetStatTiles(shotsFor!, 'goal', 'Goals', 'Missed', 'Shoot%')}${renderNetPeriodTable(shotsFor!, 'goal', 'Goals', 'Missed', 'Shoot%')}</div>` : ''}
       </div>
     </div>`;
 }
@@ -664,15 +693,21 @@ export function downloadExcelReport(data: ExportData) {
   // 8. Net Shot Locations — Goalie Hub coordinates, same scatter-chart
   // approach. Persisted to Game History, so this appears whether the
   // export comes from a live game or one downloaded later from History
-  // — except for games saved before that persistence shipped.
-  const netHeader = ["Team", "Diagram", "Result", "X", "Y"];
+  // — except for games saved before that persistence shipped. Zone
+  // translates the raw X/Y into a plain-language spot on the net (see
+  // data/goalieNet.ts) so this sheet means something on its own, without
+  // requiring a scatter chart to be built first; Period is blank for
+  // marks recorded before that field existed.
+  const netHeader = ["Team", "Period", "Diagram", "Result", "Zone", "X", "Y"];
   const netRows: (string | number)[][] = [];
-  (data.netMarksHome || []).forEach(m => netRows.push([data.homeName, 'Shots Against', m.outcome, m.x, m.y]));
-  (data.netMarksAway || []).forEach(m => netRows.push([data.awayName, 'Shots Against', m.outcome, m.x, m.y]));
-  (data.shotsForHome || []).forEach(m => netRows.push([data.homeName, 'Shots For', m.outcome, m.x, m.y]));
-  (data.shotsForAway || []).forEach(m => netRows.push([data.awayName, 'Shots For', m.outcome, m.x, m.y]));
+  const netRow = (team: string, diagram: string, m: NetMark) =>
+    [team, m.period !== undefined ? getPeriodLabel(m.period) : '—', diagram, m.outcome, describeNetZone(m.x, m.y), m.x, m.y];
+  (data.netMarksHome || []).forEach(m => netRows.push(netRow(data.homeName, 'Shots Against', m)));
+  (data.netMarksAway || []).forEach(m => netRows.push(netRow(data.awayName, 'Shots Against', m)));
+  (data.shotsForHome || []).forEach(m => netRows.push(netRow(data.homeName, 'Shots For', m)));
+  (data.shotsForAway || []).forEach(m => netRows.push(netRow(data.awayName, 'Shots For', m)));
   if (netRows.length > 0) {
-    const netNoteRow = ["Tip: select the X and Y columns above, then Insert > Chart > Scatter to build your own net shot chart in Excel.", "", "", "", ""];
+    const netNoteRow = ["Tip: select the X and Y columns above, then Insert > Chart > Scatter to build your own net shot chart in Excel.", "", "", "", "", "", ""];
     const wsNet = XLSX.utils.aoa_to_sheet([netHeader, ...netRows, [], netNoteRow]);
     XLSX.utils.book_append_sheet(wb, wsNet, "Net Shot Locations");
   }
