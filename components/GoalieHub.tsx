@@ -1,10 +1,16 @@
 import React, { useState } from 'react';
 import { Team, Player } from '../types';
+import { NET_IMG_W as IMG_W, NET_IMG_H as IMG_H, isOnNet } from '../data/goalieNet';
 
 interface NetMark {
   x: number;
   y: number;
   outcome: string;
+  // Which period the tap happened in — lets the "Period N Only / All
+  // Periods" toggle below filter the diagram the same way it already
+  // filters the main rink view. Optional so marks recorded before this
+  // field existed still display fine (just always under "All Periods").
+  period?: number;
 }
 
 interface GoalieHubProps {
@@ -26,23 +32,9 @@ interface GoalieHubProps {
   onAddShotFor: (team: Team, x: number, y: number, outcome: 'goal' | 'missed') => void;
   onUndoShotFor: (team: Team) => void;
   onClearShotFor: (team: Team) => void;
-}
-
-// Image's natural dimensions, so the viewBox maps 1:1 to its pixels.
-const IMG_W = 1408;
-const IMG_H = 768;
-
-// The actual net frame's boundary within the image, measured directly
-// from the red frame's pixel bounds. A tap landing outside this box
-// missed the net entirely — it shouldn't count as a shot faced (or
-// affect save percentage) any more than a real shot sailing wide would.
-const NET_X_MIN = 286;
-const NET_X_MAX = 1121;
-const NET_Y_MIN = 94;
-const NET_Y_MAX = 623;
-
-function isOnNet(x: number, y: number): boolean {
-  return x >= NET_X_MIN && x <= NET_X_MAX && y >= NET_Y_MIN && y <= NET_Y_MAX;
+  currentPeriod: number;
+  showAllPeriods: boolean;
+  onToggleShowAllPeriods: () => void;
 }
 
 const NetDiagram: React.FC<{
@@ -202,6 +194,7 @@ const GoalieHub: React.FC<GoalieHubProps> = ({
   startingGoalieHome, startingGoalieAway, netMarksHome, netMarksAway,
   onAddMark, onUndoMark, onClearMarks,
   shotsForHome, shotsForAway, onAddShotFor, onUndoShotFor, onClearShotFor,
+  currentPeriod, showAllPeriods, onToggleShowAllPeriods,
 }) => {
   const [activeTeam, setActiveTeam] = useState<'home' | 'away'>('home');
 
@@ -212,8 +205,12 @@ const GoalieHub: React.FC<GoalieHubProps> = ({
   const roster = activeTeam === 'home' ? homeRoster : awayRoster;
   const startingGoalie = activeTeam === 'home' ? startingGoalieHome : startingGoalieAway;
   const goalie = roster.find(p => p.number === startingGoalie);
-  const marksAgainst = activeTeam === 'home' ? netMarksHome : netMarksAway;
-  const marksFor = activeTeam === 'home' ? shotsForHome : shotsForAway;
+  // Undo/Clear always act on the full, unfiltered history for the team —
+  // only the diagram and tallies below respect the period toggle, same
+  // as the main rink view's own "Period N Only / All Periods" filter.
+  const periodFilter = (m: NetMark) => showAllPeriods || m.period === undefined || m.period === currentPeriod;
+  const marksAgainst = (activeTeam === 'home' ? netMarksHome : netMarksAway).filter(periodFilter);
+  const marksFor = (activeTeam === 'home' ? shotsForHome : shotsForAway).filter(periodFilter);
 
   return (
     <div className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl flex flex-col">
@@ -223,7 +220,15 @@ const GoalieHub: React.FC<GoalieHubProps> = ({
           <h2 className="text-2xl font-black text-white tracking-tight">Goalie Hub</h2>
           <p className="text-xs text-slate-500 mt-0.5">Visual net placement — separate from the rink log</p>
         </div>
-        <button onClick={onClose} className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white text-lg font-bold transition-colors">×</button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onToggleShowAllPeriods}
+            className={`shrink-0 px-4 py-2 rounded-xl text-[9px] font-black uppercase border active:scale-95 transition-all ${showAllPeriods ? 'bg-cyan-500 text-white border-cyan-300' : 'bg-cyan-600/15 text-cyan-400 border-cyan-500/30 hover:bg-cyan-600/30'}`}
+          >
+            {showAllPeriods ? `All Periods` : `Period ${currentPeriod} Only`}
+          </button>
+          <button onClick={onClose} className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white text-lg font-bold transition-colors">×</button>
+        </div>
       </div>
 
       {/* Team tabs */}
