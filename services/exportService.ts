@@ -97,25 +97,50 @@ const renderRinkSVG = (periodEvents: GameEvent[]) => {
 // image — avoids any image-loading/CORS complexity in a canvas-captured
 // PDF context, matching the same "pure SVG, no raster image" approach
 // already used for the rink diagram above.
+//
+// Mark coordinates (m.x, m.y) are stored in the LIVE Goalie Hub's image-pixel
+// space (0-1408 x, 0-768 y — see components/GoalieHub.tsx's IMG_W/IMG_H), and
+// its on/off-net decision is made against that component's NET_X_MIN/MAX,
+// NET_Y_MIN/MAX (the red frame's actual pixel bounds, 286-1121 x, 94-623 y).
+// The frame rect drawn below MUST occupy the same proportional position
+// within this SVG's viewBox that the real frame occupies within that image
+// — otherwise a mark placed outside the real net (correctly, in the live
+// UI) can still land inside this differently-proportioned rect and render
+// as if it were on net. Keep these two in sync with GoalieHub.tsx.
+const NET_IMG_W = 1408;
+const NET_IMG_H = 768;
+const NET_X_MIN = 286;
+const NET_X_MAX = 1121;
+const NET_Y_MIN = 94;
+const NET_Y_MAX = 623;
+
 const renderNetSVG = (marks: NetMark[], positiveOutcome: string) => {
   const W = 700, H = 420;
+  const rectX = (NET_X_MIN / NET_IMG_W) * W;
+  const rectY = (NET_Y_MIN / NET_IMG_H) * H;
+  const rectW = ((NET_X_MAX - NET_X_MIN) / NET_IMG_W) * W;
+  const rectH = ((NET_Y_MAX - NET_Y_MIN) / NET_IMG_H) * H;
+
   const markMarkup = marks.map(m => {
+    const isAttempt = m.outcome === 'attempt';
     const isPositive = m.outcome === positiveOutcome;
-    const color = isPositive ? '#22c55e' : '#ef4444';
-    const cx = (m.x / 1408) * W;
-    const cy = (m.y / 768) * H;
+    const color = isAttempt ? '#94a3b8' : (isPositive ? '#22c55e' : '#ef4444');
+    const cx = (m.x / NET_IMG_W) * W;
+    const cy = (m.y / NET_IMG_H) * H;
     const s = 7;
-    const symbol = isPositive
+    const symbol = isAttempt
+      ? `<circle cx="${cx}" cy="${cy}" r="${s * 0.35}" fill="#fff" />`
+      : isPositive
       ? `<path d="M ${cx - s * 0.6} ${cy} L ${cx - s * 0.1} ${cy + s * 0.5} L ${cx + s * 0.7} ${cy - s * 0.55}" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" />`
       : `<line x1="${cx - s * 0.5}" y1="${cy - s * 0.5}" x2="${cx + s * 0.5}" y2="${cy + s * 0.5}" stroke="#fff" stroke-width="2.5" stroke-linecap="round" /><line x1="${cx - s * 0.5}" y1="${cy + s * 0.5}" x2="${cx + s * 0.5}" y2="${cy - s * 0.5}" stroke="#fff" stroke-width="2.5" stroke-linecap="round" />`;
-    return `<circle cx="${cx}" cy="${cy}" r="${s}" fill="${color}" /> ${symbol}`;
+    return `<circle cx="${cx}" cy="${cy}" r="${s}" fill="${color}" opacity="${isAttempt ? 0.85 : 1}" /> ${symbol}`;
   }).join('');
 
   return `
     <svg viewBox="0 0 ${W} ${H}" style="width:100%; height:auto; background:#0a1628; border-radius:16px; border:2px solid #333;">
-      <rect x="60" y="30" width="${W - 120}" height="${H - 90}" rx="20" fill="none" stroke="#dc2626" stroke-width="6" />
-      ${Array.from({ length: 3 }, (_, i) => `<line x1="${60 + ((W - 120) / 3) * (i + 1)}" y1="30" x2="${60 + ((W - 120) / 3) * (i + 1)}" y2="${H - 60}" stroke="#666" stroke-width="1" stroke-dasharray="3,3" />`).join('')}
-      ${Array.from({ length: 2 }, (_, i) => `<line x1="60" y1="${30 + ((H - 90) / 3) * (i + 1)}" x2="${W - 60}" y2="${30 + ((H - 90) / 3) * (i + 1)}" stroke="#666" stroke-width="1" stroke-dasharray="3,3" />`).join('')}
+      <rect x="${rectX}" y="${rectY}" width="${rectW}" height="${rectH}" rx="20" fill="none" stroke="#dc2626" stroke-width="6" />
+      ${Array.from({ length: 3 }, (_, i) => `<line x1="${rectX + (rectW / 3) * (i + 1)}" y1="${rectY}" x2="${rectX + (rectW / 3) * (i + 1)}" y2="${rectY + rectH}" stroke="#666" stroke-width="1" stroke-dasharray="3,3" />`).join('')}
+      ${Array.from({ length: 2 }, (_, i) => `<line x1="${rectX}" y1="${rectY + (rectH / 3) * (i + 1)}" x2="${rectX + rectW}" y2="${rectY + (rectH / 3) * (i + 1)}" stroke="#666" stroke-width="1" stroke-dasharray="3,3" />`).join('')}
       ${markMarkup}
     </svg>
   `;
