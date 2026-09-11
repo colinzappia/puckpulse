@@ -29,9 +29,10 @@ interface ExportData {
   awayRoster: Player[];
   goalieHistoryHome?: GoalieStint[];
   goalieHistoryAway?: GoalieStint[];
-  // Goalie Hub net-placement data — only available for a live game's
-  // export, not one downloaded from Game History, since this data was
-  // never persisted alongside saved games.
+  // Goalie Hub net-placement data — persisted to Game History (see
+  // services/gameReportService.ts), so present on both a live game's
+  // export and one downloaded later from History. Older games saved
+  // before that persistence shipped won't have it, hence optional.
   netMarksHome?: NetMark[];
   netMarksAway?: NetMark[];
   shotsForHome?: NetMark[];
@@ -315,7 +316,8 @@ function renderGoalieTable(teamName: string, color: string, s: ReturnType<typeof
       <td style="padding:7px 10px; text-align:center; font-weight:900; color:${color}; border-bottom:1px solid ${BORDER};">${svPct(g.savePct)}</td>
     </tr>`).join('');
   return `
-    <h3 style="font-size:13px; font-weight:900; text-transform:uppercase; letter-spacing:0.05em; color:${color}; margin:0 0 8px; padding-left:10px; border-left:4px solid ${color};">${teamName} Goaltending</h3>
+    <h3 style="font-size:13px; font-weight:900; text-transform:uppercase; letter-spacing:0.05em; color:${color}; margin:0 0 2px; padding-left:10px; border-left:4px solid ${color};">${teamName} Goaltending</h3>
+    <p style="font-size:9.5px; color:${MUTED}; margin:0 0 8px; padding-left:14px;">From shots logged on the rink diagram during play</p>
     <table style="width:100%; border-collapse:collapse; font-size:11.5px; margin-bottom:24px; page-break-inside: avoid;">
       <thead>
         <tr style="background:${INK};">
@@ -330,16 +332,47 @@ function renderGoalieTable(teamName: string, color: string, s: ReturnType<typeof
     </table>`;
 }
 
+// Shared by both net-diagram panels below — mirrors the live Goalie Hub's
+// own tallying (components/GoalieHub.tsx's NetPanel) so the exported
+// numbers match what the coach saw on-screen while tapping. 'attempt'
+// marks (missed the net frame entirely) are excluded from the percentage,
+// same as a real shot sailing wide wouldn't count as a shot faced.
+function computeNetTallies(marks: NetMark[], positiveValue: string) {
+  const positiveCount = marks.filter(m => m.outcome === positiveValue).length;
+  const attemptCount = marks.filter(m => m.outcome === 'attempt').length;
+  const negativeCount = marks.length - positiveCount - attemptCount;
+  const total = positiveCount + negativeCount;
+  const pct = total > 0 ? `.${Math.round((positiveCount / total) * 1000)}` : '—';
+  return { positiveCount, negativeCount, attemptCount, pct };
+}
+
+function renderNetStatTiles(marks: NetMark[], positiveValue: string, positiveLabel: string, negativeLabel: string, pctLabel: string) {
+  const { positiveCount, negativeCount, attemptCount, pct } = computeNetTallies(marks, positiveValue);
+  const tile = (value: string | number, label: string, color: string) => `
+    <div style="flex:1; background:#f8fafc; border:1px solid ${BORDER}; border-radius:8px; padding:6px 4px; text-align:center;">
+      <div style="font-size:14px; font-weight:900; color:${color};">${value}</div>
+      <div style="font-size:7.5px; font-weight:700; color:${MUTED}; text-transform:uppercase; letter-spacing:0.03em; margin-top:2px;">${label}</div>
+    </div>`;
+  return `
+    <div style="display:flex; gap:6px; margin-top:8px;">
+      ${tile(positiveCount, positiveLabel, '#16a34a')}
+      ${tile(negativeCount, negativeLabel, '#dc2626')}
+      ${tile(pct, pctLabel, INK)}
+      ${attemptCount > 0 ? tile(attemptCount, 'Missed Net', MUTED) : ''}
+    </div>`;
+}
+
 function renderNetSection(teamName: string, netMarks: NetMark[] | undefined, shotsFor: NetMark[] | undefined) {
   const hasAgainst = netMarks && netMarks.length > 0;
   const hasFor = shotsFor && shotsFor.length > 0;
   if (!hasAgainst && !hasFor) return '';
   return `
     <div style="margin-bottom:24px;">
-      <p style="font-size:11px; font-weight:700; color:${MUTED}; text-transform:uppercase; margin:0 0 10px;">${teamName} — Net Shot Charts</p>
+      <p style="font-size:11px; font-weight:700; color:${MUTED}; text-transform:uppercase; margin:0 0 2px;">${teamName} — Net Shot Charts</p>
+      <p style="font-size:9.5px; color:${MUTED}; margin:0 0 10px; text-transform:none;">From Goalie Hub taps — tracked separately from the rink log above, so these totals won't necessarily match the Goaltending table</p>
       <div style="display:flex; gap:16px;">
-        ${hasAgainst ? `<div style="flex:1;"><p style="font-size:9px; font-weight:700; color:${MUTED}; text-transform:uppercase; margin:0 0 6px;">Shots Against (green = save)</p>${renderNetSVG(netMarks!, 'save')}</div>` : ''}
-        ${hasFor ? `<div style="flex:1;"><p style="font-size:9px; font-weight:700; color:${MUTED}; text-transform:uppercase; margin:0 0 6px;">Shots For (green = goal)</p>${renderNetSVG(shotsFor!, 'goal')}</div>` : ''}
+        ${hasAgainst ? `<div style="flex:1;"><p style="font-size:9px; font-weight:700; color:${MUTED}; text-transform:uppercase; margin:0 0 6px;">Shots Against (green = save)</p>${renderNetSVG(netMarks!, 'save')}${renderNetStatTiles(netMarks!, 'save', 'Saves', 'Goals', 'SV%')}</div>` : ''}
+        ${hasFor ? `<div style="flex:1;"><p style="font-size:9px; font-weight:700; color:${MUTED}; text-transform:uppercase; margin:0 0 6px;">Shots For (green = goal)</p>${renderNetSVG(shotsFor!, 'goal')}${renderNetStatTiles(shotsFor!, 'goal', 'Goals', 'Missed', 'Shoot%')}</div>` : ''}
       </div>
     </div>`;
 }
@@ -629,9 +662,9 @@ export function downloadExcelReport(data: ExportData) {
   }
 
   // 8. Net Shot Locations — Goalie Hub coordinates, same scatter-chart
-  // approach. Only present for a live game's export — this data isn't
-  // saved alongside a game in History, so it won't appear when
-  // downloading a report from a past saved game.
+  // approach. Persisted to Game History, so this appears whether the
+  // export comes from a live game or one downloaded later from History
+  // — except for games saved before that persistence shipped.
   const netHeader = ["Team", "Diagram", "Result", "X", "Y"];
   const netRows: (string | number)[][] = [];
   (data.netMarksHome || []).forEach(m => netRows.push([data.homeName, 'Shots Against', m.outcome, m.x, m.y]));
