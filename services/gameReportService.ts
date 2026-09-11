@@ -17,6 +17,7 @@ export interface NetMark {
   x: number;
   y: number;
   outcome: string;
+  period?: number;
 }
 
 export interface SavedGameReport {
