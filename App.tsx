@@ -1407,11 +1407,17 @@ const App: React.FC = () => {
     const setHistory = team === Team.HOME ? setGoalieHistoryHome : setGoalieHistoryAway;
     const setStarting = team === Team.HOME ? setStartingGoalieHome : setStartingGoalieAway;
     const setMarks = team === Team.HOME ? setNetMarksHome : setNetMarksAway;
+    const currentMarks = team === Team.HOME ? netMarksHome : netMarksAway;
+    // A new goalie shouldn't inherit the outgoing goalie's net chart — but
+    // that chart is otherwise-unrecoverable Goalie Hub tap data, so don't
+    // wipe it on an accidental re-tap of the roster star without asking.
+    if (currentMarks.length > 0 && !confirm("Changing this team's starting goalie clears its Goalie Hub net chart (the saves/goals tapped so far). Continue?")) {
+      return;
+    }
     setStarting(number);
     if (number) setHistory(prev => [...prev, { number, since: Date.now() }]);
-    // A new goalie shouldn't inherit the outgoing goalie's net chart.
     setMarks([]);
-  }, []);
+  }, [netMarksHome, netMarksAway]);
 
   const addNetMark = useCallback((team: Team, x: number, y: number, outcome: 'save' | 'goal' | 'attempt') => {
     const setMarks = team === Team.HOME ? setNetMarksHome : setNetMarksAway;
