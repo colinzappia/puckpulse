@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import ThemedBackground from './ThemedBackground';
+import Footer from './Footer';
 import { usePageMeta } from '../hooks/usePageMeta';
 
 interface ContactPageProps {
@@ -95,6 +96,7 @@ const ContactPage: React.FC<ContactPageProps> = ({ onClose }) => {
             </div>
           </div>
         )}
+        <Footer />
       </ThemedBackground>
     </div>
   );
