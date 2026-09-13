@@ -29,6 +29,7 @@ import SaveTeamPrompt from './components/SaveTeamPrompt';
 import TeamLibrary from './components/TeamLibrary';
 import EventAttachmentPanel from './components/EventAttachmentPanel';
 import GameHistory from './components/GameHistory';
+import { ADS_ENABLED } from './data/siteConfig';
 import { saveGameReport, SavedGameReport } from './services/gameReportService';
 import { useAuth, UserButton, useClerk, useUser } from '@clerk/clerk-react';
 import { generateNarrative, fetchRosterByAI } from './services/geminiService';
@@ -50,11 +51,6 @@ import {
   TouchSensor
 } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-
-// Ad banner (top/bottom) and the "Advertise With Us" page are switched off
-// while building up the paid user base. Flip this back to `true` to bring
-// both back — no other changes needed.
-const ADS_ENABLED = false;
 
 const getPeriodLabel = (p: number) => {
   if (p === 1) return '1st';
