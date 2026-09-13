@@ -29,6 +29,7 @@ import SaveTeamPrompt from './components/SaveTeamPrompt';
 import TeamLibrary from './components/TeamLibrary';
 import EventAttachmentPanel from './components/EventAttachmentPanel';
 import GameHistory from './components/GameHistory';
+import Footer from './components/Footer';
 import { ADS_ENABLED } from './data/siteConfig';
 import { saveGameReport, SavedGameReport } from './services/gameReportService';
 import { useAuth, UserButton, useClerk, useUser } from '@clerk/clerk-react';
@@ -2926,26 +2927,25 @@ const App: React.FC = () => {
 
     {ADS_ENABLED && <AdBanner position="bottom" onContactClick={() => navigate('/advertise')} />}
     
-    {/* Footer */}
-    <div className="flex flex-wrap items-center justify-center gap-3 py-3 bg-black/30 border-t border-white/10 px-4">
-      <a href="/terms.html" target="_blank" rel="noopener noreferrer" className="text-xs text-slate-500 hover:text-slate-300 transition-colors">Terms</a>
-      <span className="text-slate-600">·</span>
-      <a href="/privacy.html" target="_blank" rel="noopener noreferrer" className="text-xs text-slate-500 hover:text-slate-300 transition-colors">Privacy</a>
-      <span className="text-slate-600">·</span>
-      <button onClick={() => navigate('/contact')} className="text-xs font-bold text-white bg-cyan-600 hover:bg-cyan-500 transition-colors px-4 py-1.5 rounded-full">✉ Contact Us</button>
-      <span className="text-slate-600">·</span>
-      <button onClick={() => navigate('/about')} className="text-xs text-slate-500 hover:text-slate-300 transition-colors">About</button>
-      <span className="text-slate-600">·</span>
-      {!isAdmin && (
-        <button onClick={handleManageSubscription} className="text-xs font-bold text-slate-400 hover:text-white transition-colors px-4 py-1.5 rounded-full border border-white/10 hover:border-white/20">⚙ Manage Subscription</button>
-      )}
-      {isTeamOwner && (
-        <>
-          <span className="text-slate-600">·</span>
-          <button onClick={() => setShowTeamManagement(true)} className="text-xs font-bold text-slate-400 hover:text-white transition-colors px-4 py-1.5 rounded-full border border-white/10 hover:border-white/20">👥 Manage Team</button>
-        </>
-      )}
-    </div>
+    {/* Same footer as every other page (Landing, About, Contact, Advertise) —
+        see components/Footer.tsx. Account actions that only make sense while
+        actively using the app (not on the marketing pages) render in their
+        own row right below it, rather than being squeezed into the shared
+        component. */}
+    <Footer />
+    {(!isAdmin || isTeamOwner) && (
+      <div className="flex flex-wrap items-center justify-center gap-3 pb-4 bg-black/30 px-4">
+        {!isAdmin && (
+          <button onClick={handleManageSubscription} className="text-xs font-bold text-slate-400 hover:text-white transition-colors px-4 py-1.5 rounded-full border border-white/10 hover:border-white/20">⚙ Manage Subscription</button>
+        )}
+        {isTeamOwner && (
+          <>
+            {!isAdmin && <span className="text-slate-600">·</span>}
+            <button onClick={() => setShowTeamManagement(true)} className="text-xs font-bold text-slate-400 hover:text-white transition-colors px-4 py-1.5 rounded-full border border-white/10 hover:border-white/20">👥 Manage Team</button>
+          </>
+        )}
+      </div>
+    )}
 
     {/* Goal line popup via portal */}
     {pendingGoal !== null && createPortal(
