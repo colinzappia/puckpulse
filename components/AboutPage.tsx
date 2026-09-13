@@ -1,5 +1,6 @@
 import React from 'react';
 import ThemedBackground from './ThemedBackground';
+import Footer from './Footer';
 import { usePageMeta } from '../hooks/usePageMeta';
 
 interface AboutPageProps {
@@ -141,10 +142,7 @@ const AboutPage: React.FC<AboutPageProps> = ({ onClose, onContact }) => {
 
       </div>
 
-      {/* Footer */}
-      <div className="border-t border-white/5 py-6 text-center">
-        <p className="text-slate-600 text-xs">© 2026 Top Cheese Hockey · topcheesehockey.com</p>
-      </div>
+      <Footer />
 
     </ThemedBackground>
     </div>
