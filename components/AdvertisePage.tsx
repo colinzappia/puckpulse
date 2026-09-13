@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import ThemedBackground from './ThemedBackground';
+import Footer from './Footer';
 import { usePageMeta } from '../hooks/usePageMeta';
 
 interface AdvertisePageProps {
@@ -223,6 +224,7 @@ const AdvertisePage: React.FC<AdvertisePageProps> = ({ isOpen, onClose }) => {
           </>
         )}
       </div>
+      <Footer />
     </ThemedBackground>
     </div>
   );
