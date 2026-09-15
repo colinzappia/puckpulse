@@ -1860,6 +1860,7 @@ const App: React.FC = () => {
     'barber.hockey@outlook.com',
     'abbottnhl@gmail.com',
     'lennyzappia@gmail.com',
+    'turpinliam@gmail.com',
   ];
   const userEmail = currentUser?.primaryEmailAddress?.emailAddress?.toLowerCase() || user?.primaryEmailAddress?.emailAddress?.toLowerCase() || '';
   const isAdmin = ADMIN_EMAILS.includes(userEmail);
