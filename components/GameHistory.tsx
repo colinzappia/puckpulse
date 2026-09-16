@@ -99,8 +99,8 @@ export default function GameHistory({ isOpen, onClose, onLoadGame, onDownloadRep
   const S = {
     overlay: { position: 'fixed' as const, inset: 0, zIndex: 350, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' },
     panel: { position: 'fixed' as const, inset: 0, zIndex: 351, background: '#070a0f', display: 'flex', flexDirection: 'column' as const },
-    topbar: { background: '#0c1018', borderBottom: '0.5px solid rgba(255,255,255,0.08)', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 },
     tabBar: { display: 'flex', borderBottom: '0.5px solid rgba(255,255,255,0.08)', background: '#0c1018', flexShrink: 0 },
+    topbar: { background: '#0c1018', borderBottom: '0.5px solid rgba(255,255,255,0.08)', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 },
     tab: (active: boolean) => ({ flex: 1, padding: '10px', fontSize: 12, fontWeight: 600, cursor: 'pointer', textAlign: 'center' as const, color: active ? '#60a5fa' : 'rgba(255,255,255,0.35)', background: 'none', border: 'none', borderBottom: active ? '2px solid #60a5fa' : '2px solid transparent' } as React.CSSProperties),
     body: { flex: 1, overflowY: 'auto' as const, padding: '0 16px 24px' },
     card: { background: '#0f1620', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 14, marginBottom: 8, cursor: 'pointer', transition: 'border-color 0.15s' },
@@ -245,6 +245,24 @@ export default function GameHistory({ isOpen, onClose, onLoadGame, onDownloadRep
             )}
           </div>
         </div>
+
+        {shareTarget && (
+          <PlayerShareCard
+            report={selected}
+            team={shareTarget.team}
+            playerNumber={shareTarget.number}
+            onClose={() => setShareTarget(null)}
+          />
+        )}
+
+        {scoutTarget && (
+          <ScoutingReportModal
+            report={selected}
+            team={scoutTarget.team}
+            playerNumber={scoutTarget.number}
+            onClose={() => setScoutTarget(null)}
+          />
+        )}
       </>
     );
   }
@@ -307,24 +325,6 @@ export default function GameHistory({ isOpen, onClose, onLoadGame, onDownloadRep
           )}
         </div>
       </div>
-
-      {shareTarget && selected && (
-        <PlayerShareCard
-          report={selected}
-          team={shareTarget.team}
-          playerNumber={shareTarget.number}
-          onClose={() => setShareTarget(null)}
-        />
-      )}
-
-      {scoutTarget && selected && (
-        <ScoutingReportModal
-          report={selected}
-          team={scoutTarget.team}
-          playerNumber={scoutTarget.number}
-          onClose={() => setScoutTarget(null)}
-        />
-      )}
     </>
   );
 }
