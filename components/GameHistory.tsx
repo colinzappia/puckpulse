@@ -18,6 +18,7 @@ import { GameEvent, EventType, Team } from '../types';
 import { buildPlayerStats } from './playerstats';
 import SeasonStats from './SeasonStats';
 import PlayerShareCard from './PlayerShareCard';
+import ScoutingReportModal from './ScoutingReportModal';
 
 interface Props {
   isOpen: boolean;
@@ -60,6 +61,7 @@ export default function GameHistory({ isOpen, onClose, onLoadGame, onDownloadRep
   const [deleting, setDeleting] = useState<string | null>(null);
   const [toggling, setToggling] = useState<string | null>(null);
   const [shareTarget, setShareTarget] = useState<{ team: Team; number: string } | null>(null);
+  const [scoutTarget, setScoutTarget] = useState<{ team: Team; number: string } | null>(null);
 
   useEffect(() => {
     if (!isOpen || !user) return;
@@ -124,7 +126,6 @@ export default function GameHistory({ isOpen, onClose, onLoadGame, onDownloadRep
           </div>
 
           <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
-            {/* Score card */}
             <div style={{ background: '#0f1620', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: 16, marginBottom: 12 }}>
               <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginBottom: 10 }}>{formatDate(selected.playedAt)}</div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -142,7 +143,6 @@ export default function GameHistory({ isOpen, onClose, onLoadGame, onDownloadRep
               </div>
             </div>
 
-            {/* Stats */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 12 }}>
               {[
                 { label: 'Shots', home: homeStats.shots, away: awayStats.shots },
@@ -167,7 +167,6 @@ export default function GameHistory({ isOpen, onClose, onLoadGame, onDownloadRep
               {selected.events.length} events logged · {selected.periods} periods
             </div>
 
-            {/* Download buttons */}
             <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8, fontWeight: 600 }}>Download report</div>
             <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
               {(['pdf', 'excel', 'html'] as const).map(fmt => (
@@ -177,7 +176,6 @@ export default function GameHistory({ isOpen, onClose, onLoadGame, onDownloadRep
               ))}
             </div>
 
-            {/* Share a player's stats */}
             <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8, fontWeight: 600 }}>Share a player's stats</div>
             <select
               defaultValue=""
@@ -202,7 +200,30 @@ export default function GameHistory({ isOpen, onClose, onLoadGame, onDownloadRep
               </optgroup>
             </select>
 
-            {/* Share toggle (own reports only) */}
+            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8, fontWeight: 600 }}>Scout a player</div>
+            <select
+              defaultValue=""
+              onChange={e => {
+                if (!e.target.value) return;
+                const [teamStr, number] = e.target.value.split('|');
+                setScoutTarget({ team: teamStr === 'home' ? Team.HOME : Team.AWAY, number });
+                e.target.value = '';
+              }}
+              style={{ width: '100%', background: '#0f1620', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '10px 12px', color: '#fff', fontSize: 12, fontWeight: 600, marginBottom: 16 }}
+            >
+              <option value="">Pick a player to write a scouting report…</option>
+              <optgroup label={selected.homeName}>
+                {selected.homeRoster.map(p => (
+                  <option key={`home-${p.number}`} value={`home|${p.number}`}>#{p.number} {p.name}</option>
+                ))}
+              </optgroup>
+              <optgroup label={selected.awayName}>
+                {selected.awayRoster.map(p => (
+                  <option key={`away-${p.number}`} value={`away|${p.number}`}>#{p.number} {p.name}</option>
+                ))}
+              </optgroup>
+            </select>
+
             {canEdit && (
               <div onClick={() => handleToggleShared(selected)}
                 style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 10, border: `0.5px solid ${selected.isShared ? 'rgba(52,211,153,0.3)' : 'rgba(255,255,255,0.08)'}`, marginBottom: 12, cursor: 'pointer', opacity: toggling === selected.id ? 0.5 : 1 }}>
@@ -216,7 +237,6 @@ export default function GameHistory({ isOpen, onClose, onLoadGame, onDownloadRep
               </div>
             )}
 
-            {/* Delete */}
             {canEdit && (
               <button onClick={() => handleDelete(selected)}
                 style={{ width: '100%', padding: 11, borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', border: '0.5px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.08)', color: '#f87171', opacity: deleting === selected.id ? 0.5 : 1 }}>
@@ -294,6 +314,15 @@ export default function GameHistory({ isOpen, onClose, onLoadGame, onDownloadRep
           team={shareTarget.team}
           playerNumber={shareTarget.number}
           onClose={() => setShareTarget(null)}
+        />
+      )}
+
+      {scoutTarget && selected && (
+        <ScoutingReportModal
+          report={selected}
+          team={scoutTarget.team}
+          playerNumber={scoutTarget.number}
+          onClose={() => setScoutTarget(null)}
         />
       )}
     </>
