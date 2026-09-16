@@ -79,6 +79,20 @@ export default function StandaloneScoutingModal({ existing, onSaved, onClose }: 
     }
   };
 
+  const handleEmail = async () => {
+    const copied = await emailScoutingReport({
+      playerName: playerName.trim() || 'Untitled player',
+      meta: [teamName, gameDate].filter(Boolean).join(' · ') || 'No team or date noted',
+      ratings,
+      notes,
+    });
+    if (copied) {
+      alert('Report copied to your clipboard — paste it into a new email.\n\n(If you have a default mail app set up on this computer, it may have also opened a new message for you.)');
+    } else {
+      alert("Couldn't copy the report automatically — please use Download PDF instead and attach it to your email manually.");
+    }
+  };
+
   const S = {
     overlay: { position: 'fixed' as const, inset: 0, zIndex: 360, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' },
     panel: { position: 'fixed' as const, inset: 0, zIndex: 361, background: '#070a0f', display: 'flex', flexDirection: 'column' as const },
@@ -188,18 +202,7 @@ export default function StandaloneScoutingModal({ existing, onSaved, onClose }: 
             >
               ⬇ Download PDF
             </button>
-            <button
-              style={{ ...S.btn('#94a3b8'), flex: 1 }}
-              disabled={!canSave}
-              onClick={() =>
-                emailScoutingReport({
-                  playerName: playerName.trim() || 'Untitled player',
-                  meta: [teamName, gameDate].filter(Boolean).join(' · ') || 'No team or date noted',
-                  ratings,
-                  notes,
-                })
-              }
-            >
+            <button style={{ ...S.btn('#94a3b8'), flex: 1 }} disabled={!canSave} onClick={handleEmail}>
               ✉ Email
             </button>
           </div>
