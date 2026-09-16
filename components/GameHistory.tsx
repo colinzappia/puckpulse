@@ -146,4 +146,244 @@ export default function GameHistory({ isOpen, onClose, onLoadGame, onDownloadRep
         <div style={S.panel}>
           <div style={S.topbar}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span onClick={() => setSelected(null)}
+              <span onClick={() => setSelected(null)} style={{ color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: 20 }}>←</span>
+              <span style={{ color: '#fff', fontSize: 14, fontWeight: 700 }}>Game report</span>
+            </div>
+            <span onClick={onClose} style={{ fontSize: 22, color: 'rgba(255,255,255,0.3)', cursor: 'pointer' }}>×</span>
+          </div>
+
+          <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
+            <div style={{ background: '#0f1620', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: 16, marginBottom: 12 }}>
+              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginBottom: 10 }}>{formatDate(selected.playedAt)}</div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ textAlign: 'center', flex: 1 }}>
+                  {selected.homeLogo && <img src={selected.homeLogo} alt="" style={{ width: 40, height: 40, objectFit: 'contain', margin: '0 auto 6px', display: 'block' }} />}
+                  <div style={{ fontSize: 11, color: '#60a5fa', fontWeight: 600, marginBottom: 4 }}>{selected.homeName}</div>
+                  <div style={{ fontSize: 36, fontWeight: 900, color: '#fff' }}>{selected.homeScore}</div>
+                </div>
+                <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.2)', fontWeight: 700, padding: '0 12px' }}>vs</div>
+                <div style={{ textAlign: 'center', flex: 1 }}>
+                  {selected.awayLogo && <img src={selected.awayLogo} alt="" style={{ width: 40, height: 40, objectFit: 'contain', margin: '0 auto 6px', display: 'block' }} />}
+                  <div style={{ fontSize: 11, color: '#f87171', fontWeight: 600, marginBottom: 4 }}>{selected.awayName}</div>
+                  <div style={{ fontSize: 36, fontWeight: 900, color: '#fff' }}>{selected.awayScore}</div>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 12 }}>
+              {[
+                { label: 'Shots', home: homeStats.shots, away: awayStats.shots },
+                { label: 'Shooting %', home: homeStats.shootingPct !== null ? `${homeStats.shootingPct.toFixed(0)}%` : '—', away: awayStats.shootingPct !== null ? `${awayStats.shootingPct.toFixed(0)}%` : '—' },
+                { label: 'Faceoff %', home: homeStats.faceoffPct !== null ? `${homeStats.faceoffPct.toFixed(0)}%` : '—', away: awayStats.faceoffPct !== null ? `${awayStats.faceoffPct.toFixed(0)}%` : '—' },
+                { label: 'Hits', home: homeStats.hits, away: awayStats.hits },
+                { label: 'Blocked Shots', home: homeStats.blocks, away: awayStats.blocks },
+                { label: 'Penalty Min.', home: homeStats.pim, away: awayStats.pim },
+              ].map(s => (
+                <div key={s.label} style={{ background: '#0f1620', border: '0.5px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 8px', textAlign: 'center' }}>
+                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', marginBottom: 6, textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.04em' }}>{s.label}</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 15, fontWeight: 700, color: '#60a5fa' }}>{s.home}</span>
+                    <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)' }}>–</span>
+                    <span style={{ fontSize: 15, fontWeight: 700, color: '#f87171' }}>{s.away}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginBottom: 12 }}>
+              {selected.events.length} events logged · {selected.periods} periods
+            </div>
+
+            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8, fontWeight: 600 }}>Lineups</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
+              <LineupSheet roster={selected.homeRoster} teamName={selected.homeName} accent="#60a5fa" />
+              <LineupSheet roster={selected.awayRoster} teamName={selected.awayName} accent="#f87171" />
+            </div>
+
+            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8, fontWeight: 600 }}>Download report</div>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+              {(['pdf', 'excel', 'html'] as const).map(fmt => (
+                <button key={fmt} style={S.btn()} onClick={() => onDownloadReport(selected, fmt)}>
+                  {fmt === 'pdf' ? '📄 PDF' : fmt === 'excel' ? '📊 Excel' : '🌐 HTML'}
+                </button>
+              ))}
+            </div>
+
+            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8, fontWeight: 600 }}>Share a player's stats</div>
+            <select
+              defaultValue=""
+              onChange={e => {
+                if (!e.target.value) return;
+                const [teamStr, number] = e.target.value.split('|');
+                setShareTarget({ team: teamStr === 'home' ? Team.HOME : Team.AWAY, number });
+                e.target.value = '';
+              }}
+              style={{ width: '100%', background: '#0f1620', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '10px 12px', color: '#fff', fontSize: 12, fontWeight: 600, marginBottom: 16 }}
+            >
+              <option value="">Pick a player to generate a shareable card…</option>
+              <optgroup label={selected.homeName}>
+                {selected.homeRoster.map(p => (
+                  <option key={`home-${p.number}`} value={`home|${p.number}`}>#{p.number} {p.name}</option>
+                ))}
+              </optgroup>
+              <optgroup label={selected.awayName}>
+                {selected.awayRoster.map(p => (
+                  <option key={`away-${p.number}`} value={`away|${p.number}`}>#{p.number} {p.name}</option>
+                ))}
+              </optgroup>
+            </select>
+
+            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8, fontWeight: 600 }}>Scout a player</div>
+            <select
+              defaultValue=""
+              onChange={e => {
+                if (!e.target.value) return;
+                const [teamStr, number] = e.target.value.split('|');
+                setScoutTarget({ team: teamStr === 'home' ? Team.HOME : Team.AWAY, number });
+                e.target.value = '';
+              }}
+              style={{ width: '100%', background: '#0f1620', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '10px 12px', color: '#fff', fontSize: 12, fontWeight: 600, marginBottom: 16 }}
+            >
+              <option value="">Pick a player to write a scouting report…</option>
+              <optgroup label={selected.homeName}>
+                {selected.homeRoster.map(p => (
+                  <option key={`home-${p.number}`} value={`home|${p.number}`}>#{p.number} {p.name}</option>
+                ))}
+              </optgroup>
+              <optgroup label={selected.awayName}>
+                {selected.awayRoster.map(p => (
+                  <option key={`away-${p.number}`} value={`away|${p.number}`}>#{p.number} {p.name}</option>
+                ))}
+              </optgroup>
+            </select>
+
+            {canEdit && (
+              <div onClick={() => handleToggleShared(selected)}
+                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 10, border: `0.5px solid ${selected.isShared ? 'rgba(52,211,153,0.3)' : 'rgba(255,255,255,0.08)'}`, marginBottom: 12, cursor: 'pointer', opacity: toggling === selected.id ? 0.5 : 1 }}>
+                <div style={{ width: 36, height: 20, borderRadius: 10, background: selected.isShared ? '#34d399' : 'rgba(255,255,255,0.15)', position: 'relative', flexShrink: 0, transition: 'background 0.2s' }}>
+                  <div style={{ position: 'absolute', top: 2, left: selected.isShared ? 18 : 2, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
+                </div>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: selected.isShared ? '#34d399' : '#fff' }}>Share with plan</div>
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>{selected.isShared ? 'Visible to everyone on your plan' : 'Only you can see this report'}</div>
+                </div>
+              </div>
+            )}
+
+            {canEdit && (
+              <button onClick={() => handleDelete(selected)}
+                style={{ width: '100%', padding: 11, borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', border: '0.5px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.08)', color: '#f87171', opacity: deleting === selected.id ? 0.5 : 1 }}>
+                {deleting === selected.id ? 'Deleting…' : 'Delete this report'}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {shareTarget && (
+          <PlayerShareCard
+            report={selected}
+            team={shareTarget.team}
+            playerNumber={shareTarget.number}
+            onClose={() => setShareTarget(null)}
+          />
+        )}
+
+        {scoutTarget && (
+          <ScoutingReportModal
+            report={selected}
+            team={scoutTarget.team}
+            playerNumber={scoutTarget.number}
+            onClose={() => setScoutTarget(null)}
+          />
+        )}
+      </>
+    );
+  }
+
+  // List view
+  return (
+    <>
+      <div style={S.overlay} onClick={onClose} />
+      <div style={S.panel}>
+        <div style={S.topbar}>
+          <span style={{ color: '#fff', fontSize: 15, fontWeight: 700 }}>Game History</span>
+          <span onClick={onClose} style={{ fontSize: 22, color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }}>×</span>
+        </div>
+
+        <div style={S.tabBar}>
+          <button style={S.tab(tab === 'mine')} onClick={() => setTab('mine')}>
+            My Games {myReports.length > 0 && `(${myReports.length})`}
+          </button>
+          <button style={S.tab(tab === 'shared')} onClick={() => setTab('shared')}>
+            Shared {sharedReports.length > 0 && `(${sharedReports.length})`}
+          </button>
+          <button style={S.tab(tab === 'season')} onClick={() => setTab('season')}>
+            📅 Season
+          </button>
+          <button style={S.tab(tab === 'scouting')} onClick={() => setTab('scouting')}>
+            🔍 Scouting {standaloneReports.length > 0 && `(${standaloneReports.length})`}
+          </button>
+        </div>
+
+        <div style={S.body}>
+          {tab === 'season' ? (
+            <SeasonStats reports={myReports} />
+          ) : tab === 'scouting' ? (
+            <>
+              <button
+                onClick={() => setEditingStandalone('new')}
+                style={{ width: '100%', padding: 12, borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', border: '0.5px solid rgba(52,211,153,0.4)', background: 'rgba(52,211,153,0.12)', color: '#34d399', marginBottom: 12 }}
+              >
+                + New scouting report
+              </button>
+              {standaloneReports.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px 0', color: 'rgba(255,255,255,0.25)', fontSize: 13, lineHeight: 1.7 }}>
+                  No standalone reports yet.{'\n'}Use these for players you're evaluating without a tracked game.
+                </div>
+              ) : (
+                standaloneReports.map(r => (
+                  <div key={r.id} style={S.card} onClick={() => setEditingStandalone(r)}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', marginBottom: 2 }}>{r.playerName}</div>
+                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>
+                      {[r.teamName, r.gameDate].filter(Boolean).join(' · ') || 'No team or date noted'}
+                    </div>
+                  </div>
+                ))
+              )}
+            </>
+          ) : loading ? (
+            <div style={{ textAlign: 'center', padding: '40px 0', color: 'rgba(255,255,255,0.25)', fontSize: 13 }}>Loading…</div>
+          ) : reports.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px 0', color: 'rgba(255,255,255,0.25)', fontSize: 13, lineHeight: 1.7 }}>
+              {tab === 'mine' ? 'No saved games yet.\nTap "Save game" after your next game.' : 'No shared reports yet.'}
+            </div>
+          ) : (
+            reports.map(r => {
+              const homeWon = r.homeScore > r.awayScore;
+              const tied = r.homeScore === r.awayScore;
+              return (
+                <div key={r.id} style={{ ...S.card }} onClick={() => setSelected(r)}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    {r.homeLogo && <img src={r.homeLogo} alt="" style={{ width: 28, height: 28, objectFit: 'contain', flexShrink: 0 }} />}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {r.homeName} <span style={{ color: 'rgba(255,255,255,0.3)', fontWeight: 400 }}>vs</span> {r.awayName}
+                      </div>
+                      <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)' }}>{formatDate(r.playedAt)} · {r.events.length} events</div>
+                    </div>
+                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                      <div style={{ fontSize: 18, fontWeight: 900, color: tied ? 'rgba(255,255,255,0.5)' : homeWon ? '#60a5fa' : '#f87171' }}>
+                        {r.homeScore}–{r.awayScore}
+                      </div>
+                      {r.isShared && <div style={{ fontSize: 9, color: '#34d399', fontWeight: 600 }}>shared</div>}
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
