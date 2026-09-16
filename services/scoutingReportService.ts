@@ -11,10 +11,13 @@ import { supabase } from '../lib/supabaseClient';
 
 export interface ScoutRatings {
   skating?: number;
-  hockeySense?: number;
-  compete?: number;
+  shot?: number;
   puckSkills?: number;
-  projection?: number;
+  playmaking?: number;
+  ozHockeySense?: number;
+  dzHockeySense?: number;
+  compete?: number;
+  physicality?: number;
 }
 
 export interface SavedScoutingReport {
