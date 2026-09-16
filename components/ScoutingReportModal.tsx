@@ -28,10 +28,13 @@ interface Props {
 
 const RATING_FIELDS: { key: keyof ScoutRatings; label: string }[] = [
   { key: 'skating', label: 'Skating' },
-  { key: 'hockeySense', label: 'Hockey sense' },
-  { key: 'compete', label: 'Compete' },
+  { key: 'shot', label: 'Shot' },
   { key: 'puckSkills', label: 'Puck skills' },
-  { key: 'projection', label: 'Projection' },
+  { key: 'playmaking', label: 'Playmaking' },
+  { key: 'ozHockeySense', label: 'OZ hockey sense' },
+  { key: 'dzHockeySense', label: 'DZ hockey sense' },
+  { key: 'compete', label: 'Compete' },
+  { key: 'physicality', label: 'Physicality' },
 ];
 
 export default function ScoutingReportModal({ report, team, playerNumber, onClose }: Props) {
