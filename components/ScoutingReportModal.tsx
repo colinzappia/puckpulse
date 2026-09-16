@@ -1,9 +1,10 @@
 // ============================================================
 // ScoutingReportModal.tsx
 // Full-screen panel for entering a scouting evaluation on one
-// player from a saved game report. Auto-fills tracked stats
-// (zone entries, faceoffs, breakouts) from the game's raw
-// events, then lets the scout add ratings and notes on top.
+// player from a saved game report. Shows every raw event logged
+// for that player, auto-fills computed stats (zone entries,
+// faceoffs, breakouts) from those events, then lets the scout
+// add ratings and notes on top.
 // ============================================================
 
 import React, { useState, useEffect } from 'react';
@@ -16,7 +17,8 @@ import {
   saveScoutingReport,
   updateScoutingReport,
 } from '../services/scoutingReportService';
-import { computePlayerStats } from '../utils/scoutingStats';
+import { computePlayerStats, getPlayerEvents, formatEventLabel } from '../utils/scoutingStats';
+import { downloadScoutingReportPDF, emailScoutingReport } from '../utils/scoutingExport';
 import { Team } from '../types';
 
 interface Props {
@@ -43,6 +45,7 @@ export default function ScoutingReportModal({ report, team, playerNumber, onClos
   const player = roster.find(p => p.number === playerNumber);
   const teamSide: 'home' | 'away' = team === Team.HOME ? 'home' : 'away';
 
+  const playerEvents = getPlayerEvents(report.events, team, playerNumber);
   const stats = computePlayerStats(report.events, team, playerNumber);
 
   const [existing, setExisting] = useState<SavedScoutingReport | null>(null);
@@ -96,6 +99,25 @@ export default function ScoutingReportModal({ report, team, playerNumber, onClos
     }
   };
 
+  const handleEmail = async () => {
+    const copied = await emailScoutingReport({
+      playerName: player?.name || `#${playerNumber}`,
+      meta: `#${playerNumber} · ${player?.position || ''} · ${teamSide === 'home' ? report.homeName : report.awayName}`,
+      stats: [
+        { label: 'Zone entries', value: stats.zoneEntries.successPct !== null ? `${stats.zoneEntries.successPct}%` : '—' },
+        { label: 'Faceoffs', value: stats.faceoffs.winPct !== null ? `${stats.faceoffs.winPct}%` : '—' },
+        { label: 'Breakouts', value: stats.breakouts.successPct !== null ? `${stats.breakouts.successPct}%` : '—' },
+      ],
+      ratings,
+      notes,
+    });
+    if (copied) {
+      alert('Report copied to your clipboard — paste it into a new email.\n\n(If you have a default mail app set up on this computer, it may have also opened a new message for you.)');
+    } else {
+      alert("Couldn't copy the report automatically — please use Download PDF instead and attach it to your email manually.");
+    }
+  };
+
   const accent = team === Team.HOME ? '#60a5fa' : '#f87171';
 
   const S = {
@@ -142,6 +164,35 @@ export default function ScoutingReportModal({ report, team, playerNumber, onClos
                 </div>
               </div>
 
+              <div style={{ marginBottom: 16 }}>
+                <div style={S.sectionLabel}>Events this game ({playerEvents.length})</div>
+                {playerEvents.length === 0 ? (
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>
+                    No events logged for this player.
+                  </div>
+                ) : (
+                  <div style={S.card}>
+                    {playerEvents.map((e, i) => (
+                      <div
+                        key={e.id}
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          padding: '8px 0',
+                          borderTop: i === 0 ? 'none' : '0.5px solid rgba(255,255,255,0.06)',
+                        }}
+                      >
+                        <span style={{ fontSize: 13, color: '#fff' }}>{formatEventLabel(e)}</span>
+                        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>
+                          P{e.period} · {e.gameTime}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <div style={{ marginBottom: 4 }}>
                 <div style={S.sectionLabel}>Auto-filled from live tracking</div>
                 <div style={S.statGrid}>
@@ -164,11 +215,6 @@ export default function ScoutingReportModal({ report, team, playerNumber, onClos
                     </div>
                   </div>
                 </div>
-                {stats.zoneEntries.total === 0 && stats.faceoffs.total === 0 && stats.breakouts.total === 0 && (
-                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginTop: 8 }}>
-                    No tracked events found for this player in this game — they may not have been tagged during tracking.
-                  </div>
-                )}
               </div>
 
               <div style={{ marginTop: 16, marginBottom: 4 }}>
@@ -200,7 +246,6 @@ export default function ScoutingReportModal({ report, team, playerNumber, onClos
                   style={S.textarea}
                   value={notes}
                   onChange={e => setNotes(e.target.value)}
-                  placeholder="What stood out? What would you want to see more of?"
                 />
               </div>
 
@@ -222,6 +267,34 @@ export default function ScoutingReportModal({ report, team, playerNumber, onClos
               <button style={S.btn()} onClick={handleSave} disabled={saving}>
                 {saving ? 'Saving…' : existing ? 'Update report' : 'Save report'}
               </button>
+
+              <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                <button
+                  style={{ ...S.btn('#94a3b8'), flex: 1 }}
+                  onClick={async () => {
+                    try {
+                      await downloadScoutingReportPDF({
+                        playerName: player?.name || `#${playerNumber}`,
+                        meta: `#${playerNumber} · ${player?.position || ''} · ${teamSide === 'home' ? report.homeName : report.awayName}`,
+                        stats: [
+                          { label: 'Zone entries', value: stats.zoneEntries.successPct !== null ? `${stats.zoneEntries.successPct}%` : '—' },
+                          { label: 'Faceoffs', value: stats.faceoffs.winPct !== null ? `${stats.faceoffs.winPct}%` : '—' },
+                          { label: 'Breakouts', value: stats.breakouts.successPct !== null ? `${stats.breakouts.successPct}%` : '—' },
+                        ],
+                        ratings,
+                        notes,
+                      });
+                    } catch (err) {
+                      alert(err instanceof Error ? err.message : 'Could not generate the PDF.');
+                    }
+                  }}
+                >
+                  ⬇ Download PDF
+                </button>
+                <button style={{ ...S.btn('#94a3b8'), flex: 1 }} onClick={handleEmail}>
+                  ✉ Email
+                </button>
+              </div>
             </>
           )}
         </div>
