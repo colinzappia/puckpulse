@@ -1,7 +1,8 @@
 // ============================================================
 // scoutingStats.ts
 // Computes the auto-filled stat line for one player from the
-// raw tracked events on a saved game report. Pure computation —
+// raw tracked events on a saved game report, and exposes the
+// player's full raw event list for display. Pure computation —
 // no Supabase calls here. Feed it events already loaded via
 // gameReportService.
 // ============================================================
@@ -28,9 +29,7 @@ export function computePlayerStats(
   teamSide: Team,
   playerNumber: string
 ): PlayerGameStats {
-  const playerEvents = events.filter(
-    (e) => e.team === teamSide && e.playerNumber === playerNumber
-  );
+  const playerEvents = getPlayerEvents(events, teamSide, playerNumber);
 
   const zoneEntryEvents = playerEvents.filter((e) => ZONE_ENTRY_TYPES.includes(e.type));
   const deniedEntries = zoneEntryEvents.filter(
@@ -66,4 +65,59 @@ export function computePlayerStats(
         breakoutTotal > 0 ? Math.round((controlledBreakouts / breakoutTotal) * 100) : null,
     },
   };
+}
+
+// ── Every raw event logged for one player, in the order it was
+// tracked. Used to show a scout the full play-by-play for the
+// player they're evaluating, not just the summarized percentages.
+export function getPlayerEvents(
+  events: GameEvent[],
+  teamSide: Team,
+  playerNumber: string
+): GameEvent[] {
+  return events.filter((e) => e.team === teamSide && e.playerNumber === playerNumber);
+}
+
+// ── Human-readable label for one event, for display in a list.
+export function formatEventLabel(e: GameEvent): string {
+  switch (e.type) {
+    case EventType.GOAL:
+      return 'Goal';
+    case EventType.SHOT:
+      return 'Shot';
+    case EventType.SAVE:
+      return 'Save';
+    case EventType.MISS:
+      return 'Missed shot';
+    case EventType.HIT:
+      return 'Hit';
+    case EventType.FACEOFF_WIN:
+      return 'Faceoff win';
+    case EventType.FACEOFF_LOSS:
+      return 'Faceoff loss';
+    case EventType.PENALTY:
+      return e.metadata?.penaltyType ? `Penalty (${e.metadata.penaltyType})` : 'Penalty';
+    case EventType.GIVEAWAY:
+      return 'Giveaway';
+    case EventType.TAKEAWAY:
+      return 'Takeaway';
+    case EventType.BLOCK:
+      return 'Blocked shot';
+    case EventType.PP_SHOT_FOR:
+      return 'PP shot for';
+    case EventType.PP_SHOT_AGAINST:
+      return 'PP shot against';
+    case EventType.ZONE_ENTRY_CARRY:
+      return 'Zone entry (carry)';
+    case EventType.ZONE_ENTRY_DUMP:
+      return 'Zone entry (dump)';
+    case EventType.ZONE_ENTRY_PASS:
+      return 'Zone entry (pass)';
+    case EventType.ZONE_ENTRY_DENIED:
+      return 'Zone entry denied';
+    case EventType.BREAKOUT:
+      return e.metadata?.breakoutResult === 'CONTROLLED' ? 'Breakout (controlled)' : 'Breakout (failed)';
+    default:
+      return e.type;
+  }
 }
