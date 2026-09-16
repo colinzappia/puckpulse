@@ -1,10 +1,11 @@
 // ============================================================
 // scoutingReportService.ts
 // Saves and retrieves scouting reports from Supabase.
-// A scouting report is one scout's evaluation (ratings + notes)
-// of one player from an already-saved game report. The hard
-// stats it's built around live on the game_reports row itself
-// and are not duplicated here.
+// A report is either tied to a saved game (game_report_id set)
+// or fully standalone (is_standalone true, typed-in player and
+// team, no auto-filled stats). The hard stats a tied report is
+// built around live on the game_reports row itself and are not
+// duplicated here.
 // ============================================================
 
 import { supabase } from '../lib/supabaseClient';
@@ -22,10 +23,13 @@ export interface ScoutRatings {
 
 export interface SavedScoutingReport {
   id: string;
-  gameReportId: string;
-  teamSide: 'home' | 'away';
-  playerNumber: string;
+  gameReportId: string | null;
+  teamSide: 'home' | 'away' | null;
+  playerNumber: string | null;
   playerName: string;
+  teamName: string | null;
+  gameDate: string | null;
+  isStandalone: boolean;
   scoutUserId: string;
   ratings: ScoutRatings;
   notes: string;
@@ -34,14 +38,19 @@ export interface SavedScoutingReport {
   updatedAt: string;
 }
 
-// ── Save a new scouting report ──────────────────────────────
+// ── Save a new scouting report — tied to a game (pass gameReportId
+// /teamSide/playerNumber) or standalone (pass teamName/gameDate/
+// isStandalone: true instead) ────────────────────────────────
 export async function saveScoutingReport(
   scoutUserId: string,
   data: {
-    gameReportId: string;
-    teamSide: 'home' | 'away';
-    playerNumber: string;
+    gameReportId?: string;
+    teamSide?: 'home' | 'away';
+    playerNumber?: string;
     playerName: string;
+    teamName?: string;
+    gameDate?: string;
+    isStandalone?: boolean;
     ratings: ScoutRatings;
     notes: string;
     isShared: boolean;
@@ -50,10 +59,13 @@ export async function saveScoutingReport(
   const { data: report, error } = await supabase
     .from('scouting_reports')
     .insert({
-      game_report_id: data.gameReportId,
-      team_side: data.teamSide,
-      player_number: data.playerNumber,
+      game_report_id: data.gameReportId || null,
+      team_side: data.teamSide || null,
+      player_number: data.playerNumber || null,
       player_name: data.playerName,
+      team_name: data.teamName || null,
+      game_date: data.gameDate || null,
+      is_standalone: data.isStandalone ?? false,
       scout_user_id: scoutUserId,
       ratings: data.ratings,
       notes: data.notes,
@@ -78,7 +90,9 @@ export async function loadReportsForGame(gameReportId: string): Promise<SavedSco
   return (data || []).map(mapScoutingReport);
 }
 
-// ── Load one scout's own reports across all games ───────────
+// ── Load one scout's own reports across all games — includes
+// standalone reports too, filter by .isStandalone on the result
+// if you need just one kind ──────────────────────────────────
 export async function loadMyScoutingReports(scoutUserId: string): Promise<SavedScoutingReport[]> {
   const { data, error } = await supabase
     .from('scouting_reports')
@@ -94,12 +108,18 @@ export async function loadMyScoutingReports(scoutUserId: string): Promise<SavedS
 export async function updateScoutingReport(
   reportId: string,
   data: {
+    playerName?: string;
+    teamName?: string;
+    gameDate?: string;
     ratings?: ScoutRatings;
     notes?: string;
     isShared?: boolean;
   }
 ): Promise<void> {
   const updates: Record<string, unknown> = {};
+  if (data.playerName !== undefined) updates.player_name = data.playerName;
+  if (data.teamName !== undefined) updates.team_name = data.teamName;
+  if (data.gameDate !== undefined) updates.game_date = data.gameDate;
   if (data.ratings !== undefined) updates.ratings = data.ratings;
   if (data.notes !== undefined) updates.notes = data.notes;
   if (data.isShared !== undefined) updates.is_shared = data.isShared;
@@ -125,10 +145,13 @@ export async function deleteScoutingReport(reportId: string): Promise<void> {
 function mapScoutingReport(row: Record<string, unknown>): SavedScoutingReport {
   return {
     id: row.id as string,
-    gameReportId: row.game_report_id as string,
-    teamSide: row.team_side as 'home' | 'away',
-    playerNumber: row.player_number as string,
+    gameReportId: (row.game_report_id as string) || null,
+    teamSide: (row.team_side as 'home' | 'away') || null,
+    playerNumber: (row.player_number as string) || null,
     playerName: (row.player_name as string) || '',
+    teamName: (row.team_name as string) || null,
+    gameDate: (row.game_date as string) || null,
+    isStandalone: (row.is_standalone as boolean) || false,
     scoutUserId: row.scout_user_id as string,
     ratings: (row.ratings as ScoutRatings) || {},
     notes: (row.notes as string) || '',
