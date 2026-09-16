@@ -19,6 +19,7 @@ import { buildPlayerStats } from './playerstats';
 import SeasonStats from './SeasonStats';
 import PlayerShareCard from './PlayerShareCard';
 import ScoutingReportModal from './ScoutingReportModal';
+import LineupSheet from './LineupSheet';
 
 interface Props {
   isOpen: boolean;
@@ -163,8 +164,14 @@ export default function GameHistory({ isOpen, onClose, onLoadGame, onDownloadRep
               ))}
             </div>
 
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginBottom: 12 }}>
+                        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginBottom: 12 }}>
               {selected.events.length} events logged · {selected.periods} periods
+            </div>
+
+            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8, fontWeight: 600 }}>Lineups</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
+              <LineupSheet roster={selected.homeRoster} teamName={selected.homeName} accent="#60a5fa" />
+              <LineupSheet roster={selected.awayRoster} teamName={selected.awayName} accent="#f87171" />
             </div>
 
             <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8, fontWeight: 600 }}>Download report</div>
