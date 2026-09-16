@@ -15,6 +15,7 @@ import {
   saveScoutingReport,
   updateScoutingReport,
 } from '../services/scoutingReportService';
+import { downloadScoutingReportPDF, emailScoutingReport } from '../utils/scoutingExport';
 
 interface Props {
   existing?: SavedScoutingReport | null;
@@ -167,6 +168,41 @@ export default function StandaloneScoutingModal({ existing, onSaved, onClose }: 
           <button style={S.btn()} onClick={handleSave} disabled={saving || !canSave}>
             {saving ? 'Saving…' : existing ? 'Update report' : 'Save report'}
           </button>
+
+          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+            <button
+              style={{ ...S.btn('#94a3b8'), flex: 1 }}
+              disabled={!canSave}
+              onClick={async () => {
+                try {
+                  await downloadScoutingReportPDF({
+                    playerName: playerName.trim() || 'Untitled player',
+                    meta: [teamName, gameDate].filter(Boolean).join(' · ') || 'No team or date noted',
+                    ratings,
+                    notes,
+                  });
+                } catch (err) {
+                  alert(err instanceof Error ? err.message : 'Could not generate the PDF.');
+                }
+              }}
+            >
+              ⬇ Download PDF
+            </button>
+            <button
+              style={{ ...S.btn('#94a3b8'), flex: 1 }}
+              disabled={!canSave}
+              onClick={() =>
+                emailScoutingReport({
+                  playerName: playerName.trim() || 'Untitled player',
+                  meta: [teamName, gameDate].filter(Boolean).join(' · ') || 'No team or date noted',
+                  ratings,
+                  notes,
+                })
+              }
+            >
+              ✉ Email
+            </button>
+          </div>
         </div>
       </div>
     </div>
