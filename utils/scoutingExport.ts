@@ -1,11 +1,17 @@
 // ============================================================
 // scoutingExport.ts
 // Turns a scouting report (game-tied or standalone) into a
-// downloadable PDF or a pre-filled email. PDF generation reuses
-// the same html2pdf.js technique as services/exportService.ts —
-// render the report off-screen, then capture it — so no new
-// library is introduced here. Email opens the user's own mail
-// app via a mailto: link; no backend service involved.
+// downloadable PDF or clipboard text for emailing. PDF
+// generation reuses the same html2pdf.js technique as
+// services/exportService.ts — render the report off-screen,
+// then capture it — so no new library is introduced here.
+//
+// "Email" copies the report text to the clipboard rather than
+// relying only on a mailto: link — mailto silently does nothing
+// on any device without a default mail app configured, which is
+// the common case on desktop (Gmail/Outlook used in-browser, no
+// native mail app set as default). A mailto: attempt still fires
+// as a bonus for the minority who do have one set up.
 // ============================================================
 
 import { ScoutRatings } from '../services/scoutingReportService';
@@ -135,8 +141,29 @@ export async function downloadScoutingReportPDF(data: ScoutingExportData) {
   }
 }
 
-export function emailScoutingReport(data: ScoutingExportData) {
+// Copies the report to the clipboard (the reliable path) and also fires a
+// mailto: link as a bonus for anyone who does have a default mail app set
+// up — harmless no-op for everyone else. Returns whether the clipboard
+// copy actually succeeded, so the caller can tell the user what happened.
+export async function emailScoutingReport(data: ScoutingExportData): Promise<boolean> {
   const subject = `Scouting Report: ${data.playerName}`;
   const body = buildScoutingReportText(data);
-  window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+  let copied = false;
+  try {
+    await navigator.clipboard.writeText(`Subject: ${subject}\n\n${body}`);
+    copied = true;
+  } catch (err) {
+    console.error('Clipboard copy failed:', err);
+    copied = false;
+  }
+
+  try {
+    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  } catch {
+    // Ignore — this is a bonus attempt, the clipboard copy above is the
+    // real fallback.
+  }
+
+  return copied;
 }
