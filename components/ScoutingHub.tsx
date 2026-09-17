@@ -41,6 +41,7 @@ export default function ScoutingHub({ isOpen, onClose }: Props) {
   const [searchQuery, setSearchQuery] = useState('');
   const [editingStandalone, setEditingStandalone] = useState<SavedScoutingReport | 'new' | null>(null);
   const [editingLineup, setEditingLineup] = useState<SavedScoutedLineup | 'new' | null>(null);
+  const [syncingSchedule, setSyncingSchedule] = useState(false);
   const [pickingGame, setPickingGame] = useState(false);
   const [pickingPlayerFor, setPickingPlayerFor] = useState<SavedGameReport | null>(null);
   const [gameScoutTarget, setGameScoutTarget] = useState<{ report: SavedGameReport; team: Team; playerNumber: string } | null>(null);
@@ -257,8 +258,31 @@ export default function ScoutingHub({ isOpen, onClose }: Props) {
               </>
             ) : (
               <>
-                <div style={{ marginBottom: 16 }}>
+                <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
                   <button style={S.btn('#34d399')} onClick={() => setEditingLineup('new')}>+ Upload lineup</button>
+                  <button
+                    style={S.btn('#94a3b8')}
+                    disabled={syncingSchedule}
+                    onClick={async () => {
+                      setSyncingSchedule(true);
+                      try {
+                        const res = await fetch('/api/sync-chl-schedule', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ league: 'ohl' }),
+                        });
+                        const data = await res.json();
+                        if (!res.ok) throw new Error(data.error || 'Sync failed.');
+                        alert(`OHL sync complete — found ${data.gamesFound} games, saved ${data.upserted}${data.failures > 0 ? `, ${data.failures} failed` : ''}.`);
+                      } catch (err) {
+                        alert(err instanceof Error ? err.message : 'Sync failed.');
+                      } finally {
+                        setSyncingSchedule(false);
+                      }
+                    }}
+                  >
+                    {syncingSchedule ? 'Syncing…' : '🔄 Sync OHL Schedule'}
+                  </button>
                 </div>
 
                 {lineups.length > 0 && (
