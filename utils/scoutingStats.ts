@@ -121,3 +121,22 @@ export function formatEventLabel(e: GameEvent): string {
       return e.type;
   }
 }
+
+// ── Tally of every event type logged for one player — e.g.
+// "Faceoff win: 5", "Shot: 3" — used as a compact summary box
+// instead of listing every individual logged event. Distinct
+// outcomes (zone entry carry vs. dump, etc.) get their own
+// tally line, matching formatEventLabel's own granularity.
+export function summarizePlayerEvents(
+  events: GameEvent[],
+  teamSide: Team,
+  playerNumber: string
+): { label: string; count: number }[] {
+  const playerEvents = getPlayerEvents(events, teamSide, playerNumber);
+  const counts = new Map<string, number>();
+  playerEvents.forEach((e) => {
+    const label = formatEventLabel(e);
+    counts.set(label, (counts.get(label) || 0) + 1);
+  });
+  return Array.from(counts.entries()).map(([label, count]) => ({ label, count }));
+}
