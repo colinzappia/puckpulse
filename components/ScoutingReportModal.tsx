@@ -19,6 +19,7 @@ import {
   deleteScoutingReport,
 } from '../services/scoutingReportService';
 import { computePlayerStats, summarizePlayerEvents } from '../utils/scoutingStats';
+import { formatLineLabel } from './LineupSheet';
 import { downloadScoutingReportPDF, emailScoutingReport } from '../utils/scoutingExport';
 import { Team } from '../types';
 
@@ -55,7 +56,6 @@ export default function ScoutingReportModal({ report, team, playerNumber, onClos
   const [deleting, setDeleting] = useState(false);
   const [ratings, setRatings] = useState<ScoutRatings>({});
   const [notes, setNotes] = useState('');
-  const [isShared, setIsShared] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -69,7 +69,6 @@ export default function ScoutingReportModal({ report, team, playerNumber, onClos
           setExisting(mine);
           setRatings(mine.ratings);
           setNotes(mine.notes);
-          setIsShared(mine.isShared);
         }
       })
       .finally(() => setLoading(false));
@@ -81,7 +80,7 @@ export default function ScoutingReportModal({ report, team, playerNumber, onClos
     setSaving(true);
     try {
       if (existing) {
-        await updateScoutingReport(existing.id, { ratings, notes, isShared });
+        await updateScoutingReport(existing.id, { ratings, notes });
       } else {
         await saveScoutingReport(user.id, {
           gameReportId: report.id,
@@ -90,7 +89,7 @@ export default function ScoutingReportModal({ report, team, playerNumber, onClos
           playerName: player?.name || '',
           ratings,
           notes,
-          isShared,
+          isShared: false,
         });
       }
       onClose();
@@ -176,7 +175,7 @@ export default function ScoutingReportModal({ report, team, playerNumber, onClos
                   {player?.name || `#${playerNumber}`}
                 </div>
                 <div style={{ fontSize: 11, color: accent, fontWeight: 600 }}>
-                  #{playerNumber} · {player?.position || ''} · {teamSide === 'home' ? report.homeName : report.awayName}
+                  #{playerNumber} · {player?.position || ''}{player?.line ? ` · ${formatLineLabel(player.line)}` : ''} · {teamSide === 'home' ? report.homeName : report.awayName}
                 </div>
               </div>
 
@@ -255,21 +254,6 @@ export default function ScoutingReportModal({ report, team, playerNumber, onClos
                   value={notes}
                   onChange={e => setNotes(e.target.value)}
                 />
-              </div>
-
-              <div
-                onClick={() => setIsShared(v => !v)}
-                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 10, border: `0.5px solid ${isShared ? 'rgba(52,211,153,0.3)' : 'rgba(255,255,255,0.08)'}`, marginBottom: 16, cursor: 'pointer' }}
-              >
-                <div style={{ width: 36, height: 20, borderRadius: 10, background: isShared ? '#34d399' : 'rgba(255,255,255,0.15)', position: 'relative', flexShrink: 0, transition: 'background 0.2s' }}>
-                  <div style={{ position: 'absolute', top: 2, left: isShared ? 18 : 2, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
-                </div>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: isShared ? '#34d399' : '#fff' }}>Share with plan</div>
-                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>
-                    {isShared ? 'Visible to everyone on your plan' : 'Only you can see this report'}
-                  </div>
-                </div>
               </div>
 
               <button style={S.btn()} onClick={handleSave} disabled={saving}>
