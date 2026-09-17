@@ -28,7 +28,13 @@ export async function loadLeagueGames(league: string = 'ohl'): Promise<LeagueGam
     .eq('league', league)
     .order('game_date', { ascending: true });
 
-  if (error) return [];
+  if (error) {
+    // Log rather than silently returning an empty list — an empty list
+    // here looks identical in the UI to "nothing synced yet," which
+    // made a real query failure indistinguishable from an empty table.
+    console.error('[leagueGamesService] Failed to load league games:', error);
+    return [];
+  }
   return (data || []).map(mapGame);
 }
 
