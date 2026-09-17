@@ -10,7 +10,7 @@
 import React, { useState } from 'react';
 import { GameEvent, Player, Team } from '../types';
 import { ScoutRatings } from '../services/scoutingReportService';
-import { computePlayerStats, getPlayerEvents, formatEventLabel } from '../utils/scoutingStats';
+import { computePlayerStats, summarizePlayerEvents } from '../utils/scoutingStats';
 
 interface Props {
   events: GameEvent[];
@@ -36,7 +36,7 @@ const RATING_FIELDS: { key: keyof ScoutRatings; label: string }[] = [
 
 export default function LiveScoutingModal({ events, roster, team, playerNumber, teamName, initial, onSave, onClose }: Props) {
   const player = roster.find(p => p.number === playerNumber);
-  const playerEvents = getPlayerEvents(events, team, playerNumber);
+  const eventSummary = summarizePlayerEvents(events, team, playerNumber);
   const stats = computePlayerStats(events, team, playerNumber);
 
   const [ratings, setRatings] = useState<ScoutRatings>(initial?.ratings || {});
@@ -82,18 +82,18 @@ export default function LiveScoutingModal({ events, roster, team, playerNumber, 
           </div>
 
           <div style={{ marginBottom: 16 }}>
-            <div style={S.sectionLabel}>Events so far ({playerEvents.length})</div>
-            {playerEvents.length === 0 ? (
+            <div style={S.sectionLabel}>Event summary</div>
+            {eventSummary.length === 0 ? (
               <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>Nothing logged for this player yet.</div>
             ) : (
-              <div style={S.card}>
-                {playerEvents.map((e, i) => (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {eventSummary.map(s => (
                   <div
-                    key={e.id}
-                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderTop: i === 0 ? 'none' : '0.5px solid rgba(255,255,255,0.06)' }}
+                    key={s.label}
+                    style={{ background: '#0f1620', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8 }}
                   >
-                    <span style={{ fontSize: 13, color: '#fff' }}>{formatEventLabel(e)}</span>
-                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>P{e.period} · {e.gameTime}</span>
+                    <span style={{ fontSize: 12, color: '#fff', fontWeight: 600 }}>{s.label}</span>
+                    <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', fontWeight: 900 }}>{s.count}</span>
                   </div>
                 ))}
               </div>
