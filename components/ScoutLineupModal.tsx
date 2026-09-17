@@ -1,16 +1,30 @@
 // ============================================================
 // ScoutLineupModal.tsx
-// Upload or edit a scouted lineup — a team's roster with line
-// and pair assignments, tied to a specific opponent/date a
-// scout watched. Reuses the same AI roster import (paste text
-// or a photo) already used in Roster Setup, so a scout isn't
-// hand-typing 20 names. Every saved lineup is visible to
-// everyone on the plan automatically — no sharing toggle.
+// Upload or edit a scouted lineup. Creating a new one shows two
+// teams side by side, each with the same paste/photo AI import
+// coaches already use in Roster Setup, plus drag-and-drop line
+// assignment — identical interaction to the live tracking
+// screen's lineup panel, just built standalone here since that
+// version lives inline in App.tsx and isn't reusable directly.
+// Editing an existing lineup shows just that one team. Every
+// saved lineup is visible to everyone on the plan automatically
+// — no sharing toggle.
 // ============================================================
 
 import React, { useState } from 'react';
+import {
+  DndContext,
+  useDraggable,
+  useDroppable,
+  DragEndEvent,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  TouchSensor,
+} from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
 import { useUser } from '@clerk/clerk-react';
-import { Player } from '../types';
+import { Player, Team } from '../types';
 import {
   SavedScoutedLineup,
   saveScoutedLineup,
@@ -38,10 +52,9 @@ const LINE_OPTIONS = [
   { value: 'G1', label: 'Goalie 1' },
   { value: 'G2', label: 'Goalie 2' },
 ];
+const ASSIGNED_LINES = new Set(['1', '2', '3', '4', 'P1', 'P2', 'P3', 'G1', 'G2']);
 
-// Same downscale-before-upload approach as Roster Setup's photo import —
-// a full camera photo is routinely 3-10MB, which risks blowing past
-// serverless request-size limits before the image even reaches the AI.
+// Same downscale-before-upload approach as Roster Setup's photo import.
 function resizeImageForUpload(file: File, maxDimension = 1800, quality = 0.85): Promise<{ base64: string; mediaType: string }> {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -68,22 +81,165 @@ function resizeImageForUpload(file: File, maxDimension = 1800, quality = 0.85): 
   });
 }
 
-export default function ScoutLineupModal({ existing, onSaved, onClose }: Props) {
-  const { user } = useUser();
-  const [teamName, setTeamName] = useState(existing?.teamName || '');
-  const [opponent, setOpponent] = useState(existing?.opponent || '');
-  const [gameDate, setGameDate] = useState(existing?.gameDate || '');
-  const [roster, setRoster] = useState<Player[]>(existing?.roster || []);
+// ── Draggable player chip — same drag-id scheme as the live tracking
+// screen's lineup panel (player-{team}-{number}), just restyled with
+// inline styles to match the rest of the Scouting portal instead of
+// Tailwind classes.
+const DraggablePlayer: React.FC<{ p: Player; team: Team; accent: string }> = ({ p, team, accent }) => {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: `player-${team}-${p.number}` });
+  const style: React.CSSProperties = {
+    transform: CSS.Translate.toString(transform),
+    opacity: isDragging ? 0.3 : 1,
+    height: 38,
+    borderRadius: 10,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    border: `0.5px solid ${accent}40`,
+    background: `${accent}15`,
+    color: '#fff',
+    touchAction: 'none',
+    cursor: 'grab',
+    padding: '2px 4px',
+    overflow: 'hidden',
+  };
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      <span style={{ fontSize: 10, fontWeight: 900, lineHeight: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>
+        #{p.number} {p.name.split(' ').pop()}
+      </span>
+      <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.4)', marginTop: 1 }}>{p.position}</span>
+    </div>
+  );
+};
+
+// ── Drop target for one slot (a forward position on a line, a D-pair
+// side, or a goalie slot) — same drop-id scheme as the live tracking
+// screen: line-{team}-{lineOrPair}-{position}.
+const DroppableSlot: React.FC<{ id: string; children: React.ReactNode; label: string; cols?: number }> = ({ id, children, label, cols = 1 }) => {
+  const { setNodeRef, isOver } = useDroppable({ id });
+  const hasChildren = React.Children.count(children) > 0;
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        position: 'relative',
+        minHeight: 42,
+        borderRadius: 10,
+        border: `1px dashed ${isOver ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.08)'}`,
+        background: isOver ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.02)',
+      }}
+    >
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gap: 3, padding: 3, height: '100%' }}>
+        {children}
+      </div>
+      {!hasChildren && !isOver && (
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.3, pointerEvents: 'none' }}>
+          <span style={{ fontSize: 8, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.5)' }}>{label}</span>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ── The visual line/pair/goalie grid for one team — drag players
+// between slots to reassign them, same behavior as the live
+// tracking screen.
+function RosterGrid({ team, roster, accent }: { team: Team; roster: Player[]; accent: string }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      {['1', '2', '3', '4'].map(lineNum => (
+        <div key={`line-${lineNum}`}>
+          <div style={{ fontSize: 8, fontWeight: 900, color: accent, marginBottom: 2 }}>LINE {lineNum}</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 3 }}>
+            {['LW', 'C', 'RW'].map((pos, posIdx) => {
+              const playersOnLine = roster.filter(p => p.line === lineNum);
+              const playersInSlot = playersOnLine.filter(p => {
+                if (p.position === pos) return true;
+                if (p.position === 'F') {
+                  const fPlayers = playersOnLine.filter(pl => pl.position === 'F');
+                  const idx = fPlayers.indexOf(p);
+                  return posIdx === 2 ? idx >= 2 : idx === posIdx;
+                }
+                return false;
+              });
+              return (
+                <DroppableSlot key={pos} id={`line-${team}-${lineNum}-${pos}`} label={pos} cols={Math.max(1, playersInSlot.length)}>
+                  {playersInSlot.map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} accent={accent} />)}
+                </DroppableSlot>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+      {['P1', 'P2', 'P3'].map(pairNum => (
+        <div key={`pair-${pairNum}`}>
+          <div style={{ fontSize: 8, fontWeight: 900, color: accent, marginBottom: 2 }}>PAIR {pairNum.replace('P', '')}</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 3 }}>
+            {['D1', 'D2'].map((pos, posIdx) => {
+              const playersOnPair = roster.filter(p => p.line === pairNum);
+              const playersInSlot = playersOnPair.filter(p => {
+                if (p.position === 'LD' && posIdx === 0) return true;
+                if (p.position === 'RD' && posIdx === 1) return true;
+                if (p.position === 'D') {
+                  const dPlayers = playersOnPair.filter(pl => pl.position === 'D');
+                  const idx = dPlayers.indexOf(p);
+                  return posIdx === 1 ? idx >= 1 : idx === 0;
+                }
+                return false;
+              });
+              return (
+                <DroppableSlot key={pos} id={`line-${team}-${pairNum}-${posIdx === 0 ? 'LD' : 'RD'}`} label={pos} cols={Math.max(1, playersInSlot.length)}>
+                  {playersInSlot.map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} accent={accent} />)}
+                </DroppableSlot>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+      <div>
+        <div style={{ fontSize: 8, fontWeight: 900, color: accent, marginBottom: 2 }}>GOALIES</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 3 }}>
+          {['G1', 'G2'].map(goalieNum => (
+            <DroppableSlot key={goalieNum} id={`line-${team}-${goalieNum}-G`} label={goalieNum === 'G1' ? 'Starter' : 'Backup'}>
+              {roster.filter(p => p.line === goalieNum).map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} accent={accent} />)}
+            </DroppableSlot>
+          ))}
+        </div>
+      </div>
+      {roster.filter(p => !ASSIGNED_LINES.has(p.line || '')).length > 0 && (
+        <div>
+          <div style={{ fontSize: 8, fontWeight: 900, color: 'rgba(255,255,255,0.3)', marginBottom: 2 }}>UNASSIGNED</div>
+          <DroppableSlot id={`line-${team}-unassigned`} label="?" cols={2}>
+            {roster.filter(p => !ASSIGNED_LINES.has(p.line || '')).map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} accent={accent} />)}
+          </DroppableSlot>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── One team's full entry pane: name field, import (paste or photo)
+// before a roster exists, then the drag grid plus a compact editable
+// list (for number/name typo fixes and removal) plus manual add.
+function TeamEntryPane({
+  team, accent, teamName, onTeamNameChange, roster, onRosterChange, placeholder,
+}: {
+  team: Team;
+  accent: string;
+  teamName: string;
+  onTeamNameChange: (v: string) => void;
+  roster: Player[];
+  onRosterChange: (r: Player[]) => void;
+  placeholder: string;
+}) {
   const [pasteText, setPasteText] = useState('');
   const [importing, setImporting] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
   const [manualNum, setManualNum] = useState('');
   const [manualName, setManualName] = useState('');
   const [manualPos, setManualPos] = useState('C');
   const [manualLine, setManualLine] = useState('1');
-
-  const canSave = teamName.trim().length > 0 && roster.length > 0;
 
   const parsedToPlayers = (players: any[]): Player[] =>
     players.map((p: any) => ({
@@ -102,7 +258,7 @@ export default function ScoutLineupModal({ existing, onSaved, onClose }: Props) 
       if (result.status === 'ERROR') throw new Error(result.reason || 'Could not parse roster');
       const players = parsedToPlayers(result.players || []);
       if (players.length === 0) throw new Error('No players found in pasted text');
-      setRoster(sortByNumber(players));
+      onRosterChange(sortByNumber(players));
       setPasteText('');
     } catch (err: any) {
       alert(`Import error: ${err.message}`);
@@ -121,7 +277,7 @@ export default function ScoutLineupModal({ existing, onSaved, onClose }: Props) 
       if (result.status === 'ERROR') throw new Error(result.reason || 'Could not parse roster');
       const players = parsedToPlayers(result.players || []);
       if (players.length === 0) throw new Error('No players found in that photo — try a clearer, straighter shot.');
-      setRoster(sortByNumber(players));
+      onRosterChange(sortByNumber(players));
     } catch (err: any) {
       alert(`Import error: ${err.message}`);
     } finally {
@@ -130,38 +286,160 @@ export default function ScoutLineupModal({ existing, onSaved, onClose }: Props) 
   };
 
   const updatePlayer = (idx: number, field: 'number' | 'name' | 'position' | 'line', value: string) => {
-    setRoster(prev => prev.map((p, i) => (i === idx ? { ...p, [field]: value } : p)));
+    onRosterChange(roster.map((p, i) => (i === idx ? { ...p, [field]: value } : p)));
   };
 
   const removePlayer = (idx: number) => {
-    setRoster(prev => prev.filter((_, i) => i !== idx));
+    onRosterChange(roster.filter((_, i) => i !== idx));
   };
 
   const addManualPlayer = () => {
     if (!manualNum.trim() || !manualName.trim()) { alert('Enter a number and name.'); return; }
-    setRoster(prev => sortByNumber([...prev, { number: manualNum.trim(), name: manualName.trim(), position: manualPos, line: manualLine }]));
+    onRosterChange(sortByNumber([...roster, { number: manualNum.trim(), name: manualName.trim(), position: manualPos, line: manualLine }]));
     setManualNum('');
     setManualName('');
   };
 
+  return (
+    <div style={{ flex: '1 1 300px', minWidth: 280 }}>
+      <input
+        style={{ width: '100%', background: '#0f1620', border: `0.5px solid ${accent}40`, borderRadius: 10, padding: '10px 12px', color: accent, fontSize: 13, fontWeight: 700, marginBottom: 8, boxSizing: 'border-box' as const }}
+        value={teamName}
+        onChange={e => onTeamNameChange(e.target.value)}
+        placeholder={placeholder}
+      />
+
+      {roster.length === 0 ? (
+        <div style={{ background: '#0f1620', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: 10 }}>
+          <textarea
+            style={{ width: '100%', background: '#0c1018', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: 8, color: '#fff', fontSize: 10, fontFamily: 'monospace', minHeight: 60, resize: 'vertical' as const, marginBottom: 6, boxSizing: 'border-box' as const }}
+            value={pasteText}
+            onChange={e => setPasteText(e.target.value)}
+            placeholder="Paste roster text…"
+          />
+          <button
+            onClick={handlePasteImport}
+            disabled={importing}
+            style={{ width: '100%', padding: 8, borderRadius: 8, fontSize: 11, fontWeight: 700, border: `0.5px solid ${accent}40`, background: `${accent}15`, color: accent, cursor: 'pointer', marginBottom: 6 }}
+          >
+            {importing ? 'Reading…' : '📋 Import pasted roster'}
+          </button>
+          <label style={{ display: 'block', textAlign: 'center', padding: 8, borderRadius: 8, fontSize: 11, fontWeight: 700, border: '0.5px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.6)', cursor: 'pointer' }}>
+            {importing ? 'Reading…' : '📷 Upload roster photo'}
+            <input type="file" accept="image/*" disabled={importing} style={{ display: 'none' }} onChange={e => { handlePhotoImport(e.target.files?.[0] || null); e.target.value = ''; }} />
+          </label>
+          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', textAlign: 'center', marginTop: 8 }}>
+            Or skip import — enter a team name above, then add players manually once the roster area appears.
+          </div>
+          <button
+            onClick={() => onRosterChange([{ number: '', name: '', position: 'C', line: '1' }])}
+            style={{ width: '100%', marginTop: 6, padding: 6, borderRadius: 8, fontSize: 10, fontWeight: 600, border: '0.5px solid rgba(255,255,255,0.1)', background: 'transparent', color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }}
+          >
+            Start with an empty roster instead
+          </button>
+        </div>
+      ) : (
+        <>
+          <RosterGrid team={team} roster={roster} accent={accent} />
+
+          <div style={{ marginTop: 10, marginBottom: 6, fontSize: 9, fontWeight: 800, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            Edit roster ({roster.length})
+          </div>
+          <div style={{ maxHeight: 160, overflowY: 'auto' as const }}>
+            {roster.map((p, idx) => (
+              <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#0f1620', border: '0.5px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: 5, marginBottom: 4 }}>
+                <input style={{ width: 28, background: 'transparent', border: 'none', color: '#fff', fontSize: 10, fontWeight: 700, textAlign: 'center' as const }} value={p.number} onChange={e => updatePlayer(idx, 'number', e.target.value)} />
+                <input style={{ flex: 1, minWidth: 0, background: 'transparent', border: 'none', color: '#fff', fontSize: 10 }} value={p.name} onChange={e => updatePlayer(idx, 'name', e.target.value)} placeholder="Name" />
+                <select style={{ background: '#0c1018', border: 'none', color: 'rgba(255,255,255,0.5)', fontSize: 9, borderRadius: 4 }} value={p.position} onChange={e => updatePlayer(idx, 'position', e.target.value)}>
+                  {POSITIONS.map(pos => <option key={pos} value={pos}>{pos}</option>)}
+                </select>
+                <select style={{ background: '#0c1018', border: 'none', color: 'rgba(255,255,255,0.5)', fontSize: 9, borderRadius: 4 }} value={p.line || '1'} onChange={e => updatePlayer(idx, 'line', e.target.value)}>
+                  {LINE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+                <span onClick={() => removePlayer(idx)} style={{ color: 'rgba(248,113,113,0.7)', cursor: 'pointer', fontSize: 12, padding: '0 3px' }}>✕</span>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ display: 'flex', gap: 4, marginTop: 6 }}>
+            <input style={{ width: 32, background: '#0f1620', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 6, padding: 6, color: '#fff', fontSize: 10, textAlign: 'center' as const }} placeholder="#" value={manualNum} onChange={e => setManualNum(e.target.value)} />
+            <input style={{ flex: 1, minWidth: 0, background: '#0f1620', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 6, padding: 6, color: '#fff', fontSize: 10 }} placeholder="Name" value={manualName} onChange={e => setManualName(e.target.value)} />
+            <select style={{ background: '#0f1620', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 6, color: '#fff', fontSize: 9 }} value={manualPos} onChange={e => setManualPos(e.target.value)}>
+              {POSITIONS.map(pos => <option key={pos} value={pos}>{pos}</option>)}
+            </select>
+            <select style={{ background: '#0f1620', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 6, color: '#fff', fontSize: 9 }} value={manualLine} onChange={e => setManualLine(e.target.value)}>
+              {LINE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+            <button onClick={addManualPlayer} style={{ width: 26, borderRadius: 6, border: '0.5px solid rgba(52,211,153,0.4)', background: 'rgba(52,211,153,0.15)', color: '#34d399', fontWeight: 900, cursor: 'pointer' }}>+</button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+export default function ScoutLineupModal({ existing, onSaved, onClose }: Props) {
+  const { user } = useUser();
+  const [gameDate, setGameDate] = useState(existing?.gameDate || '');
+  const [opponent, setOpponent] = useState(existing?.opponent || '');
+  const [teamAName, setTeamAName] = useState(existing?.teamName || '');
+  const [teamBName, setTeamBName] = useState('');
+  const [rosterA, setRosterA] = useState<Player[]>(existing?.roster || []);
+  const [rosterB, setRosterB] = useState<Player[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over) return;
+    const [, activeTeam, activeNumber] = (active.id as string).split('-');
+    const [, overTeam, overLine, overPos] = (over.id as string).split('-');
+    if (activeTeam !== overTeam) return;
+    const isTeamA = activeTeam === Team.HOME;
+    const roster = isTeamA ? rosterA : rosterB;
+    const setRoster = isTeamA ? setRosterA : setRosterB;
+    setRoster(roster.map(p => {
+      if (p.number !== activeNumber) return p;
+      const updates: Partial<Player> = { line: overLine };
+      if (overPos) updates.position = overPos;
+      return { ...p, ...updates };
+    }));
+  };
+
+  const canSave = teamAName.trim().length > 0 && rosterA.length > 0;
+
   const handleSave = async () => {
     if (!user || !canSave) return;
+    const hasB = !existing && teamBName.trim().length > 0 && rosterB.length > 0;
     setSaving(true);
     try {
       if (existing) {
         await updateScoutedLineup(existing.id, {
-          teamName: teamName.trim(),
+          teamName: teamAName.trim(),
           opponent: opponent.trim(),
           gameDate,
-          roster,
+          roster: rosterA,
         });
       } else {
         await saveScoutedLineup(user.id, {
-          teamName: teamName.trim(),
-          opponent: opponent.trim() || undefined,
+          teamName: teamAName.trim(),
+          opponent: hasB ? teamBName.trim() : undefined,
           gameDate: gameDate || undefined,
-          roster,
+          roster: rosterA,
         });
+        if (hasB) {
+          await saveScoutedLineup(user.id, {
+            teamName: teamBName.trim(),
+            opponent: teamAName.trim(),
+            gameDate: gameDate || undefined,
+            roster: rosterB,
+          });
+        }
       }
       onSaved();
       onClose();
@@ -193,7 +471,7 @@ export default function ScoutLineupModal({ existing, onSaved, onClose }: Props) 
     topbar: { background: '#0c1018', borderBottom: '0.5px solid rgba(255,255,255,0.08)', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 },
     body: { flex: 1, overflowY: 'auto' as const, padding: 16 },
     sectionLabel: { fontSize: 10, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase' as const, letterSpacing: '0.1em', marginBottom: 8, fontWeight: 600 },
-    input: { width: '100%', background: '#0f1620', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '10px 12px', color: '#fff', fontSize: 13, fontWeight: 600, marginBottom: 12 },
+    input: { width: '100%', background: '#0f1620', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '10px 12px', color: '#fff', fontSize: 13, fontWeight: 600, marginBottom: 12, boxSizing: 'border-box' as const },
     btn: (color = '#60a5fa') => ({ padding: '11px 16px', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', border: `0.5px solid ${color}40`, background: `${color}12`, color, width: '100%' } as React.CSSProperties),
   };
 
@@ -209,109 +487,52 @@ export default function ScoutLineupModal({ existing, onSaved, onClose }: Props) 
         </div>
 
         <div style={S.body}>
-          <div style={S.sectionLabel}>Team</div>
-          <input style={S.input} value={teamName} onChange={e => setTeamName(e.target.value)} placeholder="Team name" />
-          <input style={S.input} value={opponent} onChange={e => setOpponent(e.target.value)} placeholder="Opponent (optional)" />
           <div style={S.sectionLabel}>Date seen (optional)</div>
           <input type="date" style={S.input} value={gameDate} onChange={e => setGameDate(e.target.value)} />
 
-          {roster.length === 0 && (
+          {existing && (
             <>
-              <div style={{ ...S.sectionLabel, marginTop: 16 }}>Import roster</div>
-              <textarea
-                style={{ ...S.input, minHeight: 80, resize: 'vertical' as const, fontFamily: 'monospace', fontSize: 11 }}
-                value={pasteText}
-                onChange={e => setPasteText(e.target.value)}
-                placeholder="Paste a roster from any website…"
-              />
-              <button style={S.btn()} onClick={handlePasteImport} disabled={importing}>
-                {importing ? 'Reading…' : '📋 Import pasted roster'}
-              </button>
-              <label style={{ ...S.btn('#94a3b8'), display: 'block', textAlign: 'center', marginTop: 8, cursor: 'pointer' }}>
-                {importing ? 'Reading…' : '📷 Upload roster photo'}
-                <input
-                  type="file"
-                  accept="image/*"
-                  disabled={importing}
-                  style={{ display: 'none' }}
-                  onChange={e => { handlePhotoImport(e.target.files?.[0] || null); e.target.value = ''; }}
-                />
-              </label>
-              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', textAlign: 'center', marginTop: 12 }}>
-                Or add players one at a time below.
-              </div>
+              <div style={S.sectionLabel}>Opponent (optional)</div>
+              <input style={S.input} value={opponent} onChange={e => setOpponent(e.target.value)} placeholder="Opponent team name" />
             </>
           )}
 
-          {roster.length > 0 && (
-            <div style={{ ...S.sectionLabel, marginTop: 16 }}>Roster ({roster.length})</div>
-          )}
-          {roster.map((p, idx) => (
-            <div
-              key={idx}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#0f1620', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: 8, marginBottom: 6 }}
-            >
-              <input
-                style={{ width: 36, background: 'transparent', border: 'none', color: '#fff', fontSize: 12, fontWeight: 700, textAlign: 'center' }}
-                value={p.number}
-                onChange={e => updatePlayer(idx, 'number', e.target.value)}
+          <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+            {existing ? (
+              <TeamEntryPane
+                team={Team.HOME}
+                accent="#60a5fa"
+                teamName={teamAName}
+                onTeamNameChange={setTeamAName}
+                roster={rosterA}
+                onRosterChange={setRosterA}
+                placeholder="Team name"
               />
-              <input
-                style={{ flex: 1, minWidth: 0, background: 'transparent', border: 'none', color: '#fff', fontSize: 12 }}
-                value={p.name}
-                onChange={e => updatePlayer(idx, 'name', e.target.value)}
-              />
-              <select
-                style={{ background: '#0c1018', border: 'none', color: 'rgba(255,255,255,0.5)', fontSize: 10, borderRadius: 6 }}
-                value={p.position}
-                onChange={e => updatePlayer(idx, 'position', e.target.value)}
-              >
-                {POSITIONS.map(pos => <option key={pos} value={pos}>{pos}</option>)}
-              </select>
-              <select
-                style={{ background: '#0c1018', border: 'none', color: 'rgba(255,255,255,0.5)', fontSize: 10, borderRadius: 6 }}
-                value={p.line || '1'}
-                onChange={e => updatePlayer(idx, 'line', e.target.value)}
-              >
-                {LINE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
-              <span onClick={() => removePlayer(idx)} style={{ color: 'rgba(248,113,113,0.7)', cursor: 'pointer', fontSize: 14, padding: '0 4px' }}>✕</span>
-            </div>
-          ))}
+            ) : (
+              <div style={{ display: 'flex', gap: 10, overflowX: 'auto' as const, paddingBottom: 4 }}>
+                <TeamEntryPane
+                  team={Team.HOME}
+                  accent="#60a5fa"
+                  teamName={teamAName}
+                  onTeamNameChange={setTeamAName}
+                  roster={rosterA}
+                  onRosterChange={setRosterA}
+                  placeholder="Team name"
+                />
+                <TeamEntryPane
+                  team={Team.AWAY}
+                  accent="#f87171"
+                  teamName={teamBName}
+                  onTeamNameChange={setTeamBName}
+                  roster={rosterB}
+                  onRosterChange={setRosterB}
+                  placeholder="Opponent name (optional)"
+                />
+              </div>
+            )}
+          </DndContext>
 
-          {roster.length > 0 && (
-            <div style={{ display: 'flex', gap: 6, marginTop: 4, marginBottom: 16 }}>
-              <input
-                style={{ width: 44, background: '#0f1620', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: 8, color: '#fff', fontSize: 12, textAlign: 'center' }}
-                placeholder="#"
-                value={manualNum}
-                onChange={e => setManualNum(e.target.value)}
-              />
-              <input
-                style={{ flex: 1, minWidth: 0, background: '#0f1620', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: 8, color: '#fff', fontSize: 12 }}
-                placeholder="Player name"
-                value={manualName}
-                onChange={e => setManualName(e.target.value)}
-              />
-              <select
-                style={{ background: '#0f1620', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#fff', fontSize: 11 }}
-                value={manualPos}
-                onChange={e => setManualPos(e.target.value)}
-              >
-                {POSITIONS.map(pos => <option key={pos} value={pos}>{pos}</option>)}
-              </select>
-              <select
-                style={{ background: '#0f1620', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#fff', fontSize: 11 }}
-                value={manualLine}
-                onChange={e => setManualLine(e.target.value)}
-              >
-                {LINE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
-              <button onClick={addManualPlayer} style={{ ...S.btn('#34d399'), width: 'auto', padding: '8px 14px' }}>+</button>
-            </div>
-          )}
-
-          <button style={S.btn()} onClick={handleSave} disabled={saving || !canSave}>
+          <button style={{ ...S.btn(), marginTop: 16 }} onClick={handleSave} disabled={saving || !canSave}>
             {saving ? 'Saving…' : existing ? 'Update lineup' : 'Save lineup'}
           </button>
 
@@ -323,6 +544,7 @@ export default function ScoutLineupModal({ existing, onSaved, onClose }: Props) 
 
           <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', textAlign: 'center', marginTop: 12 }}>
             Visible to everyone on your plan automatically — there's no sharing toggle for lineups.
+            {!existing && ' Filling in both teams saves them as two separate lineups.'}
           </div>
         </div>
       </div>
