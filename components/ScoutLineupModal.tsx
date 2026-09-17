@@ -33,6 +33,7 @@ import {
 } from '../services/scoutedLineupService';
 import { fetchRosterByAI } from '../services/geminiService';
 import { sortByNumber, normalizeName } from '../hooks/useTeamRoster';
+import LeagueGamePicker from './LeagueGamePicker';
 
 interface Props {
   existing?: SavedScoutedLineup | null;
@@ -388,6 +389,7 @@ export default function ScoutLineupModal({ existing, onSaved, onClose }: Props) 
   const [rosterB, setRosterB] = useState<Player[]>([]);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showGamePicker, setShowGamePicker] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -497,6 +499,15 @@ export default function ScoutLineupModal({ existing, onSaved, onClose }: Props) 
             </>
           )}
 
+          {!existing && (
+            <button
+              style={{ ...S.btn('#34d399'), marginBottom: 12 }}
+              onClick={() => setShowGamePicker(true)}
+            >
+              📅 Pick from OHL schedule
+            </button>
+          )}
+
           <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
             {existing ? (
               <TeamEntryPane
@@ -548,6 +559,17 @@ export default function ScoutLineupModal({ existing, onSaved, onClose }: Props) 
           </div>
         </div>
       </div>
+
+      {showGamePicker && (
+        <LeagueGamePicker
+          onPickBoth={game => {
+            setTeamAName(game.homeTeam);
+            setTeamBName(game.awayTeam);
+            setGameDate(game.gameDate);
+          }}
+          onClose={() => setShowGamePicker(false)}
+        />
+      )}
     </div>
   );
 }
