@@ -66,6 +66,17 @@ export default function ScoutingHub({ isOpen, onClose }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, user]);
 
+  // Land directly on "Upload lineup" every time the portal opens — this
+  // component stays mounted between opens (isOpen just toggles whether
+  // it renders), so resetting this here on every open is what makes it
+  // the actual landing screen, not just the state's initial default,
+  // which would otherwise only apply once, the very first time this
+  // component ever mounts.
+  useEffect(() => {
+    if (!isOpen) return;
+    setEditingLineup('new');
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const gamesById = new Map(games.map(g => [g.id, g]));
