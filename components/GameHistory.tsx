@@ -1,10 +1,8 @@
 // ============================================================
 // GameHistory.tsx
 // Full-screen panel showing all saved game reports.
-// Tabs: My Games (private), Shared (plan-wide), Season, and
-// Scouting (standalone reports with no tracked game behind
-// them). Tap any game to view stats summary and re-download
-// reports.
+// Tabs: My Games (private), Shared (plan-wide), and Season.
+// Tap any game to view stats summary and re-download reports.
 // ============================================================
 
 import React, { useState, useEffect } from 'react';
@@ -20,10 +18,7 @@ import { GameEvent, EventType, Team } from '../types';
 import { buildPlayerStats } from './playerstats';
 import SeasonStats from './SeasonStats';
 import PlayerShareCard from './PlayerShareCard';
-import ScoutingReportModal from './ScoutingReportModal';
 import LineupSheet from './LineupSheet';
-import StandaloneScoutingModal from './StandaloneScoutingModal';
-import { SavedScoutingReport, loadMyScoutingReports } from '../services/scoutingReportService';
 
 interface Props {
   isOpen: boolean;
@@ -58,7 +53,7 @@ function formatDate(iso: string) {
 
 export default function GameHistory({ isOpen, onClose, onLoadGame, onDownloadReport }: Props) {
   const { user } = useUser();
-  const [tab, setTab] = useState<'mine' | 'shared' | 'season' | 'scouting'>('mine');
+  const [tab, setTab] = useState<'mine' | 'shared' | 'season'>('mine');
   const [myReports, setMyReports] = useState<SavedGameReport[]>([]);
   const [sharedReports, setSharedReports] = useState<SavedGameReport[]>([]);
   const [loading, setLoading] = useState(false);
@@ -66,16 +61,6 @@ export default function GameHistory({ isOpen, onClose, onLoadGame, onDownloadRep
   const [deleting, setDeleting] = useState<string | null>(null);
   const [toggling, setToggling] = useState<string | null>(null);
   const [shareTarget, setShareTarget] = useState<{ team: Team; number: string } | null>(null);
-  const [scoutTarget, setScoutTarget] = useState<{ team: Team; number: string } | null>(null);
-  const [standaloneReports, setStandaloneReports] = useState<SavedScoutingReport[]>([]);
-  const [editingStandalone, setEditingStandalone] = useState<SavedScoutingReport | 'new' | null>(null);
-
-  const refreshStandaloneReports = () => {
-    if (!user) return;
-    loadMyScoutingReports(user.id).then(all => {
-      setStandaloneReports(all.filter(r => r.isStandalone));
-    });
-  };
 
   useEffect(() => {
     if (!isOpen || !user) return;
@@ -86,7 +71,6 @@ export default function GameHistory({ isOpen, onClose, onLoadGame, onDownloadRep
         setSharedReports(shared.filter(r => r.userId !== user.id));
       })
       .finally(() => setLoading(false));
-    refreshStandaloneReports();
   }, [isOpen, user]);
 
   const handleDelete = async (report: SavedGameReport) => {
@@ -108,18 +92,6 @@ export default function GameHistory({ isOpen, onClose, onLoadGame, onDownloadRep
   };
 
   if (!isOpen) return null;
-
-  // Standalone editor takes over the whole screen, regardless of whether
-  // a game happens to be selected underneath — it isn't tied to one.
-  if (editingStandalone !== null) {
-    return (
-      <StandaloneScoutingModal
-        existing={editingStandalone === 'new' ? null : editingStandalone}
-        onSaved={refreshStandaloneReports}
-        onClose={() => setEditingStandalone(null)}
-      />
-    );
-  }
 
   const reports = tab === 'mine' ? myReports : sharedReports;
 
@@ -233,30 +205,6 @@ export default function GameHistory({ isOpen, onClose, onLoadGame, onDownloadRep
               </optgroup>
             </select>
 
-            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8, fontWeight: 600 }}>Scout a player</div>
-            <select
-              defaultValue=""
-              onChange={e => {
-                if (!e.target.value) return;
-                const [teamStr, number] = e.target.value.split('|');
-                setScoutTarget({ team: teamStr === 'home' ? Team.HOME : Team.AWAY, number });
-                e.target.value = '';
-              }}
-              style={{ width: '100%', background: '#0f1620', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '10px 12px', color: '#fff', fontSize: 12, fontWeight: 600, marginBottom: 16 }}
-            >
-              <option value="">Pick a player to write a scouting report…</option>
-              <optgroup label={selected.homeName}>
-                {selected.homeRoster.map(p => (
-                  <option key={`home-${p.number}`} value={`home|${p.number}`}>#{p.number} {p.name}</option>
-                ))}
-              </optgroup>
-              <optgroup label={selected.awayName}>
-                {selected.awayRoster.map(p => (
-                  <option key={`away-${p.number}`} value={`away|${p.number}`}>#{p.number} {p.name}</option>
-                ))}
-              </optgroup>
-            </select>
-
             {canEdit && (
               <div onClick={() => handleToggleShared(selected)}
                 style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 10, border: `0.5px solid ${selected.isShared ? 'rgba(52,211,153,0.3)' : 'rgba(255,255,255,0.08)'}`, marginBottom: 12, cursor: 'pointer', opacity: toggling === selected.id ? 0.5 : 1 }}>
@@ -287,15 +235,6 @@ export default function GameHistory({ isOpen, onClose, onLoadGame, onDownloadRep
             onClose={() => setShareTarget(null)}
           />
         )}
-
-        {scoutTarget && (
-          <ScoutingReportModal
-            report={selected}
-            team={scoutTarget.team}
-            playerNumber={scoutTarget.number}
-            onClose={() => setScoutTarget(null)}
-          />
-        )}
       </>
     );
   }
@@ -320,37 +259,11 @@ export default function GameHistory({ isOpen, onClose, onLoadGame, onDownloadRep
           <button style={S.tab(tab === 'season')} onClick={() => setTab('season')}>
             📅 Season
           </button>
-          <button style={S.tab(tab === 'scouting')} onClick={() => setTab('scouting')}>
-            🔍 Scouting {standaloneReports.length > 0 && `(${standaloneReports.length})`}
-          </button>
         </div>
 
         <div style={S.body}>
           {tab === 'season' ? (
             <SeasonStats reports={myReports} />
-          ) : tab === 'scouting' ? (
-            <>
-              <button
-                onClick={() => setEditingStandalone('new')}
-                style={{ width: '100%', padding: 12, borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', border: '0.5px solid rgba(52,211,153,0.4)', background: 'rgba(52,211,153,0.12)', color: '#34d399', marginBottom: 12 }}
-              >
-                + New scouting report
-              </button>
-              {standaloneReports.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '40px 0', color: 'rgba(255,255,255,0.25)', fontSize: 13, lineHeight: 1.7 }}>
-                  No standalone reports yet.{'\n'}Use these for players you're evaluating without a tracked game.
-                </div>
-              ) : (
-                standaloneReports.map(r => (
-                  <div key={r.id} style={S.card} onClick={() => setEditingStandalone(r)}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', marginBottom: 2 }}>{r.playerName}</div>
-                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>
-                      {[r.teamName, r.gameDate].filter(Boolean).join(' · ') || 'No team or date noted'}
-                    </div>
-                  </div>
-                ))
-              )}
-            </>
           ) : loading ? (
             <div style={{ textAlign: 'center', padding: '40px 0', color: 'rgba(255,255,255,0.25)', fontSize: 13 }}>Loading…</div>
           ) : reports.length === 0 ? (
