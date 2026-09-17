@@ -19,6 +19,17 @@ interface Props {
 const FORWARD_LINES = ['1', '2', '3', '4'];
 const D_PAIRS = ['P1', 'P2', 'P3'];
 
+// ── Human-readable label for one player's line/pair code — reused
+// anywhere a single player's line needs to show (not just the full
+// sheet), e.g. in a scouting report's player header.
+export function formatLineLabel(line?: string): string {
+  if (!line) return '';
+  if (line === 'G1') return 'Starter';
+  if (line === 'G2') return 'Backup';
+  if (line.startsWith('P')) return `Pair ${line.replace('P', '')}`;
+  return `Line ${line}`;
+}
+
 function sortForwardSlot(a: Player, b: Player) {
   const order: Record<string, number> = { LW: 0, C: 1, RW: 2, F: 1 };
   const ao = order[a.position?.toUpperCase() || ''] ?? 3;
