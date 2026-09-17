@@ -33,7 +33,7 @@ function formatDate(iso: string) {
 export default function ScoutingHub({ isOpen, onClose }: Props) {
   const { user } = useUser();
   const [loading, setLoading] = useState(false);
-  const [tab, setTab] = useState<'reports' | 'lineups'>('reports');
+  const [tab, setTab] = useState<'reports' | 'lineups'>('lineups');
   const [reports, setReports] = useState<SavedScoutingReport[]>([]);
   const [games, setGames] = useState<SavedGameReport[]>([]);
   const [lineups, setLineups] = useState<SavedScoutedLineup[]>([]);
