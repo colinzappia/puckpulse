@@ -30,7 +30,10 @@ export default function LeagueGamePicker({ onPickBoth, onPickOne, onClose }: Pro
   const [games, setGames] = useState<LeagueGame[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
+  const [showAllDates, setShowAllDates] = useState(false);
   const [choosingSideFor, setChoosingSideFor] = useState<LeagueGame | null>(null);
+
+  const todayStr = new Date().toISOString().slice(0, 10);
 
   useEffect(() => {
     loadLeagueGames('ohl').then(g => {
@@ -39,10 +42,11 @@ export default function LeagueGamePicker({ onPickBoth, onPickOne, onClose }: Pro
     });
   }, []);
 
+  const dateScoped = showAllDates ? games : games.filter(g => g.gameDate === todayStr);
   const q = query.trim().toLowerCase();
   const filtered = q
-    ? games.filter(g => `${g.homeTeam} ${g.awayTeam}`.toLowerCase().includes(q))
-    : games;
+    ? dateScoped.filter(g => `${g.homeTeam} ${g.awayTeam}`.toLowerCase().includes(q))
+    : dateScoped;
 
   const S = {
     overlay: { position: 'fixed' as const, inset: 0, zIndex: 370, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)' },
@@ -99,12 +103,22 @@ export default function LeagueGamePicker({ onPickBoth, onPickOne, onClose }: Pro
         </div>
         <div style={S.body}>
           {games.length > 0 && (
-            <input
-              style={S.search}
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-              placeholder="Search by team…"
-            />
+            <>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+                <button style={S.btn(showAllDates ? '#94a3b8' : '#34d399')} onClick={() => setShowAllDates(false)}>
+                  Today
+                </button>
+                <button style={S.btn(showAllDates ? '#34d399' : '#94a3b8')} onClick={() => setShowAllDates(true)}>
+                  All upcoming
+                </button>
+              </div>
+              <input
+                style={S.search}
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                placeholder="Search by team…"
+              />
+            </>
           )}
 
           {loading ? (
@@ -114,7 +128,13 @@ export default function LeagueGamePicker({ onPickBoth, onPickOne, onClose }: Pro
               No games synced yet.{'\n'}Go to the Lineups tab and tap "🔄 Sync OHL Schedule" first.
             </div>
           ) : filtered.length === 0 ? (
-            <div style={S.empty}>No games match "{query}".</div>
+            <div style={S.empty}>
+              {q
+                ? `No games match "${query}".`
+                : showAllDates
+                  ? 'No upcoming games found.'
+                  : `No games today. Tap "All upcoming" to see what's coming up.`}
+            </div>
           ) : (
             filtered.map(g => (
               <div
