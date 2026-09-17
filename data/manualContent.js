@@ -246,11 +246,11 @@ export const manualSections = [
   {
     id: 'scouting',
     icon: '🔍',
-    title: 'Scouting Reports',
+    title: 'Scouts Portal',
     subsections: [
       {
         title: 'What is Scouting?',
-        content: 'Scouting lets you build a structured evaluation of any player — ratings across 8 categories plus notes — either pulled from a game you\'ve tracked (with stats auto-filled from what was actually logged) or written freeform with no tracked game at all. Reach it from the "🔍 Scouting Reports" item in the menu — it\'s its own page, separate from Game History.'
+        content: 'Scouting lets you build a structured evaluation of any player — ratings across 8 categories plus notes — either pulled from a game you\'ve tracked (with stats auto-filled from what was actually logged) or written freeform with no tracked game at all. Reach it from the "🔍 Scouts Portal" item in the menu — it\'s its own page, separate from Game History.'
       },
       {
         title: 'Scouting a player during a live game',
@@ -258,11 +258,11 @@ export const manualSections = [
       },
       {
         title: 'Scouting a player from an already-saved game',
-        content: 'From the Scouting Reports page, tap "+ From a tracked game," pick any game you\'ve already saved (your own or one shared with your plan), then pick a player from either roster. Their auto-filled stats — zone entries, faceoffs, breakouts — and a summary of every other event logged for them come from that game\'s actual tracked data.'
+        content: 'From the Scouts Portal page, tap "+ From a tracked game," pick any game you\'ve already saved (your own or one shared with your plan), then pick a player from either roster. Their auto-filled stats — zone entries, faceoffs, breakouts — and a summary of every other event logged for them come from that game\'s actual tracked data.'
       },
       {
         title: 'Standalone reports (no tracked game)',
-        content: 'Tap "+ New standalone" on the Scouting Reports page to evaluate a player with no game behind it at all — useful for a player you watched somewhere Top Cheese Hockey wasn\'t tracking. Type in the player\'s name, team (optional), and the date you saw them play (optional). There\'s no auto-filled stats here since there\'s no tracked data to pull from — just your ratings and notes.'
+        content: 'Tap "+ New standalone" on the Scouts Portal page to evaluate a player with no game behind it at all — useful for a player you watched somewhere Top Cheese Hockey wasn\'t tracking. Type in the player\'s name, team (optional), and the date you saw them play (optional). There\'s no auto-filled stats here since there\'s no tracked data to pull from — just your ratings and notes.'
       },
       {
         title: 'Auto-filled stats and event summary',
@@ -282,7 +282,7 @@ export const manualSections = [
       },
       {
         title: 'Editing or deleting a report',
-        content: 'Tap any report in the Scouting Reports list to reopen it, make changes, and save again. A "Delete this report" button appears at the bottom whenever you\'re editing an existing report (not while creating a new one) — deleting is permanent and cannot be undone.'
+        content: 'Tap any report in the Scouts Portal list to reopen it, make changes, and save again. A "Delete this report" button appears at the bottom whenever you\'re editing an existing report (not while creating a new one) — deleting is permanent and cannot be undone.'
       }
     ]
   },
