@@ -14,6 +14,7 @@ import {
   ScoutRatings,
   saveScoutingReport,
   updateScoutingReport,
+  deleteScoutingReport,
 } from '../services/scoutingReportService';
 import { downloadScoutingReportPDF, emailScoutingReport } from '../utils/scoutingExport';
 
@@ -43,8 +44,24 @@ export default function StandaloneScoutingModal({ existing, onSaved, onClose }: 
   const [notes, setNotes] = useState(existing?.notes || '');
   const [isShared, setIsShared] = useState(existing?.isShared || false);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const canSave = playerName.trim().length > 0;
+
+  const handleDelete = async () => {
+    if (!existing) return;
+    if (!confirm('Delete this scouting report? This cannot be undone.')) return;
+    setDeleting(true);
+    try {
+      await deleteScoutingReport(existing.id);
+      onSaved();
+      onClose();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to delete report.');
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!user || !canSave) return;
@@ -206,6 +223,16 @@ export default function StandaloneScoutingModal({ existing, onSaved, onClose }: 
               ✉ Email
             </button>
           </div>
+
+          {existing && (
+            <button
+              style={{ ...S.btn('#f87171'), marginTop: 8 }}
+              onClick={handleDelete}
+              disabled={deleting}
+            >
+              {deleting ? 'Deleting…' : 'Delete this report'}
+            </button>
+          )}
         </div>
       </div>
     </div>
