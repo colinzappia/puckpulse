@@ -244,6 +244,49 @@ export const manualSections = [
     ]
   },
   {
+    id: 'scouting',
+    icon: '🔍',
+    title: 'Scouting Reports',
+    subsections: [
+      {
+        title: 'What is Scouting?',
+        content: 'Scouting lets you build a structured evaluation of any player — ratings across 8 categories plus notes — either pulled from a game you\'ve tracked (with stats auto-filled from what was actually logged) or written freeform with no tracked game at all. Reach it from the "🔍 Scouting Reports" item in the menu — it\'s its own page, separate from Game History.'
+      },
+      {
+        title: 'Scouting a player during a live game',
+        content: 'While tracking, select a player in the lineup grid the same way you would to log an event for them, then tap "📝 Scout Player" below the rink. This opens a report for whichever player is currently selected, with their tracked events for the game so far auto-filled in.\n\nRatings and notes entered here stay in memory only — nothing is saved to your account until you save the game itself (💾 Save game to history). If you end the game without saving, any in-progress scouting notes are cleared along with the rest of the game data.'
+      },
+      {
+        title: 'Scouting a player from an already-saved game',
+        content: 'From the Scouting Reports page, tap "+ From a tracked game," pick any game you\'ve already saved (your own or one shared with your plan), then pick a player from either roster. Their auto-filled stats — zone entries, faceoffs, breakouts — and a summary of every other event logged for them come from that game\'s actual tracked data.'
+      },
+      {
+        title: 'Standalone reports (no tracked game)',
+        content: 'Tap "+ New standalone" on the Scouting Reports page to evaluate a player with no game behind it at all — useful for a player you watched somewhere Top Cheese Hockey wasn\'t tracking. Type in the player\'s name, team (optional), and the date you saw them play (optional). There\'s no auto-filled stats here since there\'s no tracked data to pull from — just your ratings and notes.'
+      },
+      {
+        title: 'Auto-filled stats and event summary',
+        content: 'For any report tied to a tracked game, you\'ll see two things pulled straight from what was actually logged:\n\n• Auto-filled from live tracking — the player\'s zone entry success %, faceoff win %, and breakout success %.\n\n• Event summary — a row of small tally chips covering every other type of event logged for that player (shots, goals, hits, penalties, and so on), each showing a count. Only events actually tagged to that player show up here — an event logged for the team but never attributed to a specific number won\'t appear.'
+      },
+      {
+        title: 'Filling in ratings and notes',
+        content: 'Every report — live, from a tracked game, or standalone — has the same 8 rating categories: Skating, Shot, Puck skills, Playmaking, OZ hockey sense, DZ hockey sense, Compete, and Physicality, each on a 1–10 scale. Leave any of them blank if you don\'t have an opinion yet — a blank rating shows as "—" rather than forcing a number. The Notes field below is free text for anything the ratings don\'t capture.'
+      },
+      {
+        title: 'Sharing a report',
+        content: 'Toggle "Share with plan" inside any report to make it visible to everyone on your plan — same behavior as sharing a game report in Game History. Leave it off to keep the report private to you.'
+      },
+      {
+        title: 'Downloading or emailing a report',
+        content: 'Tap "⬇ Download PDF" to generate a clean, printable PDF of the report — player info, auto-filled stats (if any), ratings, and notes.\n\nTap "✉ Email" to copy the report as plain text to your clipboard, ready to paste into a new email. If your computer has a default email app set up, it may also open a new message pre-filled automatically — but the clipboard copy is the reliable part, since not every device has one configured.'
+      },
+      {
+        title: 'Editing or deleting a report',
+        content: 'Tap any report in the Scouting Reports list to reopen it, make changes, and save again. A "Delete this report" button appears at the bottom whenever you\'re editing an existing report (not while creating a new one) — deleting is permanent and cannot be undone.'
+      }
+    ]
+  },
+  {
     id: 'exports',
     icon: '📊',
     title: 'Exporting Reports',
