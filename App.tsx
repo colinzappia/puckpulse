@@ -2416,6 +2416,11 @@ const App: React.FC = () => {
               className="flex items-center gap-2 bg-emerald-600/90 hover:bg-emerald-500 text-white text-xs font-black uppercase tracking-wider px-4 py-2.5 rounded-full shadow-xl border border-emerald-400/30 transition-all active:scale-95"
             >
               <span>📝</span><span>Scout Player{playerNumber ? ` #${playerNumber}` : ''}</span>
+              {Object.keys(scoutingReports).length > 0 && (
+                <span style={{ background: 'rgba(0,0,0,0.25)', borderRadius: 999, padding: '2px 7px', fontSize: 9 }}>
+                  {Object.keys(scoutingReports).length} draft{Object.keys(scoutingReports).length > 1 ? 's' : ''}
+                </span>
+              )}
             </button>
             <button onClick={() => setShowGoalieHub(true)} className="flex items-center gap-2 bg-slate-700/90 hover:bg-slate-600 text-white text-xs font-black uppercase tracking-wider px-4 py-2.5 rounded-full shadow-xl border border-slate-500/30 transition-all active:scale-95">
               <span>🥅</span><span>Goalie Hub</span>
