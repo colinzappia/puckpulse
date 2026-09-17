@@ -33,7 +33,16 @@ export default function LeagueGamePicker({ onPickBoth, onPickOne, onClose }: Pro
   const [showAllDates, setShowAllDates] = useState(false);
   const [choosingSideFor, setChoosingSideFor] = useState<LeagueGame | null>(null);
 
-  const todayStr = new Date().toISOString().slice(0, 10);
+  // Computed in Eastern time specifically (where every OHL team plays),
+  // not the viewer's own device timezone and not UTC — using UTC here
+  // would roll "today" over to tomorrow mid-evening, silently hiding
+  // every game happening that night.
+  const todayStr = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Toronto',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
 
   useEffect(() => {
     loadLeagueGames('ohl').then(g => {
