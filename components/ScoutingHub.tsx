@@ -187,7 +187,7 @@ export default function ScoutingHub({ isOpen, onClose }: Props) {
         <div style={S.overlay} onClick={onClose} />
         <div style={S.panel}>
           <div style={S.topbar}>
-            <span style={{ color: '#fff', fontSize: 15, fontWeight: 700 }}>Scouting Reports</span>
+            <span style={{ color: '#fff', fontSize: 15, fontWeight: 700 }}>Scouts Portal</span>
             <span onClick={onClose} style={{ fontSize: 22, color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }}>×</span>
           </div>
 
