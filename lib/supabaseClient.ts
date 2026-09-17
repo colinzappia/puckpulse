@@ -20,7 +20,18 @@ if (!supabaseUrl || !supabaseAnonKey) {
 // rebuild this client.
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   accessToken: async () => {
-    // @ts-ignore — Clerk attaches itself to window at runtime, not statically typed here
-    return (await window.Clerk?.session?.getToken()) ?? null;
+    // Fails safe rather than fails hard: if Clerk isn't fully loaded yet,
+    // or getToken() has any hiccup for any reason, this falls back to no
+    // token (anon-key-only access) instead of throwing and silently
+    // killing every request through this client — including ones, like
+    // reading public league schedule data, that never needed a signed-in
+    // user at all.
+    try {
+      // @ts-ignore — Clerk attaches itself to window at runtime, not statically typed here
+      return (await window.Clerk?.session?.getToken()) ?? null;
+    } catch (err) {
+      console.error('[Supabase] Failed to get Clerk token, falling back to anon access:', err);
+      return null;
+    }
   },
 });
