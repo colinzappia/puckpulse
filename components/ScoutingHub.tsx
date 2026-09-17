@@ -15,6 +15,7 @@ import { SavedScoutingReport, loadMyScoutingReports } from '../services/scouting
 import { Team } from '../types';
 import ScoutingReportModal from './ScoutingReportModal';
 import StandaloneScoutingModal from './StandaloneScoutingModal';
+import LineupSheet from './LineupSheet';
 
 interface Props {
   isOpen: boolean;
@@ -33,6 +34,7 @@ export default function ScoutingHub({ isOpen, onClose }: Props) {
   const [reports, setReports] = useState<SavedScoutingReport[]>([]);
   const [games, setGames] = useState<SavedGameReport[]>([]);
 
+  const [searchQuery, setSearchQuery] = useState('');
   const [editingStandalone, setEditingStandalone] = useState<SavedScoutingReport | 'new' | null>(null);
   const [pickingGame, setPickingGame] = useState(false);
   const [pickingPlayerFor, setPickingPlayerFor] = useState<SavedGameReport | null>(null);
@@ -68,7 +70,22 @@ export default function ScoutingHub({ isOpen, onClose }: Props) {
     body: { flex: 1, overflowY: 'auto' as const, padding: '16px' },
     card: { background: '#0f1620', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 14, marginBottom: 8, cursor: 'pointer' as const },
     btn: (color = '#60a5fa') => ({ padding: '11px 16px', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', border: `0.5px solid ${color}40`, background: `${color}12`, color, width: '100%' } as React.CSSProperties),
+    search: { width: '100%', background: '#0f1620', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '10px 12px', color: '#fff', fontSize: 13, marginBottom: 12 },
   };
+
+  const q = searchQuery.trim().toLowerCase();
+  const filteredReports = q
+    ? reports.filter(r => {
+        const game = r.gameReportId ? gamesById.get(r.gameReportId) : null;
+        const haystack = [
+          r.playerName,
+          r.teamName,
+          game?.homeName,
+          game?.awayName,
+        ].filter(Boolean).join(' ').toLowerCase();
+        return haystack.includes(q);
+      })
+    : reports;
 
   let screen: React.ReactNode;
 
@@ -90,6 +107,12 @@ export default function ScoutingHub({ isOpen, onClose }: Props) {
             <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginBottom: 12 }}>
               {g.homeName} vs {g.awayName} · {formatDate(g.playedAt)}
             </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
+              <LineupSheet roster={g.homeRoster} teamName={g.homeName} accent="#60a5fa" />
+              <LineupSheet roster={g.awayRoster} teamName={g.awayName} accent="#f87171" />
+            </div>
+
             <select
               defaultValue=""
               onChange={e => {
@@ -162,14 +185,27 @@ export default function ScoutingHub({ isOpen, onClose }: Props) {
               <button style={S.btn()} onClick={() => setPickingGame(true)}>+ From a tracked game</button>
             </div>
 
+            {reports.length > 0 && (
+              <input
+                style={S.search}
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Search by player or team…"
+              />
+            )}
+
             {loading ? (
               <div style={{ textAlign: 'center', padding: '40px 0', color: 'rgba(255,255,255,0.25)', fontSize: 13 }}>Loading…</div>
             ) : reports.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '40px 0', color: 'rgba(255,255,255,0.25)', fontSize: 13, lineHeight: 1.7 }}>
                 No scouting reports yet.
               </div>
+            ) : filteredReports.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px 0', color: 'rgba(255,255,255,0.25)', fontSize: 13 }}>
+                No reports match "{searchQuery.trim()}".
+              </div>
             ) : (
-              reports.map(r => {
+              filteredReports.map(r => {
                 const game = r.gameReportId ? gamesById.get(r.gameReportId) : null;
                 return (
                   <div
@@ -208,6 +244,7 @@ export default function ScoutingHub({ isOpen, onClose }: Props) {
       {editingStandalone !== null && (
         <StandaloneScoutingModal
           existing={editingStandalone === 'new' ? null : editingStandalone}
+          existingReports={reports}
           onSaved={refresh}
           onClose={() => setEditingStandalone(null)}
         />
