@@ -29,9 +29,12 @@ import SaveTeamPrompt from './components/SaveTeamPrompt';
 import TeamLibrary from './components/TeamLibrary';
 import EventAttachmentPanel from './components/EventAttachmentPanel';
 import GameHistory from './components/GameHistory';
+import LiveScoutingModal from './components/LiveScoutingModal';
+import ScoutingHub from './components/ScoutingHub';
 import Footer from './components/Footer';
 import { ADS_ENABLED } from './data/siteConfig';
 import { saveGameReport, SavedGameReport } from './services/gameReportService';
+import { ScoutRatings, saveScoutingReport } from './services/scoutingReportService';
 import { useAuth, UserButton, useClerk, useUser } from '@clerk/clerk-react';
 import { generateNarrative, fetchRosterByAI } from './services/geminiService';
 import { downloadPDFReport, downloadExcelReport, downloadHTMLExport } from './services/exportService';
@@ -840,7 +843,10 @@ const App: React.FC = () => {
 
   // ── Game history state ─────────────────────────────────────
   const [showGameHistory, setShowGameHistory] = useState(false);
+  const [showScoutingHub, setShowScoutingHub] = useState(false);
   const [savingReport, setSavingReport] = useState(false);
+  const [scoutingReports, setScoutingReports] = useState<Record<string, { team: Team; playerNumber: string; ratings: ScoutRatings; notes: string }>>({});
+  const [showLiveScouting, setShowLiveScouting] = useState(false);
 
   const handleSaveReport = async (isShared = false) => {
     if (!user) return;
@@ -850,7 +856,7 @@ const App: React.FC = () => {
     }
     setSavingReport(true);
     try {
-      await saveGameReport(user.id, {
+      const savedReport = await saveGameReport(user.id, {
         homeName, awayName,
         homeScore: getStatsForRange(Team.HOME, 'total').goals,
         awayScore: getStatsForRange(Team.AWAY, 'total').goals,
@@ -861,6 +867,34 @@ const App: React.FC = () => {
         netMarksHome, netMarksAway, shotsForHome, shotsForAway,
         isShared,
       });
+
+      const scoutEntries = Object.values(scoutingReports);
+      if (scoutEntries.length > 0) {
+        let failures = 0;
+        await Promise.all(scoutEntries.map(async entry => {
+          const roster = entry.team === Team.HOME ? homeRoster : awayRoster;
+          const player = roster.find(p => p.number === entry.playerNumber);
+          try {
+            await saveScoutingReport(user.id, {
+              gameReportId: savedReport.id,
+              teamSide: entry.team === Team.HOME ? 'home' : 'away',
+              playerNumber: entry.playerNumber,
+              playerName: player?.name || '',
+              ratings: entry.ratings,
+              notes: entry.notes,
+              isShared: false,
+            });
+          } catch (err) {
+            console.error('Failed to save a scouting report:', err);
+            failures += 1;
+          }
+        }));
+        if (failures > 0) {
+          toast.error(`Game saved, but ${failures} scouting report${failures > 1 ? 's' : ''} didn't save — try re-entering ${failures > 1 ? 'them' : 'it'} from Game History.`);
+        }
+        setScoutingReports({});
+      }
+
       toast.success('Game saved to history!');
     } catch (e) {
       toast.error(navigator.onLine ? 'Failed to save game — please try again.' : "Can't save to history while offline — your tracking data is safe, try again once you're reconnected.");
@@ -1503,6 +1537,7 @@ const App: React.FC = () => {
     setNetMarksAway([]);
     setShotsForHome([]);
     setShotsForAway([]);
+    setScoutingReports({});
     setSummaries({ 'total': 'Game tracking active. Generate coaching analysis after logging more events.' });
     localStorage.removeItem('tch_game_state');
     try { ['tch_netMarksHome','tch_netMarksAway','tch_shotsForHome','tch_shotsForAway'].forEach(k => sessionStorage.removeItem(k)); } catch {}
@@ -1703,6 +1738,7 @@ const App: React.FC = () => {
     setNetMarksAway([]);
     setShotsForHome([]);
     setShotsForAway([]);
+    setScoutingReports({});
     setSummaries({ 'total': 'Game tracking active. Generate coaching analysis after logging more events.' });
     setLastEvent(null);
     setPendingGoal(null);
@@ -2032,6 +2068,7 @@ const App: React.FC = () => {
           leftTeam={leftTeamDisplay} rightTeam={rightTeamDisplay} period={currentPeriod}
           onOpenSetup={() => setShowSetup(true)} onOpenManual={() => navigate('/manual')}
           onOpenGameHistory={() => setShowGameHistory(true)}
+          onOpenScouting={() => setShowScoutingHub(true)}
           onSetPeriod={setCurrentPeriod} onSwapSides={() => setIsRosterSwapped(!isRosterSwapped)}
           onNewGame={handleNewGame} onEndGame={handleEndGame} onOpenAbout={() => navigate('/about')} onBackToLanding={handleBackToLanding}
           onOpenContact={() => navigate('/contact')}
@@ -2374,6 +2411,12 @@ const App: React.FC = () => {
           </div>
           {/* Player Stats + Goalie Hub — sit below the rink on every screen size, never overlap the ice */}
           <div className="flex justify-end gap-2 px-3 pb-2">
+            <button
+              onClick={() => { if (!playerNumber) { toast.error('Select a player from the lineup first.'); return; } setShowLiveScouting(true); }}
+              className="flex items-center gap-2 bg-emerald-600/90 hover:bg-emerald-500 text-white text-xs font-black uppercase tracking-wider px-4 py-2.5 rounded-full shadow-xl border border-emerald-400/30 transition-all active:scale-95"
+            >
+              <span>📝</span><span>Scout Player{playerNumber ? ` #${playerNumber}` : ''}</span>
+            </button>
             <button onClick={() => setShowGoalieHub(true)} className="flex items-center gap-2 bg-slate-700/90 hover:bg-slate-600 text-white text-xs font-black uppercase tracking-wider px-4 py-2.5 rounded-full shadow-xl border border-slate-500/30 transition-all active:scale-95">
               <span>🥅</span><span>Goalie Hub</span>
             </button>
@@ -3038,6 +3081,27 @@ const App: React.FC = () => {
 
     <PlayerStats isOpen={showPlayerStats} onClose={() => setShowPlayerStats(false)} events={events} homeRoster={homeRoster} awayRoster={awayRoster} homeName={homeName} awayName={awayName} goalieHistoryHome={goalieHistoryHome} goalieHistoryAway={goalieHistoryAway} />
     <GoalieHub isOpen={showGoalieHub} onClose={() => setShowGoalieHub(false)} homeName={homeName} awayName={awayName} homeRoster={homeRoster} awayRoster={awayRoster} startingGoalieHome={startingGoalieHome} startingGoalieAway={startingGoalieAway} netMarksHome={netMarksHome} netMarksAway={netMarksAway} onAddMark={addNetMark} onUndoMark={undoNetMark} onClearMarks={clearNetMarks} shotsForHome={shotsForHome} shotsForAway={shotsForAway} onAddShotFor={addShotFor} onUndoShotFor={undoShotFor} onClearShotFor={clearShotFor} currentPeriod={currentPeriod} showAllPeriods={showAllPeriods} onToggleShowAllPeriods={() => setShowAllPeriods(!showAllPeriods)} />
+
+    {showLiveScouting && playerNumber && (
+      <LiveScoutingModal
+        events={events}
+        roster={activeTeam === Team.HOME ? homeRoster : awayRoster}
+        team={activeTeam}
+        playerNumber={playerNumber}
+        teamName={activeTeam === Team.HOME ? homeName : awayName}
+        initial={scoutingReports[`${activeTeam}-${playerNumber}`]}
+        onSave={(ratings, notes) => {
+          setScoutingReports(prev => ({
+            ...prev,
+            [`${activeTeam}-${playerNumber}`]: { team: activeTeam, playerNumber, ratings, notes },
+          }));
+          toast.success('Scouting notes saved for this game.');
+        }}
+        onClose={() => setShowLiveScouting(false)}
+      />
+    )}
+
+    <ScoutingHub isOpen={showScoutingHub} onClose={() => setShowScoutingHub(false)} />
 
     {/* End Game modal */}
     {showEndGame && (
