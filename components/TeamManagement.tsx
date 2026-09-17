@@ -29,7 +29,7 @@ export default function TeamManagement({ ownerEmail, onClose }: Props) {
   const loadMembers = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/team-members?ownerEmail=${encodeURIComponent(ownerEmail)}`);
+      const res = await fetch(`/api/team?ownerEmail=${encodeURIComponent(ownerEmail)}`);
       const data = await res.json();
       if (res.ok) setMembers(data.members || []);
       else setError(data.error || 'Could not load your team.');
@@ -48,10 +48,10 @@ export default function TeamManagement({ ownerEmail, onClose }: Props) {
     setInviting(true);
     setError('');
     try {
-      const res = await fetch('/api/team-invite', {
+      const res = await fetch('/api/team', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ownerEmail, memberEmail: email }),
+        body: JSON.stringify({ action: 'invite', ownerEmail, memberEmail: email }),
       });
       const data = await res.json();
       if (res.ok) { setNewEmail(''); await loadMembers(); }
@@ -67,10 +67,10 @@ export default function TeamManagement({ ownerEmail, onClose }: Props) {
     setRemovingEmail(memberEmail);
     setError('');
     try {
-      const res = await fetch('/api/team-remove', {
+      const res = await fetch('/api/team', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ownerEmail, memberEmail }),
+        body: JSON.stringify({ action: 'remove', ownerEmail, memberEmail }),
       });
       const data = await res.json();
       if (res.ok) await loadMembers();
