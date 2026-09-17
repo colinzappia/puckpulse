@@ -1,5 +1,3 @@
-
-Scoutinghub · TXT
 // ============================================================
 // ScoutingHub.tsx
 // Standalone top-level page for all scouting work — reached
@@ -9,7 +7,7 @@ Scoutinghub · TXT
 // tracked game to auto-fill stats from, or write a freeform
 // report with no game behind it.
 // ============================================================
- 
+
 import React, { useState, useEffect } from 'react';
 import { useUser } from '@clerk/clerk-react';
 import { SavedGameReport, loadMyReports, loadSharedReports } from '../services/gameReportService';
@@ -20,18 +18,18 @@ import ScoutingReportModal from './ScoutingReportModal';
 import StandaloneScoutingModal from './StandaloneScoutingModal';
 import ScoutLineupModal from './ScoutLineupModal';
 import LineupSheet from './LineupSheet';
- 
+
 interface Props {
   isOpen: boolean;
   onClose: () => void;
 }
- 
+
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-CA', {
     month: 'short', day: 'numeric', year: 'numeric',
   });
 }
- 
+
 export default function ScoutingHub({ isOpen, onClose }: Props) {
   const { user } = useUser();
   const [loading, setLoading] = useState(false);
@@ -39,14 +37,14 @@ export default function ScoutingHub({ isOpen, onClose }: Props) {
   const [reports, setReports] = useState<SavedScoutingReport[]>([]);
   const [games, setGames] = useState<SavedGameReport[]>([]);
   const [lineups, setLineups] = useState<SavedScoutedLineup[]>([]);
- 
+
   const [searchQuery, setSearchQuery] = useState('');
   const [editingStandalone, setEditingStandalone] = useState<SavedScoutingReport | 'new' | null>(null);
   const [editingLineup, setEditingLineup] = useState<SavedScoutedLineup | 'new' | null>(null);
   const [pickingGame, setPickingGame] = useState(false);
   const [pickingPlayerFor, setPickingPlayerFor] = useState<SavedGameReport | null>(null);
   const [gameScoutTarget, setGameScoutTarget] = useState<{ report: SavedGameReport; team: Team; playerNumber: string } | null>(null);
- 
+
   const refresh = () => {
     if (!user) return;
     setLoading(true);
@@ -60,17 +58,17 @@ export default function ScoutingHub({ isOpen, onClose }: Props) {
       })
       .finally(() => setLoading(false));
   };
- 
+
   useEffect(() => {
     if (!isOpen) return;
     refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, user]);
- 
+
   if (!isOpen) return null;
- 
+
   const gamesById = new Map(games.map(g => [g.id, g]));
- 
+
   const S = {
     overlay: { position: 'fixed' as const, inset: 0, zIndex: 350, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' },
     panel: { position: 'fixed' as const, inset: 0, zIndex: 351, background: '#070a0f', display: 'flex', flexDirection: 'column' as const },
@@ -82,7 +80,7 @@ export default function ScoutingHub({ isOpen, onClose }: Props) {
     btn: (color = '#60a5fa') => ({ padding: '11px 16px', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', border: `0.5px solid ${color}40`, background: `${color}12`, color, width: '100%' } as React.CSSProperties),
     search: { width: '100%', background: '#0f1620', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '10px 12px', color: '#fff', fontSize: 13, marginBottom: 12 },
   };
- 
+
   const q = searchQuery.trim().toLowerCase();
   const filteredReports = q
     ? reports.filter(r => {
@@ -99,9 +97,9 @@ export default function ScoutingHub({ isOpen, onClose }: Props) {
   const filteredLineups = q
     ? lineups.filter(l => [l.teamName, l.opponent].filter(Boolean).join(' ').toLowerCase().includes(q))
     : lineups;
- 
+
   let screen: React.ReactNode;
- 
+
   // ── Sub-screen: pick which player from a chosen tracked game ──
   if (pickingPlayerFor) {
     const g = pickingPlayerFor;
@@ -120,12 +118,12 @@ export default function ScoutingHub({ isOpen, onClose }: Props) {
             <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginBottom: 12 }}>
               {g.homeName} vs {g.awayName} · {formatDate(g.playedAt)}
             </div>
- 
+
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
               <LineupSheet roster={g.homeRoster} teamName={g.homeName} accent="#60a5fa" />
               <LineupSheet roster={g.awayRoster} teamName={g.awayName} accent="#f87171" />
             </div>
- 
+
             <select
               defaultValue=""
               onChange={e => {
@@ -192,7 +190,7 @@ export default function ScoutingHub({ isOpen, onClose }: Props) {
             <span style={{ color: '#fff', fontSize: 15, fontWeight: 700 }}>Scouting Reports</span>
             <span onClick={onClose} style={{ fontSize: 22, color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }}>×</span>
           </div>
- 
+
           <div style={S.tabBar}>
             <button style={S.tab(tab === 'reports')} onClick={() => setTab('reports')}>
               Reports {reports.length > 0 && `(${reports.length})`}
@@ -201,7 +199,7 @@ export default function ScoutingHub({ isOpen, onClose }: Props) {
               Lineups {lineups.length > 0 && `(${lineups.length})`}
             </button>
           </div>
- 
+
           <div style={S.body}>
             {tab === 'reports' ? (
               <>
@@ -209,7 +207,7 @@ export default function ScoutingHub({ isOpen, onClose }: Props) {
                   <button style={S.btn('#34d399')} onClick={() => setEditingStandalone('new')}>+ New standalone</button>
                   <button style={S.btn()} onClick={() => setPickingGame(true)}>+ From a tracked game</button>
                 </div>
- 
+
                 {reports.length > 0 && (
                   <input
                     style={S.search}
@@ -218,7 +216,7 @@ export default function ScoutingHub({ isOpen, onClose }: Props) {
                     placeholder="Search by player or team…"
                   />
                 )}
- 
+
                 {loading ? (
                   <div style={{ textAlign: 'center', padding: '40px 0', color: 'rgba(255,255,255,0.25)', fontSize: 13 }}>Loading…</div>
                 ) : reports.length === 0 ? (
@@ -262,7 +260,7 @@ export default function ScoutingHub({ isOpen, onClose }: Props) {
                 <div style={{ marginBottom: 16 }}>
                   <button style={S.btn('#34d399')} onClick={() => setEditingLineup('new')}>+ Upload lineup</button>
                 </div>
- 
+
                 {lineups.length > 0 && (
                   <input
                     style={S.search}
@@ -271,7 +269,7 @@ export default function ScoutingHub({ isOpen, onClose }: Props) {
                     placeholder="Search by team…"
                   />
                 )}
- 
+
                 {loading ? (
                   <div style={{ textAlign: 'center', padding: '40px 0', color: 'rgba(255,255,255,0.25)', fontSize: 13 }}>Loading…</div>
                 ) : lineups.length === 0 ? (
@@ -299,11 +297,11 @@ export default function ScoutingHub({ isOpen, onClose }: Props) {
       </>
     );
   }
- 
+
   return (
     <>
       {screen}
- 
+
       {editingStandalone !== null && (
         <StandaloneScoutingModal
           existing={editingStandalone === 'new' ? null : editingStandalone}
@@ -312,7 +310,7 @@ export default function ScoutingHub({ isOpen, onClose }: Props) {
           onClose={() => setEditingStandalone(null)}
         />
       )}
- 
+
       {gameScoutTarget && (
         <ScoutingReportModal
           report={gameScoutTarget.report}
@@ -321,7 +319,7 @@ export default function ScoutingHub({ isOpen, onClose }: Props) {
           onClose={() => { setGameScoutTarget(null); refresh(); }}
         />
       )}
- 
+
       {editingLineup !== null && (
         <ScoutLineupModal
           existing={editingLineup === 'new' ? null : editingLineup}
@@ -332,4 +330,3 @@ export default function ScoutingHub({ isOpen, onClose }: Props) {
     </>
   );
 }
- 
