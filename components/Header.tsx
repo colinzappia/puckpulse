@@ -223,7 +223,7 @@ const Header: React.FC<HeaderProps> = ({
               {([
                 { label: 'User Manual', icon: '📋', action: onOpenManual },
                 { label: 'Game History', icon: '📁', action: onOpenGameHistory },
-                { label: 'Scouting Reports', icon: '🔍', action: onOpenScouting },
+                { label: 'Scouts Portal', icon: '🔍', action: onOpenScouting },
                 { label: 'About Us', icon: 'ℹ️', action: onOpenAbout },
                 { label: 'Contact Us', icon: '✉️', action: onOpenContact },
                 null,
