@@ -1,14 +1,14 @@
 // ============================================================
 // ScoutLineupModal.tsx
-// Upload or edit a scouted lineup. Creating a new one shows two
-// teams side by side, each with the same paste/photo AI import
-// coaches already use in Roster Setup, plus drag-and-drop line
-// assignment — identical interaction to the live tracking
-// screen's lineup panel, just built standalone here since that
-// version lives inline in App.tsx and isn't reusable directly.
-// Editing an existing lineup shows just that one team. Every
-// saved lineup is visible to everyone on the plan automatically
-// — no sharing toggle.
+// Upload or edit a scouted lineup. Both teams show side by side,
+// styled and behaving exactly like the live tracking screen's own
+// roster panels — same drag-and-drop, same visual language — so
+// a scout moving from tracking a game to scouting one sees the
+// same thing. Uploading and editing use the same two-panel view;
+// editing a saved lineup also loads its paired opponent (if one
+// was saved) into the second panel, fully editable, not read-only.
+// Every saved lineup is visible to everyone on the plan
+// automatically — no sharing toggle.
 // ============================================================
 
 import React, { useState } from 'react';
@@ -35,15 +35,12 @@ import { fetchRosterByAI } from '../services/geminiService';
 import { sortByNumber, normalizeName } from '../hooks/useTeamRoster';
 import LeagueGamePicker from './LeagueGamePicker';
 import StandaloneScoutingModal from './StandaloneScoutingModal';
-import LineupSheet from './LineupSheet';
 
 interface Props {
   existing?: SavedScoutedLineup | null;
-  // Every lineup already loaded in the hub — used only to find this
-  // one's opponent (another saved lineup referencing this team as its
-  // own opponent, for the same date) so both sides of the same game
-  // can be shown together instead of requiring a separate click back
-  // to the list to see the other team.
+  // Every lineup already loaded in the hub — used to find this one's
+  // opponent (another saved lineup naming this team as its own
+  // opponent, same date) so both sides of the same game load together.
   allLineups?: SavedScoutedLineup[];
   onSaved: () => void;
   onClose: () => void;
@@ -90,95 +87,78 @@ function resizeImageForUpload(file: File, maxDimension = 1800, quality = 0.85): 
   });
 }
 
-// ── Draggable player chip — same drag-id scheme as the live tracking
-// screen's lineup panel (player-{team}-{number}), just restyled with
-// inline styles to match the rest of the Scouting portal instead of
-// Tailwind classes.
-const DraggablePlayer: React.FC<{ p: Player; team: Team; accent: string; onPlayerClick?: (p: Player) => void }> = ({ p, team, accent, onPlayerClick }) => {
+// ── Draggable player chip — identical classes to the live tracking
+// screen's own DraggablePlayer, so a scouted lineup looks and behaves
+// exactly like the rink page's roster panel. The only difference: a
+// tap here opens a scouting report instead of arming an event for
+// that player, since there's no game being logged in this screen.
+const DraggablePlayer: React.FC<{ p: Player; team: Team; isHome: boolean; onPlayerClick?: (p: Player) => void }> = ({ p, team, isHome, onPlayerClick }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: `player-${team}-${p.number}` });
-  const style: React.CSSProperties = {
-    transform: CSS.Translate.toString(transform),
-    opacity: isDragging ? 0.3 : 1,
-    height: 38,
-    borderRadius: 10,
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    border: `0.5px solid ${accent}40`,
-    background: `${accent}15`,
-    color: '#fff',
-    touchAction: 'none',
-    cursor: onPlayerClick ? 'pointer' : 'grab',
-    padding: '2px 4px',
-    overflow: 'hidden',
-  };
-  // A short tap still fires this onClick normally — dnd-kit only starts
-  // an actual drag once the pointer moves past its activation distance,
-  // so click-to-scout and drag-to-reassign coexist on the same chip.
+  const style = { transform: CSS.Translate.toString(transform), opacity: isDragging ? 0.3 : 1 };
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners} onClick={() => onPlayerClick?.(p)}>
-      <span style={{ fontSize: 10, fontWeight: 900, lineHeight: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>
+    <button
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      onClick={() => onPlayerClick?.(p)}
+      className="relative h-10 rounded-xl font-black flex flex-col items-center justify-center transition-all border group active:scale-95 touch-none bg-black/30 border-white/5 text-slate-400 hover:bg-white/10 cursor-pointer"
+    >
+      <span className="text-[11px] font-black leading-none truncate w-full text-center px-1">
         #{p.number} {p.name.split(' ').pop()}
       </span>
-      <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.4)', marginTop: 1 }}>{p.position}</span>
-    </div>
+      <div className={`absolute top-0.5 right-0.5 px-0.5 rounded text-[5px] font-black border ${p.position === 'C' ? 'bg-yellow-500/20 border-yellow-500/30 text-yellow-500' : 'bg-black/40 border-white/5 text-slate-600'}`}>
+        {p.position}
+      </div>
+    </button>
   );
 };
 
-// ── Drop target for one slot (a forward position on a line, a D-pair
-// side, or a goalie slot) — same drop-id scheme as the live tracking
-// screen: line-{team}-{lineOrPair}-{position}.
+// ── Drop target — identical classes and drop-id scheme to the live
+// tracking screen's own DroppableSlot.
 const DroppableSlot: React.FC<{ id: string; children: React.ReactNode; label: string; cols?: number }> = ({ id, children, label, cols = 1 }) => {
   const { setNodeRef, isOver } = useDroppable({ id });
-  const hasChildren = React.Children.count(children) > 0;
   return (
     <div
       ref={setNodeRef}
-      style={{
-        position: 'relative',
-        minHeight: 42,
-        borderRadius: 10,
-        border: `1px dashed ${isOver ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.08)'}`,
-        background: isOver ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.02)',
-      }}
+      className={`relative min-h-10 rounded-xl transition-all border border-dashed ${isOver ? 'bg-white/10 border-white/30 ring-2 ring-white/10' : 'bg-black/20 border-white/5'}`}
     >
-      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gap: 3, padding: 3, height: '100%' }}>
+      <div className="grid gap-0.5 p-0.5 h-full" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
         {children}
       </div>
-      {!hasChildren && !isOver && (
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.3, pointerEvents: 'none' }}>
-          <span style={{ fontSize: 8, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.5)' }}>{label}</span>
+      {!React.Children.count(children) && !isOver && (
+        <div className="absolute inset-0 flex items-center justify-center opacity-20 pointer-events-none">
+          <span className="text-[6px] font-black uppercase tracking-widest text-slate-600">{label}</span>
         </div>
       )}
     </div>
   );
 };
 
-// ── The visual line/pair/goalie grid for one team — drag players
-// between slots to reassign them, same behavior as the live
-// tracking screen.
-function RosterGrid({ team, roster, accent, onPlayerClick }: { team: Team; roster: Player[]; accent: string; onPlayerClick?: (p: Player) => void }) {
+// ── Forward lines, D pairs, and goalies — same layout and slot logic
+// as the live tracking screen's roster panel, minus the "starting
+// goalie" swap control, which is specific to a game actually being
+// tracked and doesn't apply to a standalone scouted lineup.
+function RosterGrid({ team, roster, isHome, onPlayerClick }: { team: Team; roster: Player[]; isHome: boolean; onPlayerClick?: (p: Player) => void }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+    <div className="space-y-0.5">
       {['1', '2', '3', '4'].map(lineNum => (
         <div key={`line-${lineNum}`}>
-          <div style={{ fontSize: 8, fontWeight: 900, color: accent, marginBottom: 2 }}>LINE {lineNum}</div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 3 }}>
+          <div className="flex items-center gap-0.5 mb-0.5">
+            <span className={`text-[6px] font-black w-3 shrink-0 ${isHome ? 'text-blue-600' : 'text-red-600'}`}>L{lineNum}</span>
+            <div className="flex-1 h-px bg-white/5" />
+          </div>
+          <div className="grid grid-cols-3 gap-0.5">
             {['LW', 'C', 'RW'].map((pos, posIdx) => {
               const playersOnLine = roster.filter(p => p.line === lineNum);
-              const playersInSlot = playersOnLine.filter(p => {
+              const playersInThisSlot = playersOnLine.filter(p => {
                 if (p.position === pos) return true;
-                if (p.position === 'F') {
-                  const fPlayers = playersOnLine.filter(pl => pl.position === 'F');
-                  const idx = fPlayers.indexOf(p);
-                  return posIdx === 2 ? idx >= 2 : idx === posIdx;
-                }
+                if (p.position === 'F') { const fPlayers = playersOnLine.filter(pl => pl.position === 'F'); const idx = fPlayers.indexOf(p); return posIdx === 2 ? idx >= 2 : idx === posIdx; }
                 return false;
               });
               return (
-                <DroppableSlot key={pos} id={`line-${team}-${lineNum}-${pos}`} label={pos} cols={Math.max(1, playersInSlot.length)}>
-                  {playersInSlot.map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} accent={accent} onPlayerClick={onPlayerClick} />)}
+                <DroppableSlot key={pos} id={`line-${team}-${lineNum}-${pos}`} label={pos} cols={Math.max(1, playersInThisSlot.length)}>
+                  {playersInThisSlot.map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} isHome={isHome} onPlayerClick={onPlayerClick} />)}
                 </DroppableSlot>
               );
             })}
@@ -187,23 +167,22 @@ function RosterGrid({ team, roster, accent, onPlayerClick }: { team: Team; roste
       ))}
       {['P1', 'P2', 'P3'].map(pairNum => (
         <div key={`pair-${pairNum}`}>
-          <div style={{ fontSize: 8, fontWeight: 900, color: accent, marginBottom: 2 }}>PAIR {pairNum.replace('P', '')}</div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 3 }}>
+          <div className="flex items-center gap-0.5 mb-0.5">
+            <span className={`text-[6px] font-black w-3 shrink-0 ${isHome ? 'text-blue-600' : 'text-red-600'}`}>{pairNum}</span>
+            <div className="flex-1 h-px bg-white/5" />
+          </div>
+          <div className="grid grid-cols-2 gap-0.5">
             {['D1', 'D2'].map((pos, posIdx) => {
               const playersOnPair = roster.filter(p => p.line === pairNum);
-              const playersInSlot = playersOnPair.filter(p => {
+              const playersInThisSlot = playersOnPair.filter(p => {
                 if (p.position === 'LD' && posIdx === 0) return true;
                 if (p.position === 'RD' && posIdx === 1) return true;
-                if (p.position === 'D') {
-                  const dPlayers = playersOnPair.filter(pl => pl.position === 'D');
-                  const idx = dPlayers.indexOf(p);
-                  return posIdx === 1 ? idx >= 1 : idx === 0;
-                }
+                if (p.position === 'D') { const dPlayers = playersOnPair.filter(pl => pl.position === 'D'); const idx = dPlayers.indexOf(p); return posIdx === 1 ? idx >= 1 : idx === 0; }
                 return false;
               });
               return (
-                <DroppableSlot key={pos} id={`line-${team}-${pairNum}-${posIdx === 0 ? 'LD' : 'RD'}`} label={pos} cols={Math.max(1, playersInSlot.length)}>
-                  {playersInSlot.map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} accent={accent} onPlayerClick={onPlayerClick} />)}
+                <DroppableSlot key={pos} id={`line-${team}-${pairNum}-${posIdx === 0 ? 'LD' : 'RD'}`} label={pos} cols={Math.max(1, playersInThisSlot.length)}>
+                  {playersInThisSlot.map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} isHome={isHome} onPlayerClick={onPlayerClick} />)}
                 </DroppableSlot>
               );
             })}
@@ -211,20 +190,26 @@ function RosterGrid({ team, roster, accent, onPlayerClick }: { team: Team; roste
         </div>
       ))}
       <div>
-        <div style={{ fontSize: 8, fontWeight: 900, color: accent, marginBottom: 2 }}>GOALIES</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 3 }}>
+        <div className="flex items-center gap-0.5 mb-0.5">
+          <span className={`text-[6px] font-black w-3 shrink-0 ${isHome ? 'text-blue-600' : 'text-red-600'}`}>G</span>
+          <div className="flex-1 h-px bg-white/5" />
+        </div>
+        <div className="grid grid-cols-2 gap-0.5">
           {['G1', 'G2'].map(goalieNum => (
             <DroppableSlot key={goalieNum} id={`line-${team}-${goalieNum}-G`} label={goalieNum === 'G1' ? 'Starter' : 'Backup'}>
-              {roster.filter(p => p.line === goalieNum).map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} accent={accent} onPlayerClick={onPlayerClick} />)}
+              {roster.filter(p => p.line === goalieNum).map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} isHome={isHome} onPlayerClick={onPlayerClick} />)}
             </DroppableSlot>
           ))}
         </div>
       </div>
       {roster.filter(p => !ASSIGNED_LINES.has(p.line || '')).length > 0 && (
         <div>
-          <div style={{ fontSize: 8, fontWeight: 900, color: 'rgba(255,255,255,0.3)', marginBottom: 2 }}>UNASSIGNED</div>
-          <DroppableSlot id={`line-${team}-unassigned`} label="?" cols={2}>
-            {roster.filter(p => !ASSIGNED_LINES.has(p.line || '')).map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} accent={accent} onPlayerClick={onPlayerClick} />)}
+          <div className="flex items-center gap-0.5 mb-0.5">
+            <span className="text-[6px] font-black w-3 shrink-0 text-slate-600">?</span>
+            <div className="flex-1 h-px bg-white/5" />
+          </div>
+          <DroppableSlot id={`line-${team}-unassigned`} label="Unassigned" cols={2}>
+            {roster.filter(p => !ASSIGNED_LINES.has(p.line || '')).map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} isHome={isHome} onPlayerClick={onPlayerClick} />)}
           </DroppableSlot>
         </div>
       )}
@@ -232,14 +217,17 @@ function RosterGrid({ team, roster, accent, onPlayerClick }: { team: Team; roste
   );
 }
 
-// ── One team's full entry pane: name field, import (paste or photo)
-// before a roster exists, then the drag grid plus a compact editable
-// list (for number/name typo fixes and removal) plus manual add.
+// ── One team's full pane — name field, import (paste/photo/drag-drop)
+// before a roster exists, then the same-styled roster panel as the
+// rink page, plus a compact editable list underneath (for number/name
+// typo fixes and removal — the rink page doesn't need this since
+// roster corrections happen in its separate Roster Setup screen,
+// which has no equivalent here).
 function TeamEntryPane({
-  team, accent, teamName, onTeamNameChange, roster, onRosterChange, placeholder, onPlayerClick,
+  team, isHome, teamName, onTeamNameChange, roster, onRosterChange, placeholder, onPlayerClick,
 }: {
   team: Team;
-  accent: string;
+  isHome: boolean;
   teamName: string;
   onTeamNameChange: (v: string) => void;
   roster: Player[];
@@ -254,6 +242,8 @@ function TeamEntryPane({
   const [manualName, setManualName] = useState('');
   const [manualPos, setManualPos] = useState('C');
   const [manualLine, setManualLine] = useState('1');
+
+  const accent = isHome ? '#60a5fa' : '#f87171';
 
   const parsedToPlayers = (players: any[]): Player[] =>
     players.map((p: any) => ({
@@ -315,108 +305,101 @@ function TeamEntryPane({
   };
 
   return (
-    <div style={{ flex: '1 1 300px', minWidth: 280 }}>
-      <input
-        style={{ width: '100%', background: '#0f1620', border: `0.5px solid ${accent}40`, borderRadius: 10, padding: '10px 12px', color: accent, fontSize: 13, fontWeight: 700, marginBottom: 8, boxSizing: 'border-box' as const }}
-        value={teamName}
-        onChange={e => onTeamNameChange(e.target.value)}
-        placeholder={placeholder}
-      />
+    <div className={`flex-1 flex flex-col min-w-[280px] ${isHome ? 'bg-blue-900/10' : 'bg-red-900/10'} rounded-2xl overflow-hidden border border-white/5`}>
+      <div className={`px-3 py-2 ${isHome ? 'bg-blue-900/30' : 'bg-red-900/30'} border-b border-white/10 shrink-0`}>
+        <input
+          className={`w-full bg-transparent border-none outline-none text-[11px] font-black uppercase tracking-widest ${isHome ? 'text-blue-400' : 'text-red-400'} placeholder:text-slate-600`}
+          value={teamName}
+          onChange={e => onTeamNameChange(e.target.value)}
+          placeholder={placeholder}
+        />
+      </div>
 
-      {roster.length === 0 ? (
-        <div style={{ background: '#0f1620', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: 10 }}>
-          <textarea
-            style={{ width: '100%', background: '#0c1018', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: 8, color: '#fff', fontSize: 10, fontFamily: 'monospace', minHeight: 60, resize: 'vertical' as const, marginBottom: 6, boxSizing: 'border-box' as const }}
-            value={pasteText}
-            onChange={e => setPasteText(e.target.value)}
-            placeholder="Paste roster text…"
-          />
-          <button
-            onClick={handlePasteImport}
-            disabled={importing}
-            style={{ width: '100%', padding: 8, borderRadius: 8, fontSize: 11, fontWeight: 700, border: `0.5px solid ${accent}40`, background: `${accent}15`, color: accent, cursor: 'pointer', marginBottom: 6 }}
-          >
-            {importing ? 'Reading…' : '📋 Import pasted roster'}
-          </button>
-          <div
-            onDragOver={e => { e.preventDefault(); if (!importing) setDragOver(true); }}
-            onDragLeave={() => setDragOver(false)}
-            onDrop={e => {
-              e.preventDefault();
-              setDragOver(false);
-              if (importing) return;
-              const file = e.dataTransfer.files?.[0];
-              if (file) handlePhotoImport(file);
-            }}
-            style={{
-              position: 'relative',
-              textAlign: 'center',
-              padding: 14,
-              borderRadius: 8,
-              fontSize: 11,
-              fontWeight: 700,
-              border: `1.5px dashed ${dragOver ? accent : 'rgba(255,255,255,0.15)'}`,
-              background: dragOver ? `${accent}15` : 'rgba(255,255,255,0.05)',
-              color: dragOver ? accent : 'rgba(255,255,255,0.6)',
-              cursor: importing ? 'default' : 'pointer',
-              transition: 'background 0.15s, border-color 0.15s',
-            }}
-          >
-            {importing ? 'Reading…' : dragOver ? 'Drop photo to import' : '📷 Drag a roster photo here, or tap to browse'}
-            <input
-              type="file"
-              accept="image/*"
-              disabled={importing}
-              style={{ position: 'absolute', inset: 0, opacity: 0, cursor: importing ? 'default' : 'pointer' }}
-              onChange={e => { handlePhotoImport(e.target.files?.[0] || null); e.target.value = ''; }}
+      <div className="flex-1 overflow-y-auto scrollbar-none p-2">
+        {roster.length === 0 ? (
+          <div className="space-y-2">
+            <textarea
+              className="w-full bg-black/40 border border-white/10 rounded-xl p-2.5 text-[10px] text-slate-300 font-mono outline-none focus:border-white/20 resize-none"
+              rows={4}
+              value={pasteText}
+              onChange={e => setPasteText(e.target.value)}
+              placeholder="Paste roster text…"
             />
-          </div>
-          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', textAlign: 'center', marginTop: 8 }}>
-            Or skip import — enter a team name above, then add players manually once the roster area appears.
-          </div>
-          <button
-            onClick={() => onRosterChange([{ number: '', name: '', position: 'C', line: '1' }])}
-            style={{ width: '100%', marginTop: 6, padding: 6, borderRadius: 8, fontSize: 10, fontWeight: 600, border: '0.5px solid rgba(255,255,255,0.1)', background: 'transparent', color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }}
-          >
-            Start with an empty roster instead
-          </button>
-        </div>
-      ) : (
-        <>
-          <RosterGrid team={team} roster={roster} accent={accent} onPlayerClick={onPlayerClick} />
+            <button
+              onClick={handlePasteImport}
+              disabled={importing}
+              className="w-full py-2 rounded-lg text-[10px] font-black uppercase tracking-wide bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10 transition-all disabled:opacity-40"
+            >
+              {importing ? 'Reading…' : '📋 Import pasted roster'}
+            </button>
 
-          <div style={{ marginTop: 10, marginBottom: 6, fontSize: 9, fontWeight: 800, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            Edit roster ({roster.length})
-          </div>
-          <div style={{ maxHeight: 160, overflowY: 'auto' as const }}>
-            {roster.map((p, idx) => (
-              <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#0f1620', border: '0.5px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: 5, marginBottom: 4 }}>
-                <input style={{ width: 28, background: 'transparent', border: 'none', color: '#fff', fontSize: 10, fontWeight: 700, textAlign: 'center' as const }} value={p.number} onChange={e => updatePlayer(idx, 'number', e.target.value)} />
-                <input style={{ flex: 1, minWidth: 0, background: 'transparent', border: 'none', color: '#fff', fontSize: 10 }} value={p.name} onChange={e => updatePlayer(idx, 'name', e.target.value)} placeholder="Name" />
-                <select style={{ background: '#0c1018', border: 'none', color: 'rgba(255,255,255,0.5)', fontSize: 9, borderRadius: 4 }} value={p.position} onChange={e => updatePlayer(idx, 'position', e.target.value)}>
-                  {POSITIONS.map(pos => <option key={pos} value={pos}>{pos}</option>)}
-                </select>
-                <select style={{ background: '#0c1018', border: 'none', color: 'rgba(255,255,255,0.5)', fontSize: 9, borderRadius: 4 }} value={p.line || '1'} onChange={e => updatePlayer(idx, 'line', e.target.value)}>
-                  {LINE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </select>
-                <span onClick={() => removePlayer(idx)} style={{ color: 'rgba(248,113,113,0.7)', cursor: 'pointer', fontSize: 12, padding: '0 3px' }}>✕</span>
-              </div>
-            ))}
-          </div>
+            <div
+              onDragOver={e => { e.preventDefault(); if (!importing) setDragOver(true); }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={e => {
+                e.preventDefault();
+                setDragOver(false);
+                if (importing) return;
+                const file = e.dataTransfer.files?.[0];
+                if (file) handlePhotoImport(file);
+              }}
+              className={`relative text-center p-3 rounded-lg text-[10px] font-black uppercase tracking-wide border-2 border-dashed transition-all ${dragOver ? 'border-white/40 bg-white/10 text-white' : 'border-white/15 bg-white/5 text-slate-400'} ${importing ? '' : 'cursor-pointer'}`}
+            >
+              {importing ? 'Reading…' : dragOver ? 'Drop photo to import' : '📷 Drag a roster photo here, or tap to browse'}
+              <input
+                type="file"
+                accept="image/*"
+                disabled={importing}
+                className="absolute inset-0 opacity-0"
+                style={{ cursor: importing ? 'default' : 'pointer' }}
+                onChange={e => { handlePhotoImport(e.target.files?.[0] || null); e.target.value = ''; }}
+              />
+            </div>
 
-          <div style={{ display: 'flex', gap: 4, marginTop: 6 }}>
-            <input style={{ width: 32, background: '#0f1620', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 6, padding: 6, color: '#fff', fontSize: 10, textAlign: 'center' as const }} placeholder="#" value={manualNum} onChange={e => setManualNum(e.target.value)} />
-            <input style={{ flex: 1, minWidth: 0, background: '#0f1620', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 6, padding: 6, color: '#fff', fontSize: 10 }} placeholder="Name" value={manualName} onChange={e => setManualName(e.target.value)} />
-            <select style={{ background: '#0f1620', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 6, color: '#fff', fontSize: 9 }} value={manualPos} onChange={e => setManualPos(e.target.value)}>
-              {POSITIONS.map(pos => <option key={pos} value={pos}>{pos}</option>)}
-            </select>
-            <select style={{ background: '#0f1620', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 6, color: '#fff', fontSize: 9 }} value={manualLine} onChange={e => setManualLine(e.target.value)}>
-              {LINE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
-            <button onClick={addManualPlayer} style={{ width: 26, borderRadius: 6, border: '0.5px solid rgba(52,211,153,0.4)', background: 'rgba(52,211,153,0.15)', color: '#34d399', fontWeight: 900, cursor: 'pointer' }}>+</button>
+            <button
+              onClick={() => onRosterChange([{ number: '', name: '', position: 'C', line: '1' }])}
+              className="w-full py-1.5 rounded-lg text-[9px] font-bold text-slate-500 hover:text-slate-300 transition-all"
+            >
+              Start with an empty roster instead
+            </button>
           </div>
-        </>
-      )}
+        ) : (
+          <>
+            <RosterGrid team={team} roster={roster} isHome={isHome} onPlayerClick={onPlayerClick} />
+
+            <div className="mt-3 mb-1.5 text-[9px] font-black text-slate-600 uppercase tracking-wide">
+              Edit roster ({roster.length})
+            </div>
+            <div className="max-h-40 overflow-y-auto scrollbar-none space-y-1">
+              {roster.map((p, idx) => (
+                <div key={idx} className="flex items-center gap-1 bg-black/30 border border-white/5 rounded-lg p-1">
+                  <input className="w-7 bg-transparent border-none text-white text-[10px] font-black text-center outline-none" value={p.number} onChange={e => updatePlayer(idx, 'number', e.target.value)} />
+                  <input className="flex-1 min-w-0 bg-transparent border-none text-white text-[10px] outline-none" value={p.name} onChange={e => updatePlayer(idx, 'name', e.target.value)} placeholder="Name" />
+                  <select className="bg-black/40 text-slate-400 text-[9px] rounded border-none outline-none" value={p.position} onChange={e => updatePlayer(idx, 'position', e.target.value)}>
+                    {POSITIONS.map(pos => <option key={pos} value={pos}>{pos}</option>)}
+                  </select>
+                  <select className="bg-black/40 text-slate-400 text-[9px] rounded border-none outline-none" value={p.line || '1'} onChange={e => updatePlayer(idx, 'line', e.target.value)}>
+                    {LINE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </select>
+                  <span onClick={() => removePlayer(idx)} className="text-red-400/70 cursor-pointer text-xs px-1">✕</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex gap-1 mt-1.5">
+              <input className="w-8 bg-black/30 border border-white/10 rounded-lg p-1.5 text-white text-[10px] text-center outline-none" placeholder="#" value={manualNum} onChange={e => setManualNum(e.target.value)} />
+              <input className="flex-1 min-w-0 bg-black/30 border border-white/10 rounded-lg p-1.5 text-white text-[10px] outline-none" placeholder="Name" value={manualName} onChange={e => setManualName(e.target.value)} />
+              <select className="bg-black/30 border border-white/10 rounded-lg text-white text-[9px] outline-none" value={manualPos} onChange={e => setManualPos(e.target.value)}>
+                {POSITIONS.map(pos => <option key={pos} value={pos}>{pos}</option>)}
+              </select>
+              <select className="bg-black/30 border border-white/10 rounded-lg text-white text-[9px] outline-none" value={manualLine} onChange={e => setManualLine(e.target.value)}>
+                {LINE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+              <button onClick={addManualPlayer} className="w-7 rounded-lg border border-emerald-500/40 bg-emerald-500/15 text-emerald-400 font-black">+</button>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -434,12 +417,12 @@ export default function ScoutLineupModal({ existing, allLineups, onSaved, onClos
         l.gameDate === existing.gameDate
       ) || null
     : null;
+
   const [gameDate, setGameDate] = useState(existing?.gameDate || '');
-  const [opponent, setOpponent] = useState(existing?.opponent || '');
   const [teamAName, setTeamAName] = useState(existing?.teamName || '');
-  const [teamBName, setTeamBName] = useState('');
+  const [teamBName, setTeamBName] = useState(pairedLineup?.teamName || '');
   const [rosterA, setRosterA] = useState<Player[]>(existing?.roster || []);
-  const [rosterB, setRosterB] = useState<Player[]>([]);
+  const [rosterB, setRosterB] = useState<Player[]>(pairedLineup?.roster || []);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showGamePicker, setShowGamePicker] = useState(false);
@@ -472,19 +455,38 @@ export default function ScoutLineupModal({ existing, allLineups, onSaved, onClos
   };
 
   const canSave = teamAName.trim().length > 0 && rosterA.length > 0;
+  const hasB = teamBName.trim().length > 0 && rosterB.length > 0;
 
   const handleSave = async () => {
     if (!user || !canSave) return;
-    const hasB = !existing && teamBName.trim().length > 0 && rosterB.length > 0;
     setSaving(true);
     try {
       if (existing) {
         await updateScoutedLineup(existing.id, {
           teamName: teamAName.trim(),
-          opponent: opponent.trim(),
+          opponent: hasB ? teamBName.trim() : undefined,
           gameDate,
           roster: rosterA,
         });
+        if (pairedLineup) {
+          // The paired side may have been dragged/edited too — keep it
+          // in sync, or drop the pairing if its name was cleared out.
+          await updateScoutedLineup(pairedLineup.id, {
+            teamName: teamBName.trim() || pairedLineup.teamName,
+            opponent: teamAName.trim(),
+            gameDate,
+            roster: rosterB,
+          });
+        } else if (hasB) {
+          // A second team was filled in that didn't exist before —
+          // save it as a new paired lineup.
+          await saveScoutedLineup(user.id, {
+            teamName: teamBName.trim(),
+            opponent: teamAName.trim(),
+            gameDate: gameDate || undefined,
+            roster: rosterB,
+          });
+        }
       } else {
         await saveScoutedLineup(user.id, {
           teamName: teamAName.trim(),
@@ -512,7 +514,7 @@ export default function ScoutLineupModal({ existing, allLineups, onSaved, onClos
 
   const handleDelete = async () => {
     if (!existing) return;
-    if (!confirm('Delete this lineup? This cannot be undone.')) return;
+    if (!confirm(pairedLineup ? 'Delete this lineup? The opponent lineup will be kept separately. This cannot be undone.' : 'Delete this lineup? This cannot be undone.')) return;
     setDeleting(true);
     try {
       await deleteScoutedLineup(existing.id);
@@ -525,139 +527,79 @@ export default function ScoutLineupModal({ existing, allLineups, onSaved, onClos
     }
   };
 
-  const S = {
-    overlay: { position: 'fixed' as const, inset: 0, zIndex: 360, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' },
-    panel: { position: 'fixed' as const, inset: 0, zIndex: 361, background: '#070a0f', display: 'flex', flexDirection: 'column' as const },
-    topbar: { background: '#0c1018', borderBottom: '0.5px solid rgba(255,255,255,0.08)', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 },
-    body: { flex: 1, overflowY: 'auto' as const, padding: 16 },
-    sectionLabel: { fontSize: 10, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase' as const, letterSpacing: '0.1em', marginBottom: 8, fontWeight: 600 },
-    input: { width: '100%', background: '#0f1620', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '10px 12px', color: '#fff', fontSize: 13, fontWeight: 600, marginBottom: 12, boxSizing: 'border-box' as const },
-    btn: (color = '#60a5fa') => ({ padding: '11px 16px', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', border: `0.5px solid ${color}40`, background: `${color}12`, color, width: '100%' } as React.CSSProperties),
-  };
-
   return (
-    <div style={S.overlay} onClick={onClose}>
-      <div style={S.panel} onClick={e => e.stopPropagation()}>
-        <div style={S.topbar}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span onClick={onClose} style={{ color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: 20 }}>←</span>
-            <span style={{ color: '#fff', fontSize: 14, fontWeight: 700 }}>{existing ? 'Edit lineup' : 'Upload lineup'}</span>
-          </div>
-          <span onClick={onClose} style={{ fontSize: 22, color: 'rgba(255,255,255,0.3)', cursor: 'pointer' }}>×</span>
+    <div className="fixed inset-0 z-[360] bg-black/98 backdrop-blur-3xl flex flex-col">
+      <div className="px-4 py-3 flex items-center justify-between border-b border-white/10 bg-black/40 shrink-0">
+        <div className="flex items-center gap-3">
+          <button onClick={onClose} className="text-slate-400 hover:text-white text-xl">←</button>
+          <span className="text-white text-sm font-black uppercase tracking-widest">{existing ? 'Edit lineup' : 'Upload lineup'}</span>
+        </div>
+        <button onClick={onClose} className="text-slate-400 hover:text-white text-2xl">×</button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto scrollbar-none p-3">
+        <div className="flex items-center gap-3 mb-3">
+          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest shrink-0">Date seen</span>
+          <input
+            type="date"
+            className="bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-white text-xs outline-none"
+            value={gameDate}
+            onChange={e => setGameDate(e.target.value)}
+          />
+          <button
+            className="ml-auto text-[10px] font-black uppercase tracking-wide px-3 py-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/15 text-emerald-400"
+            onClick={() => setShowGamePicker(true)}
+          >
+            📅 Pick from OHL schedule
+          </button>
         </div>
 
-        <div style={S.body}>
-          <div style={S.sectionLabel}>Date seen (optional)</div>
-          <input type="date" style={S.input} value={gameDate} onChange={e => setGameDate(e.target.value)} />
-
-          {existing && (
-            <>
-              <div style={S.sectionLabel}>Opponent (optional)</div>
-              <input style={S.input} value={opponent} onChange={e => setOpponent(e.target.value)} placeholder="Opponent team name" />
-            </>
-          )}
-
-          {!existing && (
-            <button
-              style={{ ...S.btn('#34d399'), marginBottom: 12 }}
-              onClick={() => setShowGamePicker(true)}
-            >
-              📅 Pick from OHL schedule
-            </button>
-          )}
-
-          <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-            {existing ? (
-              <div style={{ display: 'flex', gap: 10, overflowX: 'auto' as const, paddingBottom: 4 }}>
-                <div style={{ flex: '1 1 300px', minWidth: 280 }}>
-                  <TeamEntryPane
-                    team={Team.HOME}
-                    accent="#60a5fa"
-                    teamName={teamAName}
-                    onTeamNameChange={setTeamAName}
-                    roster={rosterA}
-                    onRosterChange={setRosterA}
-                    placeholder="Team name"
-                    onPlayerClick={p => openScoutingReportFor(p, teamAName)}
-                  />
-                </div>
-                {pairedLineup && (
-                  <div style={{ flex: '1 1 300px', minWidth: 280 }}>
-                    <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8, fontWeight: 700 }}>
-                      Opponent (view only — edit separately)
-                    </div>
-                    <LineupSheet
-                      roster={pairedLineup.roster}
-                      teamName={pairedLineup.teamName}
-                      accent="#f87171"
-                      onPlayerClick={p => openScoutingReportFor(p, pairedLineup.teamName)}
-                    />
-                  </div>
-                )}
-              </div>
-            ) : null}
-            {existing && (
-              <>
-                {rosterA.length > 0 && (
-                  <>
-                    <div style={{ ...S.sectionLabel, marginTop: 16 }}>Scout a player from this lineup</div>
-                    <select
-                      defaultValue=""
-                      onChange={e => {
-                        if (!e.target.value) return;
-                        const player = rosterA.find(p => p.number === e.target.value);
-                        if (player) openScoutingReportFor(player, teamAName);
-                        e.target.value = '';
-                      }}
-                      style={{ width: '100%', background: '#0f1620', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '10px 12px', color: '#fff', fontSize: 12, fontWeight: 600 }}
-                    >
-                      <option value="">Pick a player…</option>
-                      {rosterA.map(p => (
-                        <option key={p.number} value={p.number}>#{p.number} {p.name}</option>
-                      ))}
-                    </select>
-                  </>
-                )}
-              </>
-            )}
-            {!existing && (
-              <div style={{ display: 'flex', gap: 10, overflowX: 'auto' as const, paddingBottom: 4 }}>
-                <TeamEntryPane
-                  team={Team.HOME}
-                  accent="#60a5fa"
-                  teamName={teamAName}
-                  onTeamNameChange={setTeamAName}
-                  roster={rosterA}
-                  onRosterChange={setRosterA}
-                  placeholder="Team name"
-                />
-                <TeamEntryPane
-                  team={Team.AWAY}
-                  accent="#f87171"
-                  teamName={teamBName}
-                  onTeamNameChange={setTeamBName}
-                  roster={rosterB}
-                  onRosterChange={setRosterB}
-                  placeholder="Opponent name (optional)"
-                />
-              </div>
-            )}
-          </DndContext>
-
-          <button style={{ ...S.btn(), marginTop: 16 }} onClick={handleSave} disabled={saving || !canSave}>
-            {saving ? 'Saving…' : existing ? 'Update lineup' : 'Save lineup'}
-          </button>
-
-          {existing && (
-            <button style={{ ...S.btn('#f87171'), marginTop: 8 }} onClick={handleDelete} disabled={deleting}>
-              {deleting ? 'Deleting…' : 'Delete this lineup'}
-            </button>
-          )}
-
-          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', textAlign: 'center', marginTop: 12 }}>
-            Visible to everyone on your plan automatically — there's no sharing toggle for lineups.
-            {!existing && ' Filling in both teams saves them as two separate lineups.'}
+        <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+          <div className="flex gap-2 overflow-x-auto scrollbar-none pb-2" style={{ minHeight: 480 }}>
+            <TeamEntryPane
+              team={Team.HOME}
+              isHome={true}
+              teamName={teamAName}
+              onTeamNameChange={setTeamAName}
+              roster={rosterA}
+              onRosterChange={setRosterA}
+              placeholder="Team name"
+              onPlayerClick={p => openScoutingReportFor(p, teamAName)}
+            />
+            <TeamEntryPane
+              team={Team.AWAY}
+              isHome={false}
+              teamName={teamBName}
+              onTeamNameChange={setTeamBName}
+              roster={rosterB}
+              onRosterChange={setRosterB}
+              placeholder="Opponent name (optional)"
+              onPlayerClick={p => openScoutingReportFor(p, teamBName)}
+            />
           </div>
+        </DndContext>
+
+        <button
+          className="w-full mt-3 py-3 rounded-xl text-sm font-black uppercase tracking-wide border border-blue-500/40 bg-blue-500/15 text-blue-400 disabled:opacity-40"
+          onClick={handleSave}
+          disabled={saving || !canSave}
+        >
+          {saving ? 'Saving…' : existing ? 'Update lineup' : 'Save lineup'}
+        </button>
+
+        {existing && (
+          <button
+            className="w-full mt-2 py-3 rounded-xl text-sm font-black uppercase tracking-wide border border-red-500/40 bg-red-500/15 text-red-400 disabled:opacity-40"
+            onClick={handleDelete}
+            disabled={deleting}
+          >
+            {deleting ? 'Deleting…' : 'Delete this lineup'}
+          </button>
+        )}
+
+        <div className="text-[10px] text-slate-600 text-center mt-3">
+          Visible to everyone on your plan automatically — there's no sharing toggle for lineups.
+          {!hasB && !pairedLineup && ' Filling in both teams saves them as two paired lineups.'}
         </div>
       </div>
 
