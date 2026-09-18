@@ -34,9 +34,17 @@ import {
 import { fetchRosterByAI } from '../services/geminiService';
 import { sortByNumber, normalizeName } from '../hooks/useTeamRoster';
 import LeagueGamePicker from './LeagueGamePicker';
+import StandaloneScoutingModal from './StandaloneScoutingModal';
+import LineupSheet from './LineupSheet';
 
 interface Props {
   existing?: SavedScoutedLineup | null;
+  // Every lineup already loaded in the hub — used only to find this
+  // one's opponent (another saved lineup referencing this team as its
+  // own opponent, for the same date) so both sides of the same game
+  // can be shown together instead of requiring a separate click back
+  // to the list to see the other team.
+  allLineups?: SavedScoutedLineup[];
   onSaved: () => void;
   onClose: () => void;
 }
@@ -86,7 +94,7 @@ function resizeImageForUpload(file: File, maxDimension = 1800, quality = 0.85): 
 // screen's lineup panel (player-{team}-{number}), just restyled with
 // inline styles to match the rest of the Scouting portal instead of
 // Tailwind classes.
-const DraggablePlayer: React.FC<{ p: Player; team: Team; accent: string }> = ({ p, team, accent }) => {
+const DraggablePlayer: React.FC<{ p: Player; team: Team; accent: string; onPlayerClick?: (p: Player) => void }> = ({ p, team, accent, onPlayerClick }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: `player-${team}-${p.number}` });
   const style: React.CSSProperties = {
     transform: CSS.Translate.toString(transform),
@@ -101,12 +109,15 @@ const DraggablePlayer: React.FC<{ p: Player; team: Team; accent: string }> = ({ 
     background: `${accent}15`,
     color: '#fff',
     touchAction: 'none',
-    cursor: 'grab',
+    cursor: onPlayerClick ? 'pointer' : 'grab',
     padding: '2px 4px',
     overflow: 'hidden',
   };
+  // A short tap still fires this onClick normally — dnd-kit only starts
+  // an actual drag once the pointer moves past its activation distance,
+  // so click-to-scout and drag-to-reassign coexist on the same chip.
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners} onClick={() => onPlayerClick?.(p)}>
       <span style={{ fontSize: 10, fontWeight: 900, lineHeight: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>
         #{p.number} {p.name.split(' ').pop()}
       </span>
@@ -147,7 +158,7 @@ const DroppableSlot: React.FC<{ id: string; children: React.ReactNode; label: st
 // ── The visual line/pair/goalie grid for one team — drag players
 // between slots to reassign them, same behavior as the live
 // tracking screen.
-function RosterGrid({ team, roster, accent }: { team: Team; roster: Player[]; accent: string }) {
+function RosterGrid({ team, roster, accent, onPlayerClick }: { team: Team; roster: Player[]; accent: string; onPlayerClick?: (p: Player) => void }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       {['1', '2', '3', '4'].map(lineNum => (
@@ -167,7 +178,7 @@ function RosterGrid({ team, roster, accent }: { team: Team; roster: Player[]; ac
               });
               return (
                 <DroppableSlot key={pos} id={`line-${team}-${lineNum}-${pos}`} label={pos} cols={Math.max(1, playersInSlot.length)}>
-                  {playersInSlot.map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} accent={accent} />)}
+                  {playersInSlot.map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} accent={accent} onPlayerClick={onPlayerClick} />)}
                 </DroppableSlot>
               );
             })}
@@ -192,7 +203,7 @@ function RosterGrid({ team, roster, accent }: { team: Team; roster: Player[]; ac
               });
               return (
                 <DroppableSlot key={pos} id={`line-${team}-${pairNum}-${posIdx === 0 ? 'LD' : 'RD'}`} label={pos} cols={Math.max(1, playersInSlot.length)}>
-                  {playersInSlot.map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} accent={accent} />)}
+                  {playersInSlot.map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} accent={accent} onPlayerClick={onPlayerClick} />)}
                 </DroppableSlot>
               );
             })}
@@ -204,7 +215,7 @@ function RosterGrid({ team, roster, accent }: { team: Team; roster: Player[]; ac
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 3 }}>
           {['G1', 'G2'].map(goalieNum => (
             <DroppableSlot key={goalieNum} id={`line-${team}-${goalieNum}-G`} label={goalieNum === 'G1' ? 'Starter' : 'Backup'}>
-              {roster.filter(p => p.line === goalieNum).map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} accent={accent} />)}
+              {roster.filter(p => p.line === goalieNum).map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} accent={accent} onPlayerClick={onPlayerClick} />)}
             </DroppableSlot>
           ))}
         </div>
@@ -213,7 +224,7 @@ function RosterGrid({ team, roster, accent }: { team: Team; roster: Player[]; ac
         <div>
           <div style={{ fontSize: 8, fontWeight: 900, color: 'rgba(255,255,255,0.3)', marginBottom: 2 }}>UNASSIGNED</div>
           <DroppableSlot id={`line-${team}-unassigned`} label="?" cols={2}>
-            {roster.filter(p => !ASSIGNED_LINES.has(p.line || '')).map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} accent={accent} />)}
+            {roster.filter(p => !ASSIGNED_LINES.has(p.line || '')).map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} accent={accent} onPlayerClick={onPlayerClick} />)}
           </DroppableSlot>
         </div>
       )}
@@ -225,7 +236,7 @@ function RosterGrid({ team, roster, accent }: { team: Team; roster: Player[]; ac
 // before a roster exists, then the drag grid plus a compact editable
 // list (for number/name typo fixes and removal) plus manual add.
 function TeamEntryPane({
-  team, accent, teamName, onTeamNameChange, roster, onRosterChange, placeholder,
+  team, accent, teamName, onTeamNameChange, roster, onRosterChange, placeholder, onPlayerClick,
 }: {
   team: Team;
   accent: string;
@@ -234,9 +245,11 @@ function TeamEntryPane({
   roster: Player[];
   onRosterChange: (r: Player[]) => void;
   placeholder: string;
+  onPlayerClick?: (p: Player) => void;
 }) {
   const [pasteText, setPasteText] = useState('');
   const [importing, setImporting] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
   const [manualNum, setManualNum] = useState('');
   const [manualName, setManualName] = useState('');
   const [manualPos, setManualPos] = useState('C');
@@ -325,10 +338,39 @@ function TeamEntryPane({
           >
             {importing ? 'Reading…' : '📋 Import pasted roster'}
           </button>
-          <label style={{ display: 'block', textAlign: 'center', padding: 8, borderRadius: 8, fontSize: 11, fontWeight: 700, border: '0.5px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.6)', cursor: 'pointer' }}>
-            {importing ? 'Reading…' : '📷 Upload roster photo'}
-            <input type="file" accept="image/*" disabled={importing} style={{ display: 'none' }} onChange={e => { handlePhotoImport(e.target.files?.[0] || null); e.target.value = ''; }} />
-          </label>
+          <div
+            onDragOver={e => { e.preventDefault(); if (!importing) setDragOver(true); }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={e => {
+              e.preventDefault();
+              setDragOver(false);
+              if (importing) return;
+              const file = e.dataTransfer.files?.[0];
+              if (file) handlePhotoImport(file);
+            }}
+            style={{
+              position: 'relative',
+              textAlign: 'center',
+              padding: 14,
+              borderRadius: 8,
+              fontSize: 11,
+              fontWeight: 700,
+              border: `1.5px dashed ${dragOver ? accent : 'rgba(255,255,255,0.15)'}`,
+              background: dragOver ? `${accent}15` : 'rgba(255,255,255,0.05)',
+              color: dragOver ? accent : 'rgba(255,255,255,0.6)',
+              cursor: importing ? 'default' : 'pointer',
+              transition: 'background 0.15s, border-color 0.15s',
+            }}
+          >
+            {importing ? 'Reading…' : dragOver ? 'Drop photo to import' : '📷 Drag a roster photo here, or tap to browse'}
+            <input
+              type="file"
+              accept="image/*"
+              disabled={importing}
+              style={{ position: 'absolute', inset: 0, opacity: 0, cursor: importing ? 'default' : 'pointer' }}
+              onChange={e => { handlePhotoImport(e.target.files?.[0] || null); e.target.value = ''; }}
+            />
+          </div>
           <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', textAlign: 'center', marginTop: 8 }}>
             Or skip import — enter a team name above, then add players manually once the roster area appears.
           </div>
@@ -341,7 +383,7 @@ function TeamEntryPane({
         </div>
       ) : (
         <>
-          <RosterGrid team={team} roster={roster} accent={accent} />
+          <RosterGrid team={team} roster={roster} accent={accent} onPlayerClick={onPlayerClick} />
 
           <div style={{ marginTop: 10, marginBottom: 6, fontSize: 9, fontWeight: 800, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             Edit roster ({roster.length})
@@ -379,8 +421,19 @@ function TeamEntryPane({
   );
 }
 
-export default function ScoutLineupModal({ existing, onSaved, onClose }: Props) {
+export default function ScoutLineupModal({ existing, allLineups, onSaved, onClose }: Props) {
   const { user } = useUser();
+
+  // The other team from the same game, if it was saved too — matched by
+  // each referencing the other as its opponent, on the same date.
+  const pairedLineup = existing
+    ? allLineups?.find(l =>
+        l.id !== existing.id &&
+        l.teamName === existing.opponent &&
+        l.opponent === existing.teamName &&
+        l.gameDate === existing.gameDate
+      ) || null
+    : null;
   const [gameDate, setGameDate] = useState(existing?.gameDate || '');
   const [opponent, setOpponent] = useState(existing?.opponent || '');
   const [teamAName, setTeamAName] = useState(existing?.teamName || '');
@@ -390,6 +443,11 @@ export default function ScoutLineupModal({ existing, onSaved, onClose }: Props) 
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showGamePicker, setShowGamePicker] = useState(false);
+  const [scoutingPrefill, setScoutingPrefill] = useState<{ playerName: string; teamName: string; gameDate: string } | null>(null);
+
+  const openScoutingReportFor = (p: Player, teamNameForPlayer: string) => {
+    setScoutingPrefill({ playerName: p.name, teamName: teamNameForPlayer, gameDate });
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -510,16 +568,54 @@ export default function ScoutLineupModal({ existing, onSaved, onClose }: Props) 
 
           <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
             {existing ? (
-              <TeamEntryPane
-                team={Team.HOME}
-                accent="#60a5fa"
-                teamName={teamAName}
-                onTeamNameChange={setTeamAName}
-                roster={rosterA}
-                onRosterChange={setRosterA}
-                placeholder="Team name"
-              />
-            ) : (
+              <div style={{ display: 'flex', gap: 10, overflowX: 'auto' as const, paddingBottom: 4 }}>
+                <div style={{ flex: '1 1 300px', minWidth: 280 }}>
+                  <TeamEntryPane
+                    team={Team.HOME}
+                    accent="#60a5fa"
+                    teamName={teamAName}
+                    onTeamNameChange={setTeamAName}
+                    roster={rosterA}
+                    onRosterChange={setRosterA}
+                    placeholder="Team name"
+                    onPlayerClick={p => openScoutingReportFor(p, teamAName)}
+                  />
+                </div>
+                {pairedLineup && (
+                  <div style={{ flex: '1 1 300px', minWidth: 280 }}>
+                    <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8, fontWeight: 700 }}>
+                      Opponent (view only — edit separately)
+                    </div>
+                    <LineupSheet roster={pairedLineup.roster} teamName={pairedLineup.teamName} accent="#f87171" />
+                  </div>
+                )}
+              </div>
+            ) : null}
+            {existing && (
+              <>
+                {rosterA.length > 0 && (
+                  <>
+                    <div style={{ ...S.sectionLabel, marginTop: 16 }}>Scout a player from this lineup</div>
+                    <select
+                      defaultValue=""
+                      onChange={e => {
+                        if (!e.target.value) return;
+                        const player = rosterA.find(p => p.number === e.target.value);
+                        if (player) openScoutingReportFor(player, teamAName);
+                        e.target.value = '';
+                      }}
+                      style={{ width: '100%', background: '#0f1620', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '10px 12px', color: '#fff', fontSize: 12, fontWeight: 600 }}
+                    >
+                      <option value="">Pick a player…</option>
+                      {rosterA.map(p => (
+                        <option key={p.number} value={p.number}>#{p.number} {p.name}</option>
+                      ))}
+                    </select>
+                  </>
+                )}
+              </>
+            )}
+            {!existing && (
               <div style={{ display: 'flex', gap: 10, overflowX: 'auto' as const, paddingBottom: 4 }}>
                 <TeamEntryPane
                   team={Team.HOME}
@@ -568,6 +664,14 @@ export default function ScoutLineupModal({ existing, onSaved, onClose }: Props) 
             setGameDate(game.gameDate);
           }}
           onClose={() => setShowGamePicker(false)}
+        />
+      )}
+
+      {scoutingPrefill && (
+        <StandaloneScoutingModal
+          prefill={scoutingPrefill}
+          onSaved={() => setScoutingPrefill(null)}
+          onClose={() => setScoutingPrefill(null)}
         />
       )}
     </div>
