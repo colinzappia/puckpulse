@@ -174,10 +174,20 @@ export default async function handler(req, res) {
     let upserted = 0;
     let skippedPast = 0;
     let failures = 0;
+    // Tracks the actual date span of everything the API returned,
+    // regardless of whether each game got saved or skipped — this is
+    // what actually reveals a narrow-window problem like the one this
+    // was built to catch: "found 56 games" looks like partial success
+    // until you see they're all clustered in a 10-day span instead of
+    // spanning the real ~7-month season.
+    let earliestFound = null;
+    let latestFound = null;
 
     for (const g of games) {
       const gameDate = g.date_played || g.Date || g.game_date || null;
       if (!gameDate) { failures += 1; continue; }
+      if (!earliestFound || gameDate < earliestFound) earliestFound = gameDate;
+      if (!latestFound || gameDate > latestFound) latestFound = gameDate;
       if (gameDate < todayStr) { skippedPast += 1; continue; }
 
       const homeId = String(g.home_team ?? g.HomeID ?? '');
@@ -219,6 +229,7 @@ export default async function handler(req, res) {
       upserted,
       skippedPast,
       failures,
+      dateRangeFound: earliestFound && latestFound ? `${earliestFound} to ${latestFound}` : null,
     });
   } catch (err) {
     console.error('Schedule sync error:', err);
