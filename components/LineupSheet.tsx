@@ -14,6 +14,9 @@ interface Props {
   roster: Player[];
   teamName: string;
   accent: string;
+  // When provided, every player row becomes clickable — used to jump
+  // straight from a lineup into scouting that player.
+  onPlayerClick?: (p: Player) => void;
 }
 
 const FORWARD_LINES = ['1', '2', '3', '4'];
@@ -37,16 +40,35 @@ function sortForwardSlot(a: Player, b: Player) {
   return ao - bo;
 }
 
-export default function LineupSheet({ roster, teamName, accent }: Props) {
+export default function LineupSheet({ roster, teamName, accent, onPlayerClick }: Props) {
   const goalies = roster.filter(p => p.position?.toUpperCase() === 'G');
   const assignedLines = new Set([...FORWARD_LINES, ...D_PAIRS, 'G1', 'G2']);
   const unassigned = roster.filter(p => !assignedLines.has(p.line || ''));
 
-  const rowStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0' };
+  const rowStyle: React.CSSProperties = {
+    display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0',
+    cursor: onPlayerClick ? 'pointer' : 'default',
+    borderRadius: 6,
+  };
   const numStyle: React.CSSProperties = { width: 22, fontSize: 11, fontWeight: 900, color: accent, flexShrink: 0 };
   const nameStyle: React.CSSProperties = { fontSize: 12, color: '#fff', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' };
   const posStyle: React.CSSProperties = { fontSize: 10, color: 'rgba(255,255,255,0.3)', flexShrink: 0 };
   const groupLabel: React.CSSProperties = { fontSize: 9, fontWeight: 800, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 10, marginBottom: 4 };
+
+  // One row, reused everywhere below instead of repeating the same
+  // three spans four times over.
+  const PlayerRow = ({ p, posLabel }: { p: Player; posLabel?: string }) => (
+    <div
+      style={rowStyle}
+      onClick={onPlayerClick ? () => onPlayerClick(p) : undefined}
+      onMouseEnter={onPlayerClick ? e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; } : undefined}
+      onMouseLeave={onPlayerClick ? e => { e.currentTarget.style.background = 'transparent'; } : undefined}
+    >
+      <span style={numStyle}>#{p.number}</span>
+      <span style={nameStyle}>{p.name}</span>
+      <span style={posStyle}>{posLabel ?? p.position}</span>
+    </div>
+  );
 
   return (
     <div style={{ background: '#0f1620', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 14 }}>
@@ -58,13 +80,7 @@ export default function LineupSheet({ roster, teamName, accent }: Props) {
         return (
           <div key={`fwd-${lineNum}`}>
             <div style={groupLabel}>Line {lineNum}</div>
-            {players.map(p => (
-              <div key={p.number} style={rowStyle}>
-                <span style={numStyle}>#{p.number}</span>
-                <span style={nameStyle}>{p.name}</span>
-                <span style={posStyle}>{p.position}</span>
-              </div>
-            ))}
+            {players.map(p => <PlayerRow key={p.number} p={p} />)}
           </div>
         );
       })}
@@ -75,13 +91,7 @@ export default function LineupSheet({ roster, teamName, accent }: Props) {
         return (
           <div key={`def-${pairNum}`}>
             <div style={groupLabel}>Pair {pairNum.replace('P', '')}</div>
-            {players.map(p => (
-              <div key={p.number} style={rowStyle}>
-                <span style={numStyle}>#{p.number}</span>
-                <span style={nameStyle}>{p.name}</span>
-                <span style={posStyle}>{p.position}</span>
-              </div>
-            ))}
+            {players.map(p => <PlayerRow key={p.number} p={p} />)}
           </div>
         );
       })}
@@ -90,11 +100,7 @@ export default function LineupSheet({ roster, teamName, accent }: Props) {
         <div>
           <div style={groupLabel}>Goalies</div>
           {goalies.map(p => (
-            <div key={p.number} style={rowStyle}>
-              <span style={numStyle}>#{p.number}</span>
-              <span style={nameStyle}>{p.name}</span>
-              <span style={posStyle}>{p.line === 'G1' ? 'Starter' : p.line === 'G2' ? 'Backup' : ''}</span>
-            </div>
+            <PlayerRow key={p.number} p={p} posLabel={p.line === 'G1' ? 'Starter' : p.line === 'G2' ? 'Backup' : ''} />
           ))}
         </div>
       )}
@@ -102,13 +108,7 @@ export default function LineupSheet({ roster, teamName, accent }: Props) {
       {unassigned.length > 0 && (
         <div>
           <div style={groupLabel}>Unassigned</div>
-          {unassigned.map(p => (
-            <div key={p.number} style={rowStyle}>
-              <span style={numStyle}>#{p.number}</span>
-              <span style={nameStyle}>{p.name}</span>
-              <span style={posStyle}>{p.position}</span>
-            </div>
-          ))}
+          {unassigned.map(p => <PlayerRow key={p.number} p={p} />)}
         </div>
       )}
     </div>
