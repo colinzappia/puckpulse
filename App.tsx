@@ -31,6 +31,7 @@ import EventAttachmentPanel from './components/EventAttachmentPanel';
 import GameHistory from './components/GameHistory';
 import LiveScoutingModal from './components/LiveScoutingModal';
 import ScoutingHub from './components/ScoutingHub';
+import { ADMIN_EMAILS } from './data/adminConfig';
 import Footer from './components/Footer';
 import { ADS_ENABLED } from './data/siteConfig';
 import { saveGameReport, SavedGameReport } from './services/gameReportService';
@@ -1878,25 +1879,8 @@ const App: React.FC = () => {
 
   if (!isSignedIn) return <AuthGate onAuthenticated={() => setIsAuthenticated(true)} />;
 
-  const ADMIN_EMAILS = [
-    'colinzappia@gmail.com',
-    'derekfroats19@gmail.com',
-    'macopelo17@gmail.com',
-    'marcodinardo24@gmail.com',
-    'mmcnamee12@hotmail.com',
-    'codycaron@cunet.carleton.ca',
-    'shahbazimel@gmail.com',
-    'patrick.grandmaitre@uottawa.ca',
-    'patrickdelislehoude@cunet.carleton.ca',
-    'jboyd@ontariohockeyleague.com',
-    'boydjam@gmail.com',
-    'andrewmercer@rogers.com',
-    'pstoykewych@ottawa67s.com',
-    'barber.hockey@outlook.com',
-    'abbottnhl@gmail.com',
-    'lennyzappia@gmail.com',
-    'turpinliam@gmail.com',
-  ];
+  // ADMIN_EMAILS now lives in data/adminConfig.ts, shared with
+  // ScoutingHub.tsx so there's one list, not two that can drift apart.
   const userEmail = currentUser?.primaryEmailAddress?.emailAddress?.toLowerCase() || user?.primaryEmailAddress?.emailAddress?.toLowerCase() || '';
   const isAdmin = ADMIN_EMAILS.includes(userEmail);
   // Faceoffs, Zone Entries, and Breakouts are Pro+ features. Admins always
