@@ -21,7 +21,11 @@ import {
 import { computePlayerStats, summarizePlayerEvents } from '../utils/scoutingStats';
 import { formatLineLabel } from './LineupSheet';
 import { downloadScoutingReportPDF, emailScoutingReport } from '../utils/scoutingExport';
-import { Team } from '../types';
+import { Team, EventType } from '../types';
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+}
 
 interface Props {
   report: SavedGameReport;
@@ -49,6 +53,15 @@ export default function ScoutingReportModal({ report, team, playerNumber, onClos
 
   const eventSummary = summarizePlayerEvents(report.events, team, playerNumber);
   const stats = computePlayerStats(report.events, team, playerNumber);
+
+  // Team-level context for the game this player was scouted in — kept
+  // simple (score + shot totals) rather than the full stat breakdown
+  // Game History already shows, since this is meant as quick context
+  // for a report, not a duplicate box score.
+  const gameShots = {
+    home: report.events.filter(e => e.team === Team.HOME && (e.type === EventType.SHOT || e.type === EventType.GOAL)).length,
+    away: report.events.filter(e => e.team === Team.AWAY && (e.type === EventType.SHOT || e.type === EventType.GOAL)).length,
+  };
 
   const [existing, setExisting] = useState<SavedScoutingReport | null>(null);
   const [loading, setLoading] = useState(true);
@@ -176,6 +189,28 @@ export default function ScoutingReportModal({ report, team, playerNumber, onClos
                 </div>
                 <div style={{ fontSize: 11, color: accent, fontWeight: 600 }}>
                   #{playerNumber} · {player?.position || ''}{player?.line ? ` · ${formatLineLabel(player.line)}` : ''} · {teamSide === 'home' ? report.homeName : report.awayName}
+                </div>
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <div style={S.sectionLabel}>Game summary</div>
+                <div style={S.card}>
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginBottom: 8, textAlign: 'center' }}>
+                    {formatDate(report.playedAt)}
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <div style={{ fontSize: 11, color: '#60a5fa', fontWeight: 700, marginBottom: 2 }}>{report.homeName}</div>
+                      <div style={{ fontSize: 22, fontWeight: 900, color: '#fff', lineHeight: 1 }}>{report.homeScore}</div>
+                      <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 2 }}>{gameShots.home} shots</div>
+                    </div>
+                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', marginTop: 14 }}>vs</div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: 11, color: '#f87171', fontWeight: 700, marginBottom: 2 }}>{report.awayName}</div>
+                      <div style={{ fontSize: 22, fontWeight: 900, color: '#fff', lineHeight: 1 }}>{report.awayScore}</div>
+                      <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 2 }}>{gameShots.away} shots</div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
