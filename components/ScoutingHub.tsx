@@ -66,7 +66,25 @@ export default function ScoutingHub({ onNavigateHome, onOpenRosterSetup, onOpenG
   const [searchQuery, setSearchQuery] = useState('');
   const [editingStandalone, setEditingStandalone] = useState<SavedScoutingReport | 'new' | null>(null);
   const [editingLineup, setEditingLineup] = useState<SavedScoutedLineup | 'new' | null>(null);
-  const [syncingSchedule, setSyncingSchedule] = useState(false);
+  const [syncingLeague, setSyncingLeague] = useState<string | null>(null);
+
+  const syncLeague = async (league: string, label: string) => {
+    setSyncingLeague(league);
+    try {
+      const res = await fetch('/api/sync-chl-schedule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ league }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Sync failed.');
+      alert(`${label} sync complete — found ${data.gamesFound} games, saved ${data.upserted}${data.failures > 0 ? `, ${data.failures} failed` : ''}.`);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Sync failed.');
+    } finally {
+      setSyncingLeague(null);
+    }
+  };
   const [pickingGame, setPickingGame] = useState(false);
   const [pickingPlayerFor, setPickingPlayerFor] = useState<SavedGameReport | null>(null);
   const [gameScoutTarget, setGameScoutTarget] = useState<{ report: SavedGameReport; team: Team; playerNumber: string } | null>(null);
@@ -317,31 +335,25 @@ export default function ScoutingHub({ onNavigateHome, onOpenRosterSetup, onOpenG
               </>
             ) : (
               <>
-                <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+                <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
                   <button style={S.btn('#34d399')} onClick={() => setEditingLineup('new')}>+ Upload lineup</button>
-                  <button
-                    style={S.btn('#94a3b8')}
-                    disabled={syncingSchedule}
-                    onClick={async () => {
-                      setSyncingSchedule(true);
-                      try {
-                        const res = await fetch('/api/sync-chl-schedule', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ league: 'ohl' }),
-                        });
-                        const data = await res.json();
-                        if (!res.ok) throw new Error(data.error || 'Sync failed.');
-                        alert(`OHL sync complete — found ${data.gamesFound} games, saved ${data.upserted}${data.failures > 0 ? `, ${data.failures} failed` : ''}.`);
-                      } catch (err) {
-                        alert(err instanceof Error ? err.message : 'Sync failed.');
-                      } finally {
-                        setSyncingSchedule(false);
-                      }
-                    }}
-                  >
-                    {syncingSchedule ? 'Syncing…' : '🔄 Sync OHL Schedule'}
-                  </button>
+                </div>
+
+                <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
+                  {([
+                    { league: 'ohl', label: 'OHL' },
+                    { league: 'whl', label: 'WHL' },
+                    { league: 'qmjhl', label: 'QMJHL' },
+                  ] as const).map(({ league, label }) => (
+                    <button
+                      key={league}
+                      style={{ ...S.btn('#94a3b8'), fontSize: 11 }}
+                      disabled={syncingLeague !== null}
+                      onClick={() => syncLeague(league, label)}
+                    >
+                      {syncingLeague === league ? 'Syncing…' : `🔄 Sync ${label}`}
+                    </button>
+                  ))}
                 </div>
 
                 {lineups.length > 0 && (
