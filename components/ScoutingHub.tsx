@@ -8,7 +8,8 @@
 // report with no game behind it.
 // ============================================================
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import Footer from './Footer';
 import { useUser } from '@clerk/clerk-react';
 import { SavedGameReport, loadMyReports, loadSharedReports } from '../services/gameReportService';
@@ -21,8 +22,12 @@ import ScoutLineupModal from './ScoutLineupModal';
 import LineupSheet from './LineupSheet';
 
 interface Props {
-  isOpen: boolean;
-  onClose: () => void;
+  onNavigateHome: () => void;
+  onOpenRosterSetup: () => void;
+  onOpenGameHistory: () => void;
+  onOpenManual: () => void;
+  onOpenAbout: () => void;
+  onOpenContact: () => void;
 }
 
 function formatDate(iso: string) {
@@ -31,8 +36,27 @@ function formatDate(iso: string) {
   });
 }
 
-export default function ScoutingHub({ isOpen, onClose }: Props) {
+export default function ScoutingHub({ onNavigateHome, onOpenRosterSetup, onOpenGameHistory, onOpenManual, onOpenAbout, onOpenContact }: Props) {
   const { user } = useUser();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null);
+  const menuBtnRef = useRef<HTMLButtonElement>(null);
+
+  const openMenu = () => {
+    const el = menuBtnRef.current;
+    if (el) {
+      const rect = el.getBoundingClientRect();
+      const MENU_WIDTH = 220;
+      const EDGE_MARGIN = 8;
+      let right = window.innerWidth - rect.right;
+      const maxRight = window.innerWidth - MENU_WIDTH - EDGE_MARGIN;
+      right = Math.min(Math.max(EDGE_MARGIN, right), Math.max(EDGE_MARGIN, maxRight));
+      setMenuPos({ top: rect.bottom + 8, right });
+    }
+    setMenuOpen(true);
+  };
+
+  const menuAction = (fn: () => void) => { setMenuOpen(false); fn(); };
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState<'reports' | 'lineups'>('lineups');
   const [reports, setReports] = useState<SavedScoutingReport[]>([]);
@@ -61,24 +85,14 @@ export default function ScoutingHub({ isOpen, onClose }: Props) {
       .finally(() => setLoading(false));
   };
 
+  // Now a real page, mounted fresh every time you navigate here — so a
+  // plain run-once-on-mount effect is enough for both of these; no more
+  // need to gate on an isOpen flag that no longer exists.
   useEffect(() => {
-    if (!isOpen) return;
     refresh();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, user]);
-
-  // Land directly on "Upload lineup" every time the portal opens — this
-  // component stays mounted between opens (isOpen just toggles whether
-  // it renders), so resetting this here on every open is what makes it
-  // the actual landing screen, not just the state's initial default,
-  // which would otherwise only apply once, the very first time this
-  // component ever mounts.
-  useEffect(() => {
-    if (!isOpen) return;
     setEditingLineup('new');
-  }, [isOpen]);
-
-  if (!isOpen) return null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const gamesById = new Map(games.map(g => [g.id, g]));
 
@@ -144,7 +158,7 @@ export default function ScoutingHub({ isOpen, onClose }: Props) {
               <span onClick={() => setPickingPlayerFor(null)} style={{ color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: 20 }}>←</span>
               <span style={{ color: '#fff', fontSize: 14, fontWeight: 700 }}>Pick a player</span>
             </div>
-            <span onClick={onClose} style={{ fontSize: 22, color: 'rgba(255,255,255,0.3)', cursor: 'pointer' }}>×</span>
+            <span onClick={() => setPickingPlayerFor(null)} style={{ fontSize: 22, color: 'rgba(255,255,255,0.3)', cursor: 'pointer' }}>×</span>
           </div>
           <div style={S.body}>
             <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginBottom: 12 }}>
@@ -193,7 +207,7 @@ export default function ScoutingHub({ isOpen, onClose }: Props) {
               <span onClick={() => setPickingGame(false)} style={{ color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: 20 }}>←</span>
               <span style={{ color: '#fff', fontSize: 14, fontWeight: 700 }}>Pick a tracked game</span>
             </div>
-            <span onClick={onClose} style={{ fontSize: 22, color: 'rgba(255,255,255,0.3)', cursor: 'pointer' }}>×</span>
+            <span onClick={() => setPickingGame(false)} style={{ fontSize: 22, color: 'rgba(255,255,255,0.3)', cursor: 'pointer' }}>×</span>
           </div>
           <div style={S.body}>
             {games.length === 0 ? (
@@ -213,17 +227,28 @@ export default function ScoutingHub({ isOpen, onClose }: Props) {
       </>
     );
   } else {
-    // ── Main list ──
+    // ── Main list — a real page now, not an overlay on top of anything,
+    // so there's no backdrop to dim and no "X" to close it — leaving it
+    // means navigating elsewhere, via the menu below or the browser's
+    // own back button.
     screen = (
       <>
-        <div style={S.overlay} onClick={onClose} />
         <div style={S.panel}>
           <div style={S.topbar}>
             <div className="flex items-center gap-3">
               <img src="/Top_Cheese_Hockey_logo.png" alt="Top Cheese Hockey" className="h-7 w-auto" />
               <span className="text-white font-black uppercase tracking-widest text-sm">Scouts Portal</span>
             </div>
-            <span onClick={onClose} style={{ fontSize: 22, color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }}>×</span>
+            <button
+              ref={menuBtnRef}
+              onClick={openMenu}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg border font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 bg-white/5 border-white/10 text-slate-300 hover:bg-white/10"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+              <span>Menu</span>
+            </button>
           </div>
 
           <div style={S.tabBar}>
@@ -392,6 +417,57 @@ export default function ScoutingHub({ isOpen, onClose }: Props) {
           onSaved={refresh}
           onClose={() => setEditingLineup(null)}
         />
+      )}
+
+      {/* Nav menu — same destinations as the main app's menu, so leaving
+          Scouts Portal for another page never means being forced back to
+          the rink specifically. Anchored under the Menu button via a
+          portal, same approach as Header.tsx's own dropdown. */}
+      {menuOpen && menuPos && createPortal(
+        <>
+          <div
+            onClick={() => setMenuOpen(false)}
+            style={{ position: 'fixed', inset: 0, zIndex: 999998, background: 'transparent' }}
+          />
+          <div style={{
+            position: 'fixed', top: menuPos.top, right: menuPos.right, width: '220px',
+            maxHeight: 'calc(100vh - ' + menuPos.top + 'px - 16px)',
+            zIndex: 999999, background: '#0f1620',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: '14px',
+            display: 'flex', flexDirection: 'column',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.7)',
+            overflow: 'hidden',
+          }}>
+            <div style={{ padding: '8px', display: 'flex', flexDirection: 'column', gap: '2px', overflowY: 'auto' }}>
+              {([
+                { label: 'Back to rink', icon: '🏒', action: onNavigateHome },
+                { label: 'Roster Setup', icon: '➕', action: onOpenRosterSetup },
+                { label: 'Game History', icon: '📁', action: onOpenGameHistory },
+                null,
+                { label: 'User Manual', icon: '📋', action: onOpenManual },
+                { label: 'About Us', icon: 'ℹ️', action: onOpenAbout },
+                { label: 'Contact Us', icon: '✉️', action: onOpenContact },
+              ] as any[]).map((item: any, i: number) =>
+                item === null ? (
+                  <div key={i} style={{ height: '1px', background: 'rgba(255,255,255,0.06)', margin: '4px 8px' }} />
+                ) : (
+                  <button
+                    key={item.label}
+                    onClick={() => menuAction(item.action)}
+                    style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '13px 16px', borderRadius: '10px', background: 'transparent', border: 'none', color: 'white', fontWeight: 700, fontSize: '14px', cursor: 'pointer', width: '100%', textAlign: 'left' }}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.07)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <span style={{ fontSize: '18px', width: '24px' }}>{item.icon}</span>
+                    <span>{item.label}</span>
+                  </button>
+                )
+              )}
+            </div>
+          </div>
+        </>,
+        document.body
       )}
     </>
   );
