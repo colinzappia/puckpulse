@@ -9,6 +9,7 @@
 // ============================================================
 
 import React, { useState, useEffect } from 'react';
+import Footer from './Footer';
 import { useUser } from '@clerk/clerk-react';
 import { SavedGameReport, loadMyReports, loadSharedReports } from '../services/gameReportService';
 import { SavedScoutingReport, loadMyScoutingReports } from '../services/scoutingReportService';
@@ -199,7 +200,10 @@ export default function ScoutingHub({ isOpen, onClose }: Props) {
         <div style={S.overlay} onClick={onClose} />
         <div style={S.panel}>
           <div style={S.topbar}>
-            <span style={{ color: '#fff', fontSize: 15, fontWeight: 700 }}>Scouts Portal</span>
+            <div className="flex items-center gap-3">
+              <img src="/Top_Cheese_Hockey_logo.png" alt="Top Cheese Hockey" className="h-7 w-auto" />
+              <span className="text-white font-black uppercase tracking-widest text-sm">Scouts Portal</span>
+            </div>
             <span onClick={onClose} style={{ fontSize: 22, color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }}>×</span>
           </div>
 
@@ -327,6 +331,8 @@ export default function ScoutingHub({ isOpen, onClose }: Props) {
                 )}
               </>
             )}
+
+            <Footer />
           </div>
         </div>
       </>
