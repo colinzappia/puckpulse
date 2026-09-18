@@ -443,10 +443,10 @@ export default function ScoutLineupModal({ existing, allLineups, onSaved, onClos
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showGamePicker, setShowGamePicker] = useState(false);
-  const [scoutingPrefill, setScoutingPrefill] = useState<{ playerName: string; teamName: string; gameDate: string } | null>(null);
+  const [scoutingPrefill, setScoutingPrefill] = useState<{ playerName: string; playerNumber: string; position: string; teamName: string; gameDate: string } | null>(null);
 
   const openScoutingReportFor = (p: Player, teamNameForPlayer: string) => {
-    setScoutingPrefill({ playerName: p.name, teamName: teamNameForPlayer, gameDate });
+    setScoutingPrefill({ playerName: p.name, playerNumber: p.number, position: p.position || '', teamName: teamNameForPlayer, gameDate });
   };
 
   const sensors = useSensors(
@@ -586,7 +586,12 @@ export default function ScoutLineupModal({ existing, allLineups, onSaved, onClos
                     <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8, fontWeight: 700 }}>
                       Opponent (view only — edit separately)
                     </div>
-                    <LineupSheet roster={pairedLineup.roster} teamName={pairedLineup.teamName} accent="#f87171" />
+                    <LineupSheet
+                      roster={pairedLineup.roster}
+                      teamName={pairedLineup.teamName}
+                      accent="#f87171"
+                      onPlayerClick={p => openScoutingReportFor(p, pairedLineup.teamName)}
+                    />
                   </div>
                 )}
               </div>
