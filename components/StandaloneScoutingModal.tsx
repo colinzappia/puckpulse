@@ -25,6 +25,11 @@ interface Props {
   // Every standalone report already loaded in the hub — used only to warn
   // on a likely duplicate player name before creating a new one.
   existingReports?: SavedScoutingReport[];
+  // Seeds a brand-new report's fields (from a scouted lineup's player,
+  // say) without pretending it's an already-saved record — unlike
+  // `existing`, this never shows a Delete button and never treats the
+  // save as an update. Ignored when `existing` is set.
+  prefill?: { playerName?: string; teamName?: string; gameDate?: string };
   onSaved: () => void;
   onClose: () => void;
 }
@@ -40,11 +45,11 @@ const RATING_FIELDS: { key: keyof ScoutRatings; label: string }[] = [
   { key: 'physicality', label: 'Physicality' },
 ];
 
-export default function StandaloneScoutingModal({ existing, existingReports, onSaved, onClose }: Props) {
+export default function StandaloneScoutingModal({ existing, existingReports, prefill, onSaved, onClose }: Props) {
   const { user } = useUser();
-  const [playerName, setPlayerName] = useState(existing?.playerName || '');
-  const [teamName, setTeamName] = useState(existing?.teamName || '');
-  const [gameDate, setGameDate] = useState(existing?.gameDate || '');
+  const [playerName, setPlayerName] = useState(existing?.playerName || prefill?.playerName || '');
+  const [teamName, setTeamName] = useState(existing?.teamName || prefill?.teamName || '');
+  const [gameDate, setGameDate] = useState(existing?.gameDate || prefill?.gameDate || '');
   const [ratings, setRatings] = useState<ScoutRatings>(existing?.ratings || {});
   const [notes, setNotes] = useState(existing?.notes || '');
   const [saving, setSaving] = useState(false);
