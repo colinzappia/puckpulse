@@ -4,6 +4,73 @@ const supabaseAdmin = process.env.SUPABASE_SERVICE_ROLE_KEY
   ? createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
   : null;
 
+// Mirrors data/adminConfig.ts on the frontend — kept as a separate copy
+// here since this file can't import from the frontend bundle. Update
+// both together if this list ever changes.
+const ADMIN_EMAILS = [
+  'colinzappia@gmail.com',
+  'derekfroats19@gmail.com',
+  'macopelo17@gmail.com',
+  'marcodinardo24@gmail.com',
+  'mmcnamee12@hotmail.com',
+  'codycaron@cunet.carleton.ca',
+  'shahbazimel@gmail.com',
+  'patrick.grandmaitre@uottawa.ca',
+  'patrickdelislehoude@cunet.carleton.ca',
+  'jboyd@ontariohockeyleague.com',
+  'boydjam@gmail.com',
+  'andrewmercer@rogers.com',
+  'pstoykewych@ottawa67s.com',
+  'barber.hockey@outlook.com',
+  'abbottnhl@gmail.com',
+  'lennyzappia@gmail.com',
+  'turpinliam@gmail.com',
+];
+
+// Confirms the request actually came from a signed-in admin — checking
+// only in the UI isn't real security, since anyone who finds this URL
+// could call it directly, bypassing the app entirely. Two steps:
+// (1) the bearer token is verified as a genuine, currently-valid Clerk
+// session via Supabase (which already trusts Clerk for this, from the
+// same integration RLS relies on) — this can't be faked by the caller.
+// (2) Clerk's default session token doesn't include email, only a user
+// ID, so that verified ID is looked up against Clerk's own servers
+// (server-to-server, using the account's secret key) to get the real
+// email, which is then checked against the admin list. Nothing here
+// trusts anything the browser itself claims about who it is.
+async function verifyAdminCaller(req) {
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+  if (!token) return { ok: false, status: 401, error: 'Not signed in.' };
+
+  if (!process.env.VITE_SUPABASE_ANON_KEY) {
+    return { ok: false, status: 500, error: 'Server is not configured to verify sign-in.' };
+  }
+  const supabaseAuth = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY);
+  const { data: authData, error: authError } = await supabaseAuth.auth.getUser(token);
+  if (authError || !authData?.user?.id) {
+    return { ok: false, status: 401, error: 'Not signed in.' };
+  }
+
+  if (!process.env.CLERK_SECRET_KEY) {
+    return { ok: false, status: 500, error: 'Server is not configured to verify admin access.' };
+  }
+  const clerkRes = await fetch(`https://api.clerk.com/v1/users/${authData.user.id}`, {
+    headers: { Authorization: `Bearer ${process.env.CLERK_SECRET_KEY}` },
+  });
+  if (!clerkRes.ok) {
+    return { ok: false, status: 401, error: 'Could not verify your account.' };
+  }
+  const clerkUser = await clerkRes.json();
+  const primary = clerkUser.email_addresses?.find(e => e.id === clerkUser.primary_email_address_id);
+  const email = (primary?.email_address || clerkUser.email_addresses?.[0]?.email_address || '').toLowerCase();
+
+  if (!ADMIN_EMAILS.includes(email)) {
+    return { ok: false, status: 403, error: 'Admin access required.' };
+  }
+  return { ok: true, email };
+}
+
 // Each CHL league's HockeyTech/LeagueStat client code, public API key, and
 // the season_id for the CURRENT 2026-27 REGULAR season specifically —
 // preseason has its own separate season_id (87 for OHL), so asking for
@@ -67,6 +134,11 @@ export default async function handler(req, res) {
   }
   if (!supabaseAdmin) {
     return res.status(500).json({ error: 'Server is not configured for database writes (missing service role key).' });
+  }
+
+  const auth = await verifyAdminCaller(req);
+  if (!auth.ok) {
+    return res.status(auth.status).json({ error: auth.error });
   }
 
   const league = (req.body?.league || 'ohl').toLowerCase();
