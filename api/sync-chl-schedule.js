@@ -12,6 +12,12 @@ const supabaseAdmin = process.env.SUPABASE_SERVICE_ROLE_KEY
 // season ends and the league assigns new season_ids for the next one.
 const LEAGUES = {
   ohl: { clientCode: 'ohl', apiKey: 'f1aa699db3d81487', seasonId: '88' },
+  whl: { clientCode: 'whl', apiKey: 'f1aa699db3d81487', seasonId: '294' },
+  // QMJHL's actual internal client code is "lhjmq" (its French acronym) —
+  // kept as "qmjhl" everywhere in our own data and UI, since that's what
+  // scouts actually call it; the lhjmq mapping only matters for this one
+  // API call.
+  qmjhl: { clientCode: 'lhjmq', apiKey: 'f1aa699db3d81487', seasonId: '214' },
 };
 
 const HOCKEYTECH_BASE = 'https://lscluster.hockeytech.com/feed/index.php';
