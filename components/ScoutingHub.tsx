@@ -358,6 +358,7 @@ export default function ScoutingHub({ isOpen, onClose }: Props) {
       {editingLineup !== null && (
         <ScoutLineupModal
           existing={editingLineup === 'new' ? null : editingLineup}
+          allLineups={lineups}
           onSaved={refresh}
           onClose={() => setEditingLineup(null)}
         />
