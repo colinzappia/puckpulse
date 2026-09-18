@@ -412,8 +412,15 @@ export default function ScoutingHub({ onNavigateHome, onOpenRosterSetup, onOpenG
 
       {editingLineup !== null && (
         <ScoutLineupModal
+          // Keyed on identity so switching from a blank "new" lineup to
+          // an already-saved one (or between two different saved ones)
+          // actually remounts this component — otherwise its internal
+          // team/roster state, set up once on first mount, would just
+          // keep showing whatever was there before the switch.
+          key={editingLineup === 'new' ? 'new' : editingLineup.id}
           existing={editingLineup === 'new' ? null : editingLineup}
           allLineups={lineups}
+          onOpenExisting={setEditingLineup}
           onSaved={refresh}
           onClose={() => setEditingLineup(null)}
         />
