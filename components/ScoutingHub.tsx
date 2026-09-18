@@ -84,7 +84,7 @@ export default function ScoutingHub({ onNavigateHome, onOpenRosterSetup, onOpenG
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Sync failed.');
-      alert(`${label} sync complete — found ${data.gamesFound} games, saved ${data.upserted}${data.failures > 0 ? `, ${data.failures} failed` : ''}.`);
+      alert(`${label} sync complete — found ${data.gamesFound} games (${data.dateRangeFound || 'no dates'}), saved ${data.upserted}${data.skippedPast > 0 ? `, skipped ${data.skippedPast} already past` : ''}${data.failures > 0 ? `, ${data.failures} failed` : ''}.`);
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Sync failed.');
     } finally {
