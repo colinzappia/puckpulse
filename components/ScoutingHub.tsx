@@ -111,6 +111,25 @@ export default function ScoutingHub({ isOpen, onClose }: Props) {
     ? lineups.filter(l => [l.teamName, l.opponent].filter(Boolean).join(' ').toLowerCase().includes(q))
     : lineups;
 
+  // Two lineups uploaded for the same game (each naming the other as its
+  // opponent, same date) are two separate saved rows, but they represent
+  // one game to a scout browsing the list — collapse them into a single
+  // row rather than showing the same game twice.
+  const findPair = (l: SavedScoutedLineup) =>
+    filteredLineups.find(o => o.id !== l.id && o.teamName === l.opponent && o.opponent === l.teamName && o.gameDate === l.gameDate);
+  const dedupedLineups = (() => {
+    const seen = new Set<string>();
+    const result: SavedScoutedLineup[] = [];
+    for (const l of filteredLineups) {
+      if (seen.has(l.id)) continue;
+      const pair = findPair(l);
+      if (pair) seen.add(pair.id);
+      seen.add(l.id);
+      result.push(l);
+    }
+    return result;
+  })();
+
   let screen: React.ReactNode;
 
   // ── Sub-screen: pick which player from a chosen tracked game ──
@@ -315,19 +334,24 @@ export default function ScoutingHub({ isOpen, onClose }: Props) {
                   <div style={{ textAlign: 'center', padding: '40px 0', color: 'rgba(255,255,255,0.25)', fontSize: 13, lineHeight: 1.7 }}>
                     No lineups uploaded yet.{'\n'}Visible to everyone on your plan once you add one.
                   </div>
-                ) : filteredLineups.length === 0 ? (
+                ) : dedupedLineups.length === 0 ? (
                   <div style={{ textAlign: 'center', padding: '40px 0', color: 'rgba(255,255,255,0.25)', fontSize: 13 }}>
                     No lineups match "{searchQuery.trim()}".
                   </div>
                 ) : (
-                  filteredLineups.map(l => (
-                    <div key={l.id} style={S.card} onClick={() => setEditingLineup(l)}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', marginBottom: 2 }}>{l.teamName}</div>
-                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>
-                        {[l.opponent && `vs ${l.opponent}`, l.gameDate].filter(Boolean).join(' · ') || `${l.roster.length} players`}
+                  dedupedLineups.map(l => {
+                    const pair = findPair(l);
+                    return (
+                      <div key={l.id} style={S.card} onClick={() => setEditingLineup(l)}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', marginBottom: 2 }}>
+                          {pair ? `${l.teamName} vs ${pair.teamName}` : l.teamName}
+                        </div>
+                        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>
+                          {l.gameDate || (pair ? undefined : l.opponent && `vs ${l.opponent}`) || `${l.roster.length} players`}
+                        </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </>
             )}
