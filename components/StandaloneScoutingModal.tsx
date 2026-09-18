@@ -18,7 +18,6 @@ import {
 } from '../services/scoutingReportService';
 
 import { downloadScoutingReportPDF, emailScoutingReport } from '../utils/scoutingExport';
-import LeagueGamePicker from './LeagueGamePicker';
 
 interface Props {
   existing?: SavedScoutingReport | null;
@@ -56,7 +55,6 @@ export default function StandaloneScoutingModal({ existing, existingReports, pre
   const [notes, setNotes] = useState(existing?.notes || '');
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [showGamePicker, setShowGamePicker] = useState(false);
 
   const canSave = playerName.trim().length > 0;
 
@@ -196,15 +194,6 @@ export default function StandaloneScoutingModal({ existing, existingReports, pre
             onChange={e => setGameDate(e.target.value)}
           />
 
-          {!existing && (
-            <button
-              style={{ ...S.btn('#34d399'), marginBottom: 12 }}
-              onClick={() => setShowGamePicker(true)}
-            >
-              📅 Pick from OHL schedule
-            </button>
-          )}
-
           <div style={{ marginTop: 8, marginBottom: 4 }}>
             <div style={S.sectionLabel}>Your evaluation</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
@@ -270,16 +259,6 @@ export default function StandaloneScoutingModal({ existing, existingReports, pre
           )}
         </div>
       </div>
-
-      {showGamePicker && (
-        <LeagueGamePicker
-          onPickOne={result => {
-            setTeamName(result.teamName);
-            setGameDate(result.gameDate);
-          }}
-          onClose={() => setShowGamePicker(false)}
-        />
-      )}
     </div>
   );
 }
