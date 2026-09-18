@@ -1,6 +1,6 @@
 // ============================================================
 // LeagueGamePicker.tsx
-// Browse and search synced league games (currently OHL only) to
+// Browse and search synced league games (OHL, WHL, QMJHL) to
 // pick a specific one instead of typing team names and a date by
 // hand. Two modes:
 //   - onPickBoth: picking a game immediately fills both team
@@ -32,10 +32,13 @@ export default function LeagueGamePicker({ onPickBoth, onPickOne, onClose }: Pro
   const [query, setQuery] = useState('');
   const [choosingSideFor, setChoosingSideFor] = useState<LeagueGame | null>(null);
 
-  // Computed in Eastern time specifically (where every OHL team plays),
-  // not the viewer's own device timezone and not UTC — using UTC here
-  // would roll "today" over to tomorrow mid-evening, silently hiding
-  // every game happening that night.
+  // Computed in Eastern time — correct for OHL and QMJHL, both played
+  // Eastern. WHL plays Pacific/Mountain, so a very late WHL start could
+  // occasionally land on the wrong side of this cutoff right around
+  // Eastern midnight — a narrow edge case, not one this attempts to
+  // fully solve, but using Eastern time here is still far more correct
+  // than UTC or the viewer's own device timezone, either of which would
+  // misclassify "today" far more often, for every league, every day.
   const todayStr = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'America/Toronto',
     year: 'numeric',
@@ -44,7 +47,7 @@ export default function LeagueGamePicker({ onPickBoth, onPickOne, onClose }: Pro
   }).format(new Date());
 
   useEffect(() => {
-    loadLeagueGames('ohl').then(g => {
+    loadLeagueGames().then(g => {
       setGames(g);
       setLoading(false);
     });
@@ -106,7 +109,7 @@ export default function LeagueGamePicker({ onPickBoth, onPickOne, onClose }: Pro
     <div style={S.overlay} onClick={onClose}>
       <div style={S.panel} onClick={e => e.stopPropagation()}>
         <div style={S.topbar}>
-          <span style={{ color: '#fff', fontSize: 14, fontWeight: 700 }}>Today's OHL games</span>
+          <span style={{ color: '#fff', fontSize: 14, fontWeight: 700 }}>Today's games</span>
           <span onClick={onClose} style={{ fontSize: 22, color: 'rgba(255,255,255,0.3)', cursor: 'pointer' }}>×</span>
         </div>
         <div style={S.body}>
@@ -123,10 +126,10 @@ export default function LeagueGamePicker({ onPickBoth, onPickOne, onClose }: Pro
             <div style={S.empty}>Loading…</div>
           ) : games.length === 0 ? (
             <div style={S.empty}>
-              No games synced yet.{'\n'}Go to the Lineups tab and tap "🔄 Sync OHL Schedule" first.
+              No games synced yet.{'\n'}Go to the Lineups tab and sync a league's schedule first.
             </div>
           ) : todaysGames.length === 0 ? (
-            <div style={S.empty}>No OHL games today.</div>
+            <div style={S.empty}>No games today.</div>
           ) : filtered.length === 0 ? (
             <div style={S.empty}>No games match "{query}".</div>
           ) : (
@@ -143,8 +146,13 @@ export default function LeagueGamePicker({ onPickBoth, onPickOne, onClose }: Pro
                   }
                 }}
               >
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', marginBottom: 2 }}>
-                  {g.awayTeam} @ {g.homeTeam}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                  <span style={{ fontSize: 8, fontWeight: 900, color: '#34d399', border: '0.5px solid rgba(52,211,153,0.4)', borderRadius: 4, padding: '1px 5px', textTransform: 'uppercase' as const }}>
+                    {g.league}
+                  </span>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>
+                    {g.awayTeam} @ {g.homeTeam}
+                  </div>
                 </div>
                 <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>
                   {formatGameDate(g.gameDate)}{g.venue ? ` · ${g.venue}` : ''}
