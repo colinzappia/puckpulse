@@ -843,7 +843,6 @@ const App: React.FC = () => {
 
   // ── Game history state ─────────────────────────────────────
   const [showGameHistory, setShowGameHistory] = useState(false);
-  const [showScoutingHub, setShowScoutingHub] = useState(false);
   const [savingReport, setSavingReport] = useState(false);
   const [scoutingReports, setScoutingReports] = useState<Record<string, { team: Team; playerNumber: string; ratings: ScoutRatings; notes: string }>>({});
   const [showLiveScouting, setShowLiveScouting] = useState(false);
@@ -1924,6 +1923,29 @@ const App: React.FC = () => {
 
   if (!isSubscribed && !isAdmin) return <PricingGate onSubscribed={() => setIsSubscribed(true)} />;
 
+  // Scouts Portal — a real page (its own URL, not a modal toggled over
+  // the rink), reachable from the menu and directly bookmarkable/
+  // back-buttonable like /manual and /about. The other menu items it
+  // offers that are still modal state on the main page (Roster Setup,
+  // Game History) are wired directly to this same component instance's
+  // real setters below, since navigating here never actually unmounts
+  // App — only the conditionally-rendered branch changes.
+  if (location.pathname === '/scouts') {
+    return (
+      <>
+        <ScoutingHub
+          onNavigateHome={() => navigate('/')}
+          onOpenRosterSetup={() => { setShowSetup(true); navigate('/'); }}
+          onOpenGameHistory={() => { setShowGameHistory(true); navigate('/'); }}
+          onOpenManual={() => navigate('/manual')}
+          onOpenAbout={() => navigate('/about')}
+          onOpenContact={() => navigate('/contact')}
+        />
+        <SupportChatWidget />
+      </>
+    );
+  }
+
   return (
     <ThemedBackground intensity="subtle" className="flex flex-col text-slate-200">
       {ADS_ENABLED && <AdBanner position="top" onContactClick={() => navigate('/advertise')} />}
@@ -2068,7 +2090,7 @@ const App: React.FC = () => {
           leftTeam={leftTeamDisplay} rightTeam={rightTeamDisplay} period={currentPeriod}
           onOpenSetup={() => setShowSetup(true)} onOpenManual={() => navigate('/manual')}
           onOpenGameHistory={() => setShowGameHistory(true)}
-          onOpenScouting={() => setShowScoutingHub(true)}
+          onOpenScouting={() => navigate('/scouts')}
           onSetPeriod={setCurrentPeriod} onSwapSides={() => setIsRosterSwapped(!isRosterSwapped)}
           onNewGame={handleNewGame} onEndGame={handleEndGame} onOpenAbout={() => navigate('/about')} onBackToLanding={handleBackToLanding}
           onOpenContact={() => navigate('/contact')}
@@ -3105,8 +3127,6 @@ const App: React.FC = () => {
         onClose={() => setShowLiveScouting(false)}
       />
     )}
-
-    <ScoutingHub isOpen={showScoutingHub} onClose={() => setShowScoutingHub(false)} />
 
     {/* End Game modal */}
     {showEndGame && (
