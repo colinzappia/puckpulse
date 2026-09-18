@@ -11,7 +11,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import Footer from './Footer';
-import { useUser } from '@clerk/clerk-react';
+import { useUser, useAuth } from '@clerk/clerk-react';
+import { ADMIN_EMAILS } from '../data/adminConfig';
 import { SavedGameReport, loadMyReports, loadSharedReports } from '../services/gameReportService';
 import { SavedScoutingReport, loadMyScoutingReports } from '../services/scoutingReportService';
 import { SavedScoutedLineup, loadAllScoutedLineups } from '../services/scoutedLineupService';
@@ -19,6 +20,7 @@ import { Team } from '../types';
 import ScoutingReportModal from './ScoutingReportModal';
 import StandaloneScoutingModal from './StandaloneScoutingModal';
 import ScoutLineupModal from './ScoutLineupModal';
+import ImportScheduleModal from './ImportScheduleModal';
 import LineupSheet from './LineupSheet';
 
 interface Props {
@@ -38,6 +40,8 @@ function formatDate(iso: string) {
 
 export default function ScoutingHub({ onNavigateHome, onOpenRosterSetup, onOpenGameHistory, onOpenManual, onOpenAbout, onOpenContact }: Props) {
   const { user } = useUser();
+  const { getToken } = useAuth();
+  const isAdmin = ADMIN_EMAILS.includes((user?.primaryEmailAddress?.emailAddress || '').toLowerCase());
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null);
   const menuBtnRef = useRef<HTMLButtonElement>(null);
@@ -67,13 +71,15 @@ export default function ScoutingHub({ onNavigateHome, onOpenRosterSetup, onOpenG
   const [editingStandalone, setEditingStandalone] = useState<SavedScoutingReport | 'new' | null>(null);
   const [editingLineup, setEditingLineup] = useState<SavedScoutedLineup | 'new' | null>(null);
   const [syncingLeague, setSyncingLeague] = useState<string | null>(null);
+  const [showImportSchedule, setShowImportSchedule] = useState(false);
 
   const syncLeague = async (league: string, label: string) => {
     setSyncingLeague(league);
     try {
+      const token = await getToken();
       const res = await fetch('/api/sync-chl-schedule', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ league }),
       });
       const data = await res.json();
@@ -339,22 +345,33 @@ export default function ScoutingHub({ onNavigateHome, onOpenRosterSetup, onOpenG
                   <button style={S.btn('#34d399')} onClick={() => setEditingLineup('new')}>+ Upload lineup</button>
                 </div>
 
-                <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
-                  {([
-                    { league: 'ohl', label: 'OHL' },
-                    { league: 'whl', label: 'WHL' },
-                    { league: 'qmjhl', label: 'QMJHL' },
-                  ] as const).map(({ league, label }) => (
+                {isAdmin && (
+                  <>
+                    <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap' as const }}>
+                      {([
+                        { league: 'ohl', label: 'OHL' },
+                        { league: 'whl', label: 'WHL' },
+                        { league: 'qmjhl', label: 'QMJHL' },
+                      ] as const).map(({ league, label }) => (
+                        <button
+                          key={league}
+                          style={{ ...S.btn('#94a3b8'), fontSize: 11, width: 'auto', flex: '1 1 auto' }}
+                          disabled={syncingLeague !== null}
+                          onClick={() => syncLeague(league, label)}
+                        >
+                          {syncingLeague === league ? 'Syncing…' : `🔄 Sync ${label}`}
+                        </button>
+                      ))}
+                    </div>
+
                     <button
-                      key={league}
-                      style={{ ...S.btn('#94a3b8'), fontSize: 11 }}
-                      disabled={syncingLeague !== null}
-                      onClick={() => syncLeague(league, label)}
+                      style={{ ...S.btn('#a78bfa'), fontSize: 11, marginBottom: 16 }}
+                      onClick={() => setShowImportSchedule(true)}
                     >
-                      {syncingLeague === league ? 'Syncing…' : `🔄 Sync ${label}`}
+                      📊 Import league schedule from Excel
                     </button>
-                  ))}
-                </div>
+                  </>
+                )}
 
                 {lineups.length > 0 && (
                   <input
@@ -435,6 +452,13 @@ export default function ScoutingHub({ onNavigateHome, onOpenRosterSetup, onOpenG
           onOpenExisting={setEditingLineup}
           onSaved={refresh}
           onClose={() => setEditingLineup(null)}
+        />
+      )}
+
+      {showImportSchedule && (
+        <ImportScheduleModal
+          getToken={getToken}
+          onClose={() => { setShowImportSchedule(false); refresh(); }}
         />
       )}
 
