@@ -1,6 +1,6 @@
 // ============================================================
 // leagueGamesService.ts
-// Reads the synced league schedule (currently OHL only) from
+// Reads the synced league schedule (OHL, WHL, QMJHL) from
 // Supabase. Writing to this table only ever happens server-side,
 // via api/sync-chl-schedule.js using the service role key — this
 // file is read-only by design.
@@ -21,11 +21,11 @@ export interface LeagueGame {
   status: string | null;
 }
 
-export async function loadLeagueGames(league: string = 'ohl'): Promise<LeagueGame[]> {
+export async function loadLeagueGames(leagues: string[] = ['ohl', 'whl', 'qmjhl']): Promise<LeagueGame[]> {
   const { data, error } = await supabase
     .from('league_games')
     .select('*')
-    .eq('league', league)
+    .in('league', leagues)
     .order('game_date', { ascending: true });
 
   if (error) {
