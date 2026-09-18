@@ -27,6 +27,7 @@ export interface SavedScoutingReport {
   teamSide: 'home' | 'away' | null;
   playerNumber: string | null;
   playerName: string;
+  position: string | null;
   teamName: string | null;
   gameDate: string | null;
   isStandalone: boolean;
@@ -48,6 +49,7 @@ export async function saveScoutingReport(
     teamSide?: 'home' | 'away';
     playerNumber?: string;
     playerName: string;
+    position?: string;
     teamName?: string;
     gameDate?: string;
     isStandalone?: boolean;
@@ -63,6 +65,7 @@ export async function saveScoutingReport(
       team_side: data.teamSide || null,
       player_number: data.playerNumber || null,
       player_name: data.playerName,
+      position: data.position || null,
       team_name: data.teamName || null,
       game_date: data.gameDate || null,
       is_standalone: data.isStandalone ?? false,
@@ -109,6 +112,7 @@ export async function updateScoutingReport(
   reportId: string,
   data: {
     playerName?: string;
+    position?: string;
     teamName?: string;
     gameDate?: string;
     ratings?: ScoutRatings;
@@ -118,6 +122,7 @@ export async function updateScoutingReport(
 ): Promise<void> {
   const updates: Record<string, unknown> = {};
   if (data.playerName !== undefined) updates.player_name = data.playerName;
+  if (data.position !== undefined) updates.position = data.position;
   if (data.teamName !== undefined) updates.team_name = data.teamName;
   if (data.gameDate !== undefined) updates.game_date = data.gameDate;
   if (data.ratings !== undefined) updates.ratings = data.ratings;
@@ -149,6 +154,7 @@ function mapScoutingReport(row: Record<string, unknown>): SavedScoutingReport {
     teamSide: (row.team_side as 'home' | 'away') || null,
     playerNumber: (row.player_number as string) || null,
     playerName: (row.player_name as string) || '',
+    position: (row.position as string) || null,
     teamName: (row.team_name as string) || null,
     gameDate: (row.game_date as string) || null,
     isStandalone: (row.is_standalone as boolean) || false,
