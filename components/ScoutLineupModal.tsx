@@ -558,7 +558,7 @@ export default function ScoutLineupModal({ existing, allLineups, onOpenExisting,
             className="ml-auto text-[10px] font-black uppercase tracking-wide px-3 py-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/15 text-emerald-400"
             onClick={() => setShowGamePicker(true)}
           >
-            📅 Pick from OHL schedule
+            📅 Pick from CHL schedule
           </button>
         </div>
 
