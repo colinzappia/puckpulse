@@ -29,7 +29,7 @@ interface Props {
   // say) without pretending it's an already-saved record — unlike
   // `existing`, this never shows a Delete button and never treats the
   // save as an update. Ignored when `existing` is set.
-  prefill?: { playerName?: string; teamName?: string; gameDate?: string };
+  prefill?: { playerName?: string; playerNumber?: string; position?: string; teamName?: string; gameDate?: string };
   onSaved: () => void;
   onClose: () => void;
 }
@@ -48,6 +48,8 @@ const RATING_FIELDS: { key: keyof ScoutRatings; label: string }[] = [
 export default function StandaloneScoutingModal({ existing, existingReports, prefill, onSaved, onClose }: Props) {
   const { user } = useUser();
   const [playerName, setPlayerName] = useState(existing?.playerName || prefill?.playerName || '');
+  const [playerNumber, setPlayerNumber] = useState(existing?.playerNumber || prefill?.playerNumber || '');
+  const [position, setPosition] = useState(existing?.position || prefill?.position || '');
   const [teamName, setTeamName] = useState(existing?.teamName || prefill?.teamName || '');
   const [gameDate, setGameDate] = useState(existing?.gameDate || prefill?.gameDate || '');
   const [ratings, setRatings] = useState<ScoutRatings>(existing?.ratings || {});
@@ -93,6 +95,7 @@ export default function StandaloneScoutingModal({ existing, existingReports, pre
       if (existing) {
         await updateScoutingReport(existing.id, {
           playerName: playerName.trim(),
+          position: position.trim() || undefined,
           teamName: teamName.trim() || undefined,
           gameDate: gameDate || undefined,
           ratings,
@@ -101,6 +104,8 @@ export default function StandaloneScoutingModal({ existing, existingReports, pre
       } else {
         await saveScoutingReport(user.id, {
           playerName: playerName.trim(),
+          playerNumber: playerNumber.trim() || undefined,
+          position: position.trim() || undefined,
           teamName: teamName.trim() || undefined,
           gameDate: gameDate || undefined,
           isStandalone: true,
@@ -163,6 +168,20 @@ export default function StandaloneScoutingModal({ existing, existingReports, pre
             onChange={e => setPlayerName(e.target.value)}
             placeholder="Player name"
           />
+          <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+            <input
+              style={{ ...S.input, marginBottom: 0, width: 90, flexShrink: 0 }}
+              value={playerNumber}
+              onChange={e => setPlayerNumber(e.target.value)}
+              placeholder="#"
+            />
+            <input
+              style={{ ...S.input, marginBottom: 0, flex: 1 }}
+              value={position}
+              onChange={e => setPosition(e.target.value)}
+              placeholder="Position (e.g. C, LW, D)"
+            />
+          </div>
           <input
             style={S.input}
             value={teamName}
