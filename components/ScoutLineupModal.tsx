@@ -40,8 +40,16 @@ interface Props {
   existing?: SavedScoutedLineup | null;
   // Every lineup already loaded in the hub — used to find this one's
   // opponent (another saved lineup naming this team as its own
-  // opponent, same date) so both sides of the same game load together.
+  // opponent, same date) so both sides of the same game load together,
+  // and also to check whether a game picked from the OHL schedule was
+  // already uploaded by someone else.
   allLineups?: SavedScoutedLineup[];
+  // Fires instead of the normal create flow when the OHL game picked
+  // turns out to already have a saved lineup — hands that lineup back
+  // up to the hub so it can reopen this whole modal in edit mode for
+  // the real saved data, rather than showing empty import boxes for a
+  // game someone already scouted.
+  onOpenExisting?: (lineup: SavedScoutedLineup) => void;
   onSaved: () => void;
   onClose: () => void;
 }
@@ -404,7 +412,7 @@ function TeamEntryPane({
   );
 }
 
-export default function ScoutLineupModal({ existing, allLineups, onSaved, onClose }: Props) {
+export default function ScoutLineupModal({ existing, allLineups, onOpenExisting, onSaved, onClose }: Props) {
   const { user } = useUser();
 
   // The other team from the same game, if it was saved too — matched by
@@ -606,6 +614,19 @@ export default function ScoutLineupModal({ existing, allLineups, onSaved, onClos
       {showGamePicker && (
         <LeagueGamePicker
           onPickBoth={game => {
+            // If either team's lineup for this exact game was already
+            // uploaded by anyone, hand off to that saved lineup instead
+            // of starting a blank one — same game, so the same lineup.
+            const already = allLineups?.find(l =>
+              l.gameDate === game.gameDate &&
+              ((l.teamName === game.homeTeam && l.opponent === game.awayTeam) ||
+               (l.teamName === game.awayTeam && l.opponent === game.homeTeam))
+            );
+            if (already && onOpenExisting) {
+              setShowGamePicker(false);
+              onOpenExisting(already);
+              return;
+            }
             setTeamAName(game.homeTeam);
             setTeamBName(game.awayTeam);
             setGameDate(game.gameDate);
