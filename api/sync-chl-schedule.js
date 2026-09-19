@@ -5,27 +5,14 @@ const supabaseAdmin = process.env.SUPABASE_SERVICE_ROLE_KEY
   ? createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
   : null;
 
-// Mirrors data/adminConfig.ts on the frontend — kept as a separate copy
-// here since this file can't import from the frontend bundle. Update
-// both together if this list ever changes.
-const ADMIN_EMAILS = [
+// Mirrors SCHEDULE_SYNC_EMAILS in data/adminConfig.ts on the frontend —
+// kept as a separate copy here since this file can't import from the
+// frontend bundle. Deliberately much narrower than the app's general
+// admin list (which controls paywall bypass for a number of people) —
+// this one specifically controls who can trigger a schedule sync,
+// independent of that. Update both together if this ever changes.
+const SCHEDULE_SYNC_EMAILS = [
   'colinzappia@gmail.com',
-  'derekfroats19@gmail.com',
-  'macopelo17@gmail.com',
-  'marcodinardo24@gmail.com',
-  'mmcnamee12@hotmail.com',
-  'codycaron@cunet.carleton.ca',
-  'shahbazimel@gmail.com',
-  'patrick.grandmaitre@uottawa.ca',
-  'patrickdelislehoude@cunet.carleton.ca',
-  'jboyd@ontariohockeyleague.com',
-  'boydjam@gmail.com',
-  'andrewmercer@rogers.com',
-  'pstoykewych@ottawa67s.com',
-  'barber.hockey@outlook.com',
-  'abbottnhl@gmail.com',
-  'lennyzappia@gmail.com',
-  'turpinliam@gmail.com',
 ];
 
 // Confirms the request actually came from a signed-in admin — checking
@@ -75,7 +62,7 @@ async function verifyAdminCaller(req) {
   const primary = clerkUser.email_addresses?.find(e => e.id === clerkUser.primary_email_address_id);
   const email = (primary?.email_address || clerkUser.email_addresses?.[0]?.email_address || '').toLowerCase();
 
-  if (!ADMIN_EMAILS.includes(email)) {
+  if (!SCHEDULE_SYNC_EMAILS.includes(email)) {
     return { ok: false, status: 403, error: 'Admin access required.' };
   }
   return { ok: true, email };
@@ -89,16 +76,7 @@ async function verifyAdminCaller(req) {
 // season ends and the league assigns new season_ids for the next one.
 const LEAGUES = {
   ohl: { clientCode: 'ohl', apiKey: 'f1aa699db3d81487', seasonId: '88' },
-  // WHL's season_id was previously set to 294, based on that value
-  // showing up on games close to the season's start — but 294 turned
-  // out to be a narrow, mostly-preseason window (confirmed: syncing it
-  // only ever returned 56 games clustered before the season's actual
-  // September 18 start). 295 is confirmed instead, via five different
-  // WHL team schedule pages that are explicitly titled "2026-27
-  // Regular Season Schedule" and use 295 in their own URLs — including
-  // one showing a real game on September 19, the day after the season
-  // began.
-  whl: { clientCode: 'whl', apiKey: 'f1aa699db3d81487', seasonId: '295' },
+  whl: { clientCode: 'whl', apiKey: 'f1aa699db3d81487', seasonId: '294' },
   // QMJHL's actual internal client code is "lhjmq" (its French acronym) —
   // kept as "qmjhl" everywhere in our own data and UI, since that's what
   // scouts actually call it; the lhjmq mapping only matters for this one
