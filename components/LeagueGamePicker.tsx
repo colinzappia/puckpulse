@@ -30,6 +30,7 @@ export default function LeagueGamePicker({ onPickBoth, onPickOne, onClose }: Pro
   const [games, setGames] = useState<LeagueGame[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
+  const [leagueFilter, setLeagueFilter] = useState('all');
   const [choosingSideFor, setChoosingSideFor] = useState<LeagueGame | null>(null);
 
   // Computed in Eastern time — correct for OHL and QMJHL, both played
@@ -58,11 +59,18 @@ export default function LeagueGamePicker({ onPickBoth, onPickOne, onClose }: Pro
     });
   }, []);
 
+  // Built from whatever leagues actually have games synced, rather than
+  // a fixed OHL/WHL/QMJHL list — so a manually-imported league (GTHL,
+  // Alliance, etc.) shows up here automatically too, with no code
+  // change needed every time a new one gets added.
+  const availableLeagues = Array.from(new Set(games.map(g => g.league))).sort();
+
   const todaysGames = games.filter(g => g.gameDate === todayStr);
+  const leagueScoped = leagueFilter === 'all' ? todaysGames : todaysGames.filter(g => g.league === leagueFilter);
   const q = query.trim().toLowerCase();
   const filtered = q
-    ? todaysGames.filter(g => `${g.homeTeam} ${g.awayTeam}`.toLowerCase().includes(q))
-    : todaysGames;
+    ? leagueScoped.filter(g => `${g.homeTeam} ${g.awayTeam}`.toLowerCase().includes(q))
+    : leagueScoped;
 
   const S = {
     overlay: { position: 'fixed' as const, inset: 0, zIndex: 370, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)' },
@@ -119,12 +127,26 @@ export default function LeagueGamePicker({ onPickBoth, onPickOne, onClose }: Pro
         </div>
         <div style={S.body}>
           {todaysGames.length > 0 && (
-            <input
-              style={S.search}
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-              placeholder="Search by team…"
-            />
+            <>
+              <select
+                value={leagueFilter}
+                onChange={e => setLeagueFilter(e.target.value)}
+                style={{ ...S.search, cursor: 'pointer' }}
+              >
+                <option value="all">All leagues ({todaysGames.length})</option>
+                {availableLeagues.map(lg => (
+                  <option key={lg} value={lg}>
+                    {lg.toUpperCase()} ({todaysGames.filter(g => g.league === lg).length})
+                  </option>
+                ))}
+              </select>
+              <input
+                style={S.search}
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                placeholder="Search by team…"
+              />
+            </>
           )}
 
           {loading ? (
@@ -136,7 +158,9 @@ export default function LeagueGamePicker({ onPickBoth, onPickOne, onClose }: Pro
           ) : todaysGames.length === 0 ? (
             <div style={S.empty}>No games today.</div>
           ) : filtered.length === 0 ? (
-            <div style={S.empty}>No games match "{query}".</div>
+            <div style={S.empty}>
+              {q ? `No games match "${query}".` : `No ${leagueFilter.toUpperCase()} games today.`}
+            </div>
           ) : (
             filtered.map(g => (
               <div
