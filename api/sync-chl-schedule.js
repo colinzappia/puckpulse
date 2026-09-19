@@ -142,9 +142,19 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Server is not configured for database writes (missing service role key).' });
   }
 
-  const auth = await verifyAdminCaller(req);
-  if (!auth.ok) {
-    return res.status(auth.status).json({ error: auth.error });
+  // A scheduled GitHub Action can trigger this same sync automatically,
+  // carrying this shared secret instead of a real signed-in session —
+  // there's no user to verify in that case, only a value only the
+  // Action and this server both know. Manual use from Scouts Portal
+  // (a real admin, signed in) still goes through the normal check below.
+  const cronSecret = req.headers['x-cron-secret'];
+  const isCron = process.env.CRON_SECRET && cronSecret === process.env.CRON_SECRET;
+
+  if (!isCron) {
+    const auth = await verifyAdminCaller(req);
+    if (!auth.ok) {
+      return res.status(auth.status).json({ error: auth.error });
+    }
   }
 
   const league = (req.body?.league || 'ohl').toLowerCase();
