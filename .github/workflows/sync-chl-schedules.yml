@@ -1,0 +1,31 @@
+name: Sync CHL Schedules
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'   # every 6 hours, GitHub's own scheduler — no Vercel plan restriction applies here
+  workflow_dispatch:         # also lets you trigger a sync manually from GitHub's Actions tab, any time
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sync OHL
+        run: |
+          curl -X POST "${{ secrets.SYNC_URL }}" \
+            -H "Content-Type: application/json" \
+            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
+            -d '{"league":"ohl"}'
+
+      - name: Sync WHL
+        run: |
+          curl -X POST "${{ secrets.SYNC_URL }}" \
+            -H "Content-Type: application/json" \
+            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
+            -d '{"league":"whl"}'
+
+      - name: Sync QMJHL
+        run: |
+          curl -X POST "${{ secrets.SYNC_URL }}" \
+            -H "Content-Type: application/json" \
+            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
+            -d '{"league":"qmjhl"}'
