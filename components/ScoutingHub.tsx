@@ -12,7 +12,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import Footer from './Footer';
 import { useUser, useAuth } from '@clerk/clerk-react';
-import { ADMIN_EMAILS } from '../data/adminConfig';
+import { SCHEDULE_SYNC_EMAILS } from '../data/adminConfig';
 import { SavedGameReport, loadMyReports, loadSharedReports } from '../services/gameReportService';
 import { SavedScoutingReport, loadMyScoutingReports } from '../services/scoutingReportService';
 import { SavedScoutedLineup, loadAllScoutedLineups } from '../services/scoutedLineupService';
@@ -41,7 +41,7 @@ function formatDate(iso: string) {
 export default function ScoutingHub({ onNavigateHome, onOpenRosterSetup, onOpenGameHistory, onOpenManual, onOpenAbout, onOpenContact }: Props) {
   const { user } = useUser();
   const { getToken } = useAuth();
-  const isAdmin = ADMIN_EMAILS.includes((user?.primaryEmailAddress?.emailAddress || '').toLowerCase());
+  const isAdmin = SCHEDULE_SYNC_EMAILS.includes((user?.primaryEmailAddress?.emailAddress || '').toLowerCase());
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null);
   const menuBtnRef = useRef<HTMLButtonElement>(null);
