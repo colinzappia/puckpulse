@@ -208,8 +208,13 @@ export default async function handler(req, res) {
 
       const homeId = String(g.home_team ?? g.HomeID ?? '');
       const awayId = String(g.visiting_team ?? g.VisitorID ?? '');
-      const homeTeam = teamNames[homeId] || g.home_team_name || g.HomeLongName || `Team ${homeId}`;
-      const awayTeam = teamNames[awayId] || g.visiting_team_name || g.VisitorLongName || `Team ${awayId}`;
+      // QMJHL names teams "City, Team Name" (e.g. "Baie-Comeau, Drakkar") —
+      // OHL and WHL don't do this, so it's fixed only for this one league
+      // rather than stripping commas from every team name generally,
+      // which could accidentally mangle a name that legitimately has one.
+      const cleanTeamName = (name) => (league === 'qmjhl' ? name.replace(/,\s*/g, ' ') : name);
+      const homeTeam = cleanTeamName(teamNames[homeId] || g.home_team_name || g.HomeLongName || `Team ${homeId}`);
+      const awayTeam = cleanTeamName(teamNames[awayId] || g.visiting_team_name || g.VisitorLongName || `Team ${awayId}`);
       const gameId = String(g.game_id ?? g.ID ?? g.id ?? `${gameDate}-${homeId}-${awayId}`);
 
       const { error } = await supabaseAdmin
