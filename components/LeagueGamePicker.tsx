@@ -39,12 +39,17 @@ export default function LeagueGamePicker({ onPickBoth, onPickOne, onClose }: Pro
   // fully solve, but using Eastern time here is still far more correct
   // than UTC or the viewer's own device timezone, either of which would
   // misclassify "today" far more often, for every league, every day.
-  const todayStr = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'America/Toronto',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(new Date());
+  //
+  // Built manually (convert to Eastern, then read year/month/day off
+  // that) rather than via Intl.DateTimeFormat's own formatted output —
+  // that formatter's exact string shape (separators, digit padding)
+  // isn't perfectly guaranteed identical across every browser engine,
+  // which could silently produce a string that never matches a real
+  // game_date even though the underlying date is correct. Reading the
+  // numeric fields off a real Date object and building the string here
+  // by hand sidesteps that entirely.
+  const nowInEastern = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Toronto' }));
+  const todayStr = `${nowInEastern.getFullYear()}-${String(nowInEastern.getMonth() + 1).padStart(2, '0')}-${String(nowInEastern.getDate()).padStart(2, '0')}`;
 
   useEffect(() => {
     loadLeagueGames().then(g => {
