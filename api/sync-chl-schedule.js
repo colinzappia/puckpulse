@@ -76,7 +76,16 @@ async function verifyAdminCaller(req) {
 // season ends and the league assigns new season_ids for the next one.
 const LEAGUES = {
   ohl: { clientCode: 'ohl', apiKey: 'f1aa699db3d81487', seasonId: '88' },
-  whl: { clientCode: 'whl', apiKey: 'f1aa699db3d81487', seasonId: '294' },
+  // WHL's season_id was previously set to 294, based on that value
+  // showing up on games close to the season's start — but 294 turned
+  // out to be a narrow, mostly-preseason window (confirmed: syncing it
+  // only ever returned 56 games clustered before the season's actual
+  // September 18 start). 295 is confirmed instead, via five different
+  // WHL team schedule pages that are explicitly titled "2026-27
+  // Regular Season Schedule" and use 295 in their own URLs — including
+  // one showing a real game on September 19, the day after the season
+  // began.
+  whl: { clientCode: 'whl', apiKey: 'f1aa699db3d81487', seasonId: '295' },
   // QMJHL's actual internal client code is "lhjmq" (its French acronym) —
   // kept as "qmjhl" everywhere in our own data and UI, since that's what
   // scouts actually call it; the lhjmq mapping only matters for this one
