@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { verifyToken } from '@clerk/backend';
 
 const supabaseAdmin = process.env.SUPABASE_SERVICE_ROLE_KEY
   ? createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
@@ -29,15 +30,23 @@ const ADMIN_EMAILS = [
 
 // Confirms the request actually came from a signed-in admin — checking
 // only in the UI isn't real security, since anyone who finds this URL
-// could call it directly, bypassing the app entirely. Two steps:
-// (1) the bearer token is verified as a genuine, currently-valid Clerk
-// session via Supabase (which already trusts Clerk for this, from the
-// same integration RLS relies on) — this can't be faked by the caller.
-// (2) Clerk's default session token doesn't include email, only a user
-// ID, so that verified ID is looked up against Clerk's own servers
-// (server-to-server, using the account's secret key) to get the real
-// email, which is then checked against the admin list. Nothing here
-// trusts anything the browser itself claims about who it is.
+// could call it directly, bypassing the app entirely.
+//
+// This verifies the token directly with Clerk (verifyToken, from
+// Clerk's own backend SDK), rather than through Supabase's auth
+// service — an earlier version tried routing through
+// supabase.auth.getUser(), which failed, because that path expects
+// Supabase's own natively-signed tokens (a different algorithm) and
+// doesn't inherit the Third-Party Auth trust that only applies to
+// database-level (RLS) requests, not the separate Supabase Auth
+// service. Clerk's own SDK is the correct tool for verifying Clerk's
+// own tokens.
+//
+// Clerk's default session token doesn't include email, only a user
+// ID, so once the token's identity is confirmed, that ID is looked up
+// against Clerk's own servers (server-to-server, using the account's
+// secret key) to get the real email, checked against the admin list.
+// Nothing here trusts anything the browser itself claims about who it is.
 async function verifyAdminCaller(req) {
   const authHeader = req.headers.authorization || '';
   const token = authHeader.replace(/^Bearer\s+/i, '').trim();
@@ -45,19 +54,18 @@ async function verifyAdminCaller(req) {
     return { ok: false, status: 401, error: `No valid sign-in token was sent with this request (got: "${token || '(empty)'}").` };
   }
 
-  if (!process.env.VITE_SUPABASE_ANON_KEY) {
-    return { ok: false, status: 500, error: 'Server is not configured to verify sign-in (missing anon key).' };
-  }
-  const supabaseAuth = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY);
-  const { data: authData, error: authError } = await supabaseAuth.auth.getUser(token);
-  if (authError || !authData?.user?.id) {
-    return { ok: false, status: 401, error: `Sign-in token did not validate: ${authError?.message || 'no user returned'}.` };
-  }
-
   if (!process.env.CLERK_SECRET_KEY) {
     return { ok: false, status: 500, error: 'Server is not configured to verify admin access (missing Clerk secret key).' };
   }
-  const clerkRes = await fetch(`https://api.clerk.com/v1/users/${authData.user.id}`, {
+
+  let payload;
+  try {
+    payload = await verifyToken(token, { secretKey: process.env.CLERK_SECRET_KEY });
+  } catch (err) {
+    return { ok: false, status: 401, error: `Sign-in token did not validate: ${err.message}.` };
+  }
+
+  const clerkRes = await fetch(`https://api.clerk.com/v1/users/${payload.sub}`, {
     headers: { Authorization: `Bearer ${process.env.CLERK_SECRET_KEY}` },
   });
   if (!clerkRes.ok) {
