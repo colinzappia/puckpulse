@@ -72,6 +72,18 @@ export default function LeagueGamePicker({ onPickBoth, onPickOne, onClose }: Pro
     ? leagueScoped.filter(g => `${g.homeTeam} ${g.awayTeam}`.toLowerCase().includes(q))
     : leagueScoped;
 
+  // League, then start time (if known — games with no time sort first
+  // within their league), then home team, so the list reads in a
+  // predictable order rather than however Supabase happened to return
+  // rows for the same date.
+  const sorted = [...filtered].sort((a, b) => {
+    if (a.league !== b.league) return a.league.localeCompare(b.league);
+    const timeA = a.gameDatetime || '';
+    const timeB = b.gameDatetime || '';
+    if (timeA !== timeB) return timeA.localeCompare(timeB);
+    return a.homeTeam.localeCompare(b.homeTeam);
+  });
+
   const S = {
     overlay: { position: 'fixed' as const, inset: 0, zIndex: 370, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)' },
     panel: { position: 'fixed' as const, inset: 0, zIndex: 371, background: '#070a0f', display: 'flex', flexDirection: 'column' as const },
@@ -162,7 +174,7 @@ export default function LeagueGamePicker({ onPickBoth, onPickOne, onClose }: Pro
               {q ? `No games match "${query}".` : `No ${leagueFilter.toUpperCase()} games today.`}
             </div>
           ) : (
-            filtered.map(g => (
+            sorted.map(g => (
               <div
                 key={g.id}
                 style={S.card}
