@@ -41,25 +41,27 @@ const ADMIN_EMAILS = [
 async function verifyAdminCaller(req) {
   const authHeader = req.headers.authorization || '';
   const token = authHeader.replace(/^Bearer\s+/i, '').trim();
-  if (!token) return { ok: false, status: 401, error: 'Not signed in.' };
+  if (!token || token === 'null' || token === 'undefined') {
+    return { ok: false, status: 401, error: `No valid sign-in token was sent with this request (got: "${token || '(empty)'}").` };
+  }
 
   if (!process.env.VITE_SUPABASE_ANON_KEY) {
-    return { ok: false, status: 500, error: 'Server is not configured to verify sign-in.' };
+    return { ok: false, status: 500, error: 'Server is not configured to verify sign-in (missing anon key).' };
   }
   const supabaseAuth = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY);
   const { data: authData, error: authError } = await supabaseAuth.auth.getUser(token);
   if (authError || !authData?.user?.id) {
-    return { ok: false, status: 401, error: 'Not signed in.' };
+    return { ok: false, status: 401, error: `Sign-in token did not validate: ${authError?.message || 'no user returned'}.` };
   }
 
   if (!process.env.CLERK_SECRET_KEY) {
-    return { ok: false, status: 500, error: 'Server is not configured to verify admin access.' };
+    return { ok: false, status: 500, error: 'Server is not configured to verify admin access (missing Clerk secret key).' };
   }
   const clerkRes = await fetch(`https://api.clerk.com/v1/users/${authData.user.id}`, {
     headers: { Authorization: `Bearer ${process.env.CLERK_SECRET_KEY}` },
   });
   if (!clerkRes.ok) {
-    return { ok: false, status: 401, error: 'Could not verify your account.' };
+    return { ok: false, status: 401, error: `Could not verify your account with Clerk (status ${clerkRes.status}).` };
   }
   const clerkUser = await clerkRes.json();
   const primary = clerkUser.email_addresses?.find(e => e.id === clerkUser.primary_email_address_id);
