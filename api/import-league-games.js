@@ -5,27 +5,14 @@ const supabaseAdmin = process.env.SUPABASE_SERVICE_ROLE_KEY
   ? createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
   : null;
 
-// Mirrors data/adminConfig.ts on the frontend — kept as a separate copy
-// here since this file can't import from the frontend bundle. Update
-// both together if this list ever changes.
-const ADMIN_EMAILS = [
+// Mirrors SCHEDULE_SYNC_EMAILS in data/adminConfig.ts on the frontend —
+// kept as a separate copy here since this file can't import from the
+// frontend bundle. Deliberately much narrower than the app's general
+// admin list (which controls paywall bypass for a number of people) —
+// this one specifically controls who can trigger a schedule import,
+// independent of that. Update both together if this ever changes.
+const SCHEDULE_SYNC_EMAILS = [
   'colinzappia@gmail.com',
-  'derekfroats19@gmail.com',
-  'macopelo17@gmail.com',
-  'marcodinardo24@gmail.com',
-  'mmcnamee12@hotmail.com',
-  'codycaron@cunet.carleton.ca',
-  'shahbazimel@gmail.com',
-  'patrick.grandmaitre@uottawa.ca',
-  'patrickdelislehoude@cunet.carleton.ca',
-  'jboyd@ontariohockeyleague.com',
-  'boydjam@gmail.com',
-  'andrewmercer@rogers.com',
-  'pstoykewych@ottawa67s.com',
-  'barber.hockey@outlook.com',
-  'abbottnhl@gmail.com',
-  'lennyzappia@gmail.com',
-  'turpinliam@gmail.com',
 ];
 
 // Confirms the request actually came from a signed-in admin — checking
@@ -75,7 +62,7 @@ async function verifyAdminCaller(req) {
   const primary = clerkUser.email_addresses?.find(e => e.id === clerkUser.primary_email_address_id);
   const email = (primary?.email_address || clerkUser.email_addresses?.[0]?.email_address || '').toLowerCase();
 
-  if (!ADMIN_EMAILS.includes(email)) {
+  if (!SCHEDULE_SYNC_EMAILS.includes(email)) {
     return { ok: false, status: 403, error: 'Admin access required.' };
   }
   return { ok: true, email };
