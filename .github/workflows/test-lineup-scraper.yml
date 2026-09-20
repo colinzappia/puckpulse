@@ -1,0 +1,27 @@
+name: Test CHL Lineup Scraper
+
+on:
+  workflow_dispatch:
+    inputs:
+      game_id:
+        description: 'Game ID (e.g. from the schedule picker)'
+        required: true
+      date:
+        description: 'Game date, YYYY-MM-DD'
+        required: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests pdfplumber
+
+      - name: Run the scraper against one game
+        run: python scripts/chl_lineups.py --game "${{ github.event.inputs.game_id }}" --date "${{ github.event.inputs.date }}"
