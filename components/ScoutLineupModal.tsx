@@ -32,6 +32,7 @@ import {
   deleteScoutedLineup,
 } from '../services/scoutedLineupService';
 import { fetchRosterByAI } from '../services/geminiService';
+import { findChlLineup, chlLineupSideToPlayers } from '../services/chlLineupsService';
 import { sortByNumber, normalizeName } from '../hooks/useTeamRoster';
 import LeagueGamePicker from './LeagueGamePicker';
 import StandaloneScoutingModal from './StandaloneScoutingModal';
@@ -613,7 +614,7 @@ export default function ScoutLineupModal({ existing, allLineups, onOpenExisting,
 
       {showGamePicker && (
         <LeagueGamePicker
-          onPickBoth={game => {
+          onPickBoth={async game => {
             // If either team's lineup for this exact game was already
             // uploaded by anyone, hand off to that saved lineup instead
             // of starting a blank one — same game, so the same lineup.
@@ -627,9 +628,21 @@ export default function ScoutLineupModal({ existing, allLineups, onOpenExisting,
               onOpenExisting(already);
               return;
             }
+
             setTeamAName(game.homeTeam);
             setTeamBName(game.awayTeam);
             setGameDate(game.gameDate);
+
+            // No manually-entered lineup exists yet — check whether the
+            // CHL scraper already found this game's real lineup (posted
+            // roughly an hour before puck drop). If so, both rosters
+            // come pre-filled with the actual real lines, no manual
+            // entry needed at all.
+            const scraped = await findChlLineup(game.league, game.externalGameId);
+            if (scraped) {
+              setRosterA(chlLineupSideToPlayers(scraped.homeLines));
+              setRosterB(chlLineupSideToPlayers(scraped.awayLines));
+            }
           }}
           onClose={() => setShowGamePicker(false)}
         />
