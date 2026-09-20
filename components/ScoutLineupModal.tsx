@@ -105,17 +105,17 @@ function resizeImageForUpload(file: File, maxDimension = 1800, quality = 0.85): 
 // exactly like the rink page's roster panel. The only difference: a
 // tap here opens a scouting report instead of arming an event for
 // that player, since there's no game being logged in this screen.
-const DraggablePlayer: React.FC<{ p: Player; team: Team; isHome: boolean; onPlayerClick?: (p: Player) => void }> = ({ p, team, isHome, onPlayerClick }) => {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: `player-${team}-${p.number}` });
+const DraggablePlayer: React.FC<{ p: Player; team: Team; isHome: boolean; onPlayerClick?: (p: Player) => void; locked?: boolean }> = ({ p, team, isHome, onPlayerClick, locked }) => {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: `player-${team}-${p.number}`, disabled: locked });
   const style = { transform: CSS.Translate.toString(transform), opacity: isDragging ? 0.3 : 1 };
   return (
     <button
       ref={setNodeRef}
       style={style}
       {...attributes}
-      {...listeners}
+      {...(locked ? {} : listeners)}
       onClick={() => onPlayerClick?.(p)}
-      className="relative h-10 rounded-xl font-black flex flex-col items-center justify-center transition-all border group active:scale-95 touch-none bg-black/30 border-white/5 text-slate-400 hover:bg-white/10 cursor-pointer"
+      className={`relative h-10 rounded-xl font-black flex flex-col items-center justify-center transition-all border group active:scale-95 bg-black/30 border-white/5 text-slate-400 hover:bg-white/10 cursor-pointer ${locked ? '' : 'touch-none'}`}
     >
       <span className="text-[11px] font-black leading-none truncate w-full text-center px-1">
         #{p.number} {p.name.split(' ').pop()}
@@ -152,7 +152,7 @@ const DroppableSlot: React.FC<{ id: string; children: React.ReactNode; label: st
 // as the live tracking screen's roster panel, minus the "starting
 // goalie" swap control, which is specific to a game actually being
 // tracked and doesn't apply to a standalone scouted lineup.
-function RosterGrid({ team, roster, isHome, onPlayerClick }: { team: Team; roster: Player[]; isHome: boolean; onPlayerClick?: (p: Player) => void }) {
+function RosterGrid({ team, roster, isHome, onPlayerClick, locked }: { team: Team; roster: Player[]; isHome: boolean; onPlayerClick?: (p: Player) => void; locked?: boolean }) {
   return (
     <div className="space-y-0.5">
       {['1', '2', '3', '4'].map(lineNum => (
@@ -171,7 +171,7 @@ function RosterGrid({ team, roster, isHome, onPlayerClick }: { team: Team; roste
               });
               return (
                 <DroppableSlot key={pos} id={`line-${team}-${lineNum}-${pos}`} label={pos} cols={Math.max(1, playersInThisSlot.length)}>
-                  {playersInThisSlot.map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} isHome={isHome} onPlayerClick={onPlayerClick} />)}
+                  {playersInThisSlot.map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} isHome={isHome} onPlayerClick={onPlayerClick} locked={locked} />)}
                 </DroppableSlot>
               );
             })}
@@ -195,7 +195,7 @@ function RosterGrid({ team, roster, isHome, onPlayerClick }: { team: Team; roste
               });
               return (
                 <DroppableSlot key={pos} id={`line-${team}-${pairNum}-${posIdx === 0 ? 'LD' : 'RD'}`} label={pos} cols={Math.max(1, playersInThisSlot.length)}>
-                  {playersInThisSlot.map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} isHome={isHome} onPlayerClick={onPlayerClick} />)}
+                  {playersInThisSlot.map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} isHome={isHome} onPlayerClick={onPlayerClick} locked={locked} />)}
                 </DroppableSlot>
               );
             })}
@@ -210,7 +210,7 @@ function RosterGrid({ team, roster, isHome, onPlayerClick }: { team: Team; roste
         <div className="grid grid-cols-2 gap-0.5">
           {['G1', 'G2'].map(goalieNum => (
             <DroppableSlot key={goalieNum} id={`line-${team}-${goalieNum}-G`} label={goalieNum === 'G1' ? 'Starter' : 'Backup'}>
-              {roster.filter(p => p.line === goalieNum).map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} isHome={isHome} onPlayerClick={onPlayerClick} />)}
+              {roster.filter(p => p.line === goalieNum).map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} isHome={isHome} onPlayerClick={onPlayerClick} locked={locked} />)}
             </DroppableSlot>
           ))}
         </div>
@@ -222,7 +222,7 @@ function RosterGrid({ team, roster, isHome, onPlayerClick }: { team: Team; roste
             <div className="flex-1 h-px bg-white/5" />
           </div>
           <DroppableSlot id={`line-${team}-unassigned`} label="Unassigned" cols={2}>
-            {roster.filter(p => !ASSIGNED_LINES.has(p.line || '')).map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} isHome={isHome} onPlayerClick={onPlayerClick} />)}
+            {roster.filter(p => !ASSIGNED_LINES.has(p.line || '')).map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} isHome={isHome} onPlayerClick={onPlayerClick} locked={locked} />)}
           </DroppableSlot>
         </div>
       )}
@@ -237,7 +237,7 @@ function RosterGrid({ team, roster, isHome, onPlayerClick }: { team: Team; roste
 // roster corrections happen in its separate Roster Setup screen,
 // which has no equivalent here).
 function TeamEntryPane({
-  team, isHome, teamName, onTeamNameChange, roster, onRosterChange, placeholder, onPlayerClick,
+  team, isHome, teamName, onTeamNameChange, roster, onRosterChange, placeholder, onPlayerClick, locked,
 }: {
   team: Team;
   isHome: boolean;
@@ -247,6 +247,7 @@ function TeamEntryPane({
   onRosterChange: (r: Player[]) => void;
   placeholder: string;
   onPlayerClick?: (p: Player) => void;
+  locked?: boolean;
 }) {
   const [pasteText, setPasteText] = useState('');
   const [importing, setImporting] = useState(false);
@@ -378,7 +379,7 @@ function TeamEntryPane({
           </div>
         ) : (
           <>
-            <RosterGrid team={team} roster={roster} isHome={isHome} onPlayerClick={onPlayerClick} />
+            <RosterGrid team={team} roster={roster} isHome={isHome} onPlayerClick={onPlayerClick} locked={locked} />
 
             <div className="mt-3 mb-1.5 text-[9px] font-black text-slate-600 uppercase tracking-wide">
               Edit roster ({roster.length})
@@ -439,6 +440,7 @@ export default function ScoutLineupModal({ existing, allLineups, onOpenExisting,
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showGamePicker, setShowGamePicker] = useState(false);
+  const [locked, setLocked] = useState(false);
   const [scoutingPrefill, setScoutingPrefill] = useState<{ playerName: string; playerNumber: string; position: string; teamName: string; gameDate: string } | null>(null);
 
   const openScoutingReportFor = (p: Player, teamNameForPlayer: string) => {
@@ -551,7 +553,7 @@ export default function ScoutLineupModal({ existing, allLineups, onOpenExisting,
       </div>
 
       <div className="flex-1 overflow-y-auto scrollbar-none p-3">
-        <div className="flex items-center gap-3 mb-3">
+        <div className="flex items-center gap-2 mb-3 flex-wrap">
           <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest shrink-0">Date seen</span>
           <input
             type="date"
@@ -560,15 +562,26 @@ export default function ScoutLineupModal({ existing, allLineups, onOpenExisting,
             onChange={e => setGameDate(e.target.value)}
           />
           <button
+            onClick={() => setLocked(l => !l)}
+            className={`text-[10px] font-black uppercase tracking-wide px-3 py-1.5 rounded-lg border transition-all ${locked ? 'border-amber-500/40 bg-amber-500/15 text-amber-400' : 'border-white/10 bg-white/5 text-slate-400'}`}
+          >
+            {locked ? '🔒 Locked' : '🔓 Unlocked'}
+          </button>
+          <button
             className="ml-auto text-[10px] font-black uppercase tracking-wide px-3 py-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/15 text-emerald-400"
             onClick={() => setShowGamePicker(true)}
           >
             📅 Pick from CHL schedule
           </button>
         </div>
+        {locked && (
+          <div className="text-[10px] text-amber-400/80 -mt-1.5 mb-3">
+            Lines are locked — players can't be dragged to a new spot until you unlock.
+          </div>
+        )}
 
         <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-          <div className="flex gap-2 overflow-x-auto scrollbar-none pb-2" style={{ minHeight: 480 }}>
+          <div className="flex flex-col md:flex-row gap-2 md:overflow-x-auto scrollbar-none pb-2" style={{ minHeight: 480 }}>
             <TeamEntryPane
               team={Team.HOME}
               isHome={true}
@@ -578,6 +591,7 @@ export default function ScoutLineupModal({ existing, allLineups, onOpenExisting,
               onRosterChange={setRosterA}
               placeholder="Team name"
               onPlayerClick={p => openScoutingReportFor(p, teamAName)}
+              locked={locked}
             />
             <TeamEntryPane
               team={Team.AWAY}
@@ -588,6 +602,7 @@ export default function ScoutLineupModal({ existing, allLineups, onOpenExisting,
               onRosterChange={setRosterB}
               placeholder="Opponent name (optional)"
               onPlayerClick={p => openScoutingReportFor(p, teamBName)}
+              locked={locked}
             />
           </div>
         </DndContext>
