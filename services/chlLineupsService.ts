@@ -62,6 +62,27 @@ export async function findChlLineup(league: string, externalGameId: string): Pro
   return data ? mapRow(data) : null;
 }
 
+// Bulk version — everything scraped for a given date in one query,
+// keyed by "league-externalGameId" for fast lookup while building a
+// list of many games at once, instead of one query per game.
+export async function findChlLineupsForDate(gameDate: string): Promise<Map<string, ChlLineup>> {
+  const { data, error } = await supabase
+    .from('chl_lineups')
+    .select('*')
+    .eq('game_date', gameDate);
+
+  const map = new Map<string, ChlLineup>();
+  if (error) {
+    console.error('[chlLineupsService] Failed to load lineups for date:', error);
+    return map;
+  }
+  for (const row of data || []) {
+    const lineup = mapRow(row);
+    map.set(`${lineup.league}-${lineup.externalGameId}`, lineup);
+  }
+  return map;
+}
+
 // Converts one scraped side (forward lines + defense pairs + goalies)
 // into the app's own Player[] roster shape, used everywhere else in
 // Scouts Portal (drag-and-drop grids, scouting reports, etc.) — this is
