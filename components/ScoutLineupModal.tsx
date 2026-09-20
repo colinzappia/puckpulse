@@ -398,7 +398,15 @@ function TeamEntryPane({
               Edit roster ({roster.length})
             </div>
             <div className="max-h-40 overflow-y-auto scrollbar-none space-y-1">
-              {roster.map((p, idx) => (
+              {roster
+                .map((p, idx) => ({ p, idx }))
+                // Sorted for display only — idx below still refers to
+                // each player's real position in the roster array, so
+                // editing or removing a row here still affects the
+                // right player even though the list itself is now in
+                // numerical order rather than import order.
+                .sort((a, b) => (parseInt(a.p.number, 10) || 0) - (parseInt(b.p.number, 10) || 0))
+                .map(({ p, idx }) => (
                 <div key={idx} className="flex items-center gap-1 bg-black/30 border border-white/5 rounded-lg p-1">
                   <input className="w-7 bg-transparent border-none text-white text-[10px] font-black text-center outline-none" value={p.number} onChange={e => updatePlayer(idx, 'number', e.target.value)} />
                   <input className="flex-1 min-w-0 bg-transparent border-none text-white text-[10px] outline-none" value={p.name} onChange={e => updatePlayer(idx, 'name', e.target.value)} placeholder="Name" />
