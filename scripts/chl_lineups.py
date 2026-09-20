@@ -14,13 +14,13 @@ Usage:
   python chl_lineups.py --date 2026-09-19
   python chl_lineups.py --game 28992     # single known game (OHL)
 
-STATUS: the schedule-fetching half of this (season IDs, team codes, PDF
-URL construction) is confirmed correct against a real live API response.
-The PDF-parsing half (parse_lineup_pdf / _parse_one_team) has been
-rewritten to use pdfplumber's table detection, which should handle the
-real two-column page layout far better than plain-text regex — but it
-has NOT been run against a real, current lineup PDF yet. Test it against
-one before trusting it for a real game.
+STATUS: confirmed working end-to-end against a real, completed game
+(OHL game 28992, Sept 17 2026, Kingston @ Peterborough). Both team's
+starting/backup goalies, all forward lines, and all defense pairs
+matched an independent reference (a screenshot of that game's actual
+lineup sheet) exactly. Season IDs, team codes, PDF URL construction,
+and table-based parsing are all validated — this has not yet been
+tested on a large batch of same-day games or wired into the live app.
 """
 
 from __future__ import annotations
@@ -125,31 +125,13 @@ def parse_lineup_pdf(pdf_bytes: bytes) -> dict:
     result: dict = {"home": None, "visitor": None}
 
     with pdfplumber.open(BytesIO(pdf_bytes)) as pdf:
-        for page_num, page in enumerate(pdf.pages):
+        for page in pdf.pages:
             tables = page.extract_tables()
             if not tables:
-                print(f"    [debug] page {page_num}: extract_tables() found nothing")
-                print(f"    [debug] page {page_num} raw text (first 500 chars):")
-                print("    " + repr((page.extract_text() or "")[:500]))
                 continue
-
-            print(f"    [debug] page {page_num}: {len(tables)} table(s) found")
-            for t_idx, table in enumerate(tables):
-                print(f"    [debug] table {t_idx}: {len(table)} row(s), header={table[0] if table else None}")
-                # Full rows for the roster and lines/pairs tables (where
-                # the data we actually need lives) — short preview for
-                # the rest (scratches, staff, officials).
-                header_preview = " ".join((c or "") for c in (table[0] if table else [])).lower()
-                is_relevant = "roster" in header_preview or (len(table) > 1 and any(
-                    (c or "").strip() in ("LW", "C", "RW", "LD", "RD") for c in table[1]
-                ))
-                rows_to_show = table if is_relevant else table[:5]
-                for r_idx, row in enumerate(rows_to_show):
-                    print(f"    [debug]   row {r_idx}: {row}")
 
             team = _parse_one_team_from_tables(tables)
             if not team:
-                print(f"    [debug] page {page_num}: tables found but none matched a roster/lines header — nothing extracted")
                 continue
 
             # Which side this page belongs to: read from the page's own
