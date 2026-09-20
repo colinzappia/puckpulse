@@ -128,10 +128,6 @@ def parse_lineup_pdf(pdf_bytes: bytes) -> dict:
         for page_num, page in enumerate(pdf.pages):
             tables = page.extract_tables()
             if not tables:
-                # Ground truth instead of another guess: show exactly
-                # what pdfplumber found (or didn't) on this page, so the
-                # actual real structure can be seen directly rather than
-                # inferred from an old screenshot.
                 print(f"    [debug] page {page_num}: extract_tables() found nothing")
                 print(f"    [debug] page {page_num} raw text (first 500 chars):")
                 print("    " + repr((page.extract_text() or "")[:500]))
@@ -140,7 +136,15 @@ def parse_lineup_pdf(pdf_bytes: bytes) -> dict:
             print(f"    [debug] page {page_num}: {len(tables)} table(s) found")
             for t_idx, table in enumerate(tables):
                 print(f"    [debug] table {t_idx}: {len(table)} row(s), header={table[0] if table else None}")
-                for r_idx, row in enumerate(table[:5]):
+                # Full rows for the roster and lines/pairs tables (where
+                # the data we actually need lives) — short preview for
+                # the rest (scratches, staff, officials).
+                header_preview = " ".join((c or "") for c in (table[0] if table else [])).lower()
+                is_relevant = "roster" in header_preview or (len(table) > 1 and any(
+                    (c or "").strip() in ("LW", "C", "RW", "LD", "RD") for c in table[1]
+                ))
+                rows_to_show = table if is_relevant else table[:5]
+                for r_idx, row in enumerate(rows_to_show):
                     print(f"    [debug]   row {r_idx}: {row}")
 
             team = _parse_one_team_from_tables(tables)
@@ -175,22 +179,32 @@ def _parse_one_team_from_tables(tables: list[list[list]]) -> dict | None:
         header_joined = " ".join(header).lower()
 
         # --- Roster table: "# | Roster | Status" ---
-        # Each data row is [slot, jersey_number, name, status]. Slot is
-        # a line/pair number for skaters, or "GB"/"GK" for goalies —
-        # slot alone doesn't say which goalie is starting; that comes
-        # from the "Starting #" / "Substitute #" text inside the lines
-        # table below, matched back to this same roster_map by number.
+        # Real row shape confirmed against a live PDF: jersey number and
+        # name arrive combined in ONE cell — e.g. row = ['GB', '29 Smith,
+        # Royden', None, None] — not as separate columns like the header
+        # implies. Split that combined cell with a regex instead of
+        # expecting the number alone. Slot ("GB"/"GK"/a line number)
+        # doesn't say who's starting in goal; that comes from the
+        # "Starting #" / "Substitute #" text in the lines table below,
+        # matched back to this same roster_map by jersey number.
         if "roster" in header_joined:
             for row in table[1:]:
-                if not row or len(row) < 3:
+                if not row or len(row) < 2:
                     continue
-                num = (row[1] or "").strip()
-                name = (row[2] or "").strip()
-                if num.isdigit() and name:
-                    roster_map[num] = name
+                combined = (row[1] or "").strip()
+                m = re.match(r"^(\d+)\s+(.+)$", combined)
+                if m:
+                    roster_map[m.group(1)] = m.group(2).strip()
 
-        # --- Lines/pairs table: header contains LW/C/RW or LD/RD ---
-        elif any(h in header for h in ("LW", "C", "RW", "LD", "RD")):
+        # --- Lines/pairs table: title row ("Forwards lines and
+        # defensemen duos") is separate from the actual column-label row
+        # (LW/C/RW or LD/RD) right under it — confirmed against a live
+        # PDF, so both the first and second rows need checking, not just
+        # the first. ---
+        elif (
+            any(h in header for h in ("LW", "C", "RW", "LD", "RD"))
+            or (len(table) > 1 and any((c or "").strip() in ("LW", "C", "RW", "LD", "RD") for c in table[1]))
+        ):
             for row in table[1:]:
                 if not row or not row[0]:
                     continue
