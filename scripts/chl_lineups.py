@@ -31,6 +31,7 @@ import os
 import re
 import sys
 from datetime import date, datetime, timezone
+from zoneinfo import ZoneInfo
 from io import BytesIO
 from pathlib import Path
 
@@ -56,6 +57,18 @@ LEAGUES = {
 }
 
 OUTPUT_DIR = Path("lineups")
+
+
+def today_eastern() -> str:
+    """"Today" in Eastern time, not the server's own clock — GitHub's
+    runners use UTC, which rolls over to the next calendar day while
+    it's still evening in North America. Using the server's own date
+    here caused this to look for tomorrow's games hours before any of
+    tonight's had even started. Eastern isn't exactly right for WHL
+    (Pacific/Mountain) either, but it's far closer than UTC for every
+    league, every day, the same reasoning already applied on the
+    website's own schedule picker."""
+    return datetime.now(ZoneInfo("America/Toronto")).date().isoformat()
 
 
 # ---------------------------------------------------------------------------
@@ -373,7 +386,7 @@ def main():
             print(json.dumps(result, indent=2))
         return
 
-    target = args.date or date.today().isoformat()
+    target = args.date or today_eastern()
     results = process_date(target)
     print(f"\nDone. {len(results)} lineup files written to {OUTPUT_DIR}/")
 
