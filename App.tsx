@@ -66,6 +66,20 @@ const getPeriodLabel = (p: number) => {
   return `${p}`;
 };
 
+// Extracts just the last name for compact display throughout this
+// page. Handles both "Last, First" (how CHL-scraped rosters arrive,
+// e.g. "Smith, Royden") and plain "First Last" (a manually-typed
+// roster) — splitting on the last space alone, as every one of these
+// used to do, silently showed the first name instead for any scraped
+// player.
+function lastNameOf(fullName: string): string {
+  if (fullName.includes(',')) {
+    return fullName.split(',')[0].trim();
+  }
+  const parts = fullName.trim().split(' ');
+  return parts[parts.length - 1];
+}
+
 const DraggablePlayer: React.FC<{ p: Player, team: Team, isHome: boolean, isSelected: boolean, onSelect: (num: string, team: Team) => void, locked?: boolean }> = ({ p, team, isHome, isSelected, onSelect, locked }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `player-${team}-${p.number}`,
@@ -87,7 +101,7 @@ const DraggablePlayer: React.FC<{ p: Player, team: Team, isHome: boolean, isSele
       className={`relative h-10 rounded-xl font-black flex flex-col items-center justify-center transition-all border group active:scale-95 ${locked ? '' : 'touch-none'} ${isSelected ? (isHome ? 'bg-blue-600 border-blue-400 shadow-blue-500/40 shadow-xl' : 'bg-red-600 border-red-400 shadow-red-500/40 shadow-xl') : 'bg-black/30 border-white/5 text-slate-400 hover:bg-white/10'}`}
     >
       <span className="text-[11px] font-black leading-none truncate w-full text-center px-1">
-        #{p.number} {p.name.split(' ').pop()}
+        #{p.number} {lastNameOf(p.name)}
       </span>
       <div className={`absolute top-0.5 right-0.5 px-0.5 rounded text-[5px] font-black border ${p.position === 'C' ? 'bg-yellow-500/20 border-yellow-500/30 text-yellow-500' : 'bg-black/40 border-white/5 text-slate-600'}`}>
         {p.position}
@@ -333,7 +347,7 @@ const GoalLinePopup: React.FC<GoalLinePopupProps> = ({ pendingGoal, homeName, aw
               <div style={{ color: '#22c55e', fontWeight: 700, fontSize: '0.875rem', marginBottom: '0.2rem' }}>{selectedLine}</div>
               <div style={{ color: '#94a3b8', fontSize: '0.7rem' }}>
                 {selectedPlayers.length > 0
-                  ? selectedPlayers.map(n => { const p = scoringSideRoster.find(r => r.number === n); return p ? `#${n} ${p.name.split(' ').pop()}` : `#${n}`; }).join(' · ')
+                  ? selectedPlayers.map(n => { const p = scoringSideRoster.find(r => r.number === n); return p ? `#${n} ${lastNameOf(p.name)}` : `#${n}`; }).join(' · ')
                   : 'No players assigned to this line'}
               </div>
             </div>
@@ -352,7 +366,7 @@ const GoalLinePopup: React.FC<GoalLinePopupProps> = ({ pendingGoal, homeName, aw
                   return (
                     <button key={p.number} onClick={() => toggleAssist(p.number)}
                       style={{ padding: '0.4rem 0.65rem', borderRadius: '0.5rem', fontSize: '0.7rem', fontWeight: 800, border: `1px solid ${on ? '#38bdf8' : 'rgba(255,255,255,0.08)'}`, background: on ? 'rgba(56,189,248,0.2)' : 'rgba(255,255,255,0.03)', color: on ? '#7dd3fc' : '#94a3b8', cursor: 'pointer' }}>
-                      #{p.number} {p.name.split(' ').pop()}
+                      #{p.number} {lastNameOf(p.name)}
                     </button>
                   );
                 })}
@@ -501,7 +515,7 @@ const FaceoffPopup: React.FC<FaceoffPopupProps> = ({ homeName, awayName, homeRos
         {centres.map(p => (
           <button key={p.number} onClick={() => onSelect(p.number)}
             style={{ padding: '0.4rem 0.7rem', borderRadius: '0.6rem', fontSize: '0.75rem', fontWeight: 900, border: `1px solid ${selected === p.number ? accent : 'rgba(255,255,255,0.08)'}`, background: selected === p.number ? accentBg : 'rgba(255,255,255,0.03)', color: selected === p.number ? '#fff' : '#94a3b8', cursor: 'pointer' }}>
-            #{p.number} {p.name.split(' ').pop()}
+            #{p.number} {lastNameOf(p.name)}
           </button>
         ))}
         {centres.length === 0 && <span style={{ fontSize: '0.7rem', color: '#475569' }}>No centres found</span>}
