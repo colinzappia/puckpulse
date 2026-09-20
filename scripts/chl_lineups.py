@@ -139,13 +139,24 @@ def parse_lineup_pdf(pdf_bytes: bytes) -> dict:
     result: dict = {"home": None, "visitor": None}
 
     with pdfplumber.open(BytesIO(pdf_bytes)) as pdf:
-        for page in pdf.pages:
+        for page_num, page in enumerate(pdf.pages):
             tables = page.extract_tables()
             if not tables:
                 continue
 
             team = _parse_one_team_from_tables(tables)
             if not team:
+                # Nothing matched on this page — show exactly what was
+                # actually there instead of guessing why. Scoped to only
+                # the failure case so OHL/WHL's already-working output
+                # stays quiet; this is specifically to see whether QMJHL
+                # (a French-language league) uses different header text
+                # than the English strings this looks for.
+                print(f"    [debug] page {page_num}: {len(tables)} table(s) found, none matched")
+                for t_idx, table in enumerate(tables):
+                    print(f"    [debug] table {t_idx} header: {table[0] if table else None}")
+                    for r_idx, row in enumerate(table[1:4]):
+                        print(f"    [debug]   row {r_idx}: {row}")
                 continue
 
             # Which side this page belongs to: read from the page's own
