@@ -59,6 +59,19 @@ interface Props {
   onClose: () => void;
 }
 
+// Extracts just the last name for the compact chip label. Handles both
+// "Last, First" (how CHL-scraped names arrive, e.g. "Smith, Royden")
+// and plain "First Last" (how a manually-typed roster might be
+// entered) — splitting on the last space alone, as this used to do,
+// silently grabbed the first name for every scraped player instead.
+function lastNameOf(fullName: string): string {
+  if (fullName.includes(',')) {
+    return fullName.split(',')[0].trim();
+  }
+  const parts = fullName.trim().split(' ');
+  return parts[parts.length - 1];
+}
+
 const POSITIONS = ['LW', 'RW', 'C', 'LD', 'RD', 'D', 'G'];
 const LINE_OPTIONS = [
   { value: '1', label: 'Line 1' },
@@ -118,7 +131,7 @@ const DraggablePlayer: React.FC<{ p: Player; team: Team; isHome: boolean; onPlay
       className={`relative h-10 rounded-xl font-black flex flex-col items-center justify-center transition-all border group active:scale-95 bg-black/30 border-white/5 text-slate-400 hover:bg-white/10 cursor-pointer ${locked ? '' : 'touch-none'}`}
     >
       <span className="text-[11px] font-black leading-none truncate w-full text-center px-1">
-        #{p.number} {p.name.split(' ').pop()}
+        #{p.number} {lastNameOf(p.name)}
       </span>
       <div className={`absolute top-0.5 right-0.5 px-0.5 rounded text-[5px] font-black border ${p.position === 'C' ? 'bg-yellow-500/20 border-yellow-500/30 text-yellow-500' : 'bg-black/40 border-white/5 text-slate-600'}`}>
         {p.position}
