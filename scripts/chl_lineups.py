@@ -139,32 +139,27 @@ def parse_lineup_pdf(pdf_bytes: bytes) -> dict:
     result: dict = {"home": None, "visitor": None}
 
     with pdfplumber.open(BytesIO(pdf_bytes)) as pdf:
-        for page_num, page in enumerate(pdf.pages):
+        for page in pdf.pages:
             tables = page.extract_tables()
             if not tables:
                 continue
 
             team = _parse_one_team_from_tables(tables)
             if not team:
-                # Nothing matched on this page — show exactly what was
-                # actually there instead of guessing why. Scoped to only
-                # the failure case so OHL/WHL's already-working output
-                # stays quiet; this is specifically to see whether QMJHL
-                # (a French-language league) uses different header text
-                # than the English strings this looks for.
-                print(f"    [debug] page {page_num}: {len(tables)} table(s) found, none matched")
-                for t_idx, table in enumerate(tables):
-                    print(f"    [debug] table {t_idx} header: {table[0] if table else None}")
-                    for r_idx, row in enumerate(table[1:4]):
-                        print(f"    [debug]   row {r_idx}: {row}")
                 continue
 
             # Which side this page belongs to: read from the page's own
             # text (the big "HOM"/"VIS" banner), not from table content —
-            # that banner is styled page text, not a table cell.
+            # that banner is styled page text, not a table cell. QMJHL's
+            # sheet uses "LOC" (French "Local") for home instead of
+            # "HOM", while "VIS" (Visitor/Visiteur) happens to be
+            # identical in both languages — checked explicitly for both
+            # home markers rather than assuming "not home = visitor",
+            # since silently guessing the wrong side is worse than an
+            # occasional genuine tie.
             page_text = page.extract_text() or ""
             first_chunk = page_text[:150].upper()
-            if "HOM" in first_chunk:
+            if "HOM" in first_chunk or "LOC" in first_chunk:
                 result["home"] = team
             else:
                 result["visitor"] = team
@@ -180,22 +175,29 @@ def _parse_one_team_from_tables(tables: list[list[list]]) -> dict | None:
     backup_goalie_num: str | None = None
 
     for table in tables:
-        if not table or not table[0]:
+        if not table:
             continue
-        header = [(c or "").strip() for c in table[0]]
-        header_joined = " ".join(header).lower()
+        # Identify a table by whether ANY of its first few rows contains
+        # a recognizable marker, rather than assuming the marker sits in
+        # a specific row — OHL's sheet has one header row before the
+        # data starts; QMJHL's stacks a French title, an English title,
+        # AND a column-label row before its data starts. Checking several
+        # rows (not just row 0) and using substring matches (not exact
+        # equality) catches both "LW" alone and combined labels like
+        # "AG / LW".
+        preview_rows = table[:4]
+        preview_text = " ".join((c or "") for row in preview_rows for c in row).lower()
+        is_roster_table = "roster" in preview_text or "alignement" in preview_text
+        is_lines_table = any(marker in preview_text for marker in ("lw", "rw", "ld", "rd"))
 
-        # --- Roster table: "# | Roster | Status" ---
-        # Real row shape confirmed against a live PDF: jersey number and
-        # name arrive combined in ONE cell — e.g. row = ['GB', '29 Smith,
-        # Royden', None, None] — not as separate columns like the header
-        # implies. Split that combined cell with a regex instead of
-        # expecting the number alone. Slot ("GB"/"GK"/a line number)
-        # doesn't say who's starting in goal; that comes from the
-        # "Starting #" / "Substitute #" text in the lines table below,
-        # matched back to this same roster_map by jersey number.
-        if "roster" in header_joined:
-            for row in table[1:]:
+        if is_roster_table:
+            # Data rows have the jersey number and name combined in one
+            # cell (e.g. "29 Smith, Royden") — rather than assuming a
+            # fixed number of header rows to skip first, every row is
+            # checked and only ones actually matching that shape count;
+            # title/label rows (in whatever language, however many of
+            # them) simply never match and are silently skipped.
+            for row in table:
                 if not row or len(row) < 2:
                     continue
                 combined = (row[1] or "").strip()
@@ -203,22 +205,21 @@ def _parse_one_team_from_tables(tables: list[list[list]]) -> dict | None:
                 if m:
                     roster_map[m.group(1)] = m.group(2).strip()
 
-        # --- Lines/pairs table: title row ("Forwards lines and
-        # defensemen duos") is separate from the actual column-label row
-        # (LW/C/RW or LD/RD) right under it — confirmed against a live
-        # PDF, so both the first and second rows need checking, not just
-        # the first. ---
-        elif (
-            any(h in header for h in ("LW", "C", "RW", "LD", "RD"))
-            or (len(table) > 1 and any((c or "").strip() in ("LW", "C", "RW", "LD", "RD") for c in table[1]))
-        ):
-            for row in table[1:]:
+        elif is_lines_table:
+            # Same approach — a data row ("Line 1", "Trio / Line 1",
+            # "Def 1", etc.) is identified by containing a digit in its
+            # own label, not by its position under however many title
+            # and header rows happen to precede it.
+            for row in table:
                 if not row or not row[0]:
                     continue
                 label = row[0].strip()
+                label_lower = label.lower()
+                if not re.search(r"\d", label):
+                    continue
                 cells = [(c or "").strip() for c in row[1:]]
 
-                if label.lower().startswith("line"):
+                if "line" in label_lower or "trio" in label_lower:
                     m = re.search(r"\d+", label)
                     nums = [c for c in cells if c.isdigit()]
                     if m and nums:
@@ -227,17 +228,21 @@ def _parse_one_team_from_tables(tables: list[list[list]]) -> dict | None:
                             "players": [{"number": n, "name": roster_map.get(n, "???")} for n in nums],
                         })
 
-                elif label.lower().startswith("def"):
+                elif "def" in label_lower:
                     m = re.search(r"\d+", label)
                     nums = []
                     for c in cells:
                         if c.isdigit():
                             nums.append(c)
                             continue
-                        sm = re.search(r"Starting\s*#\s*(\d+)", c)
+                        # English "Starting" or French "Partant" for the
+                        # starter; "Substitut" (no trailing "e") catches
+                        # both English "Substitute" and the French
+                        # "Substitut(e)" seen on QMJHL's sheet.
+                        sm = re.search(r"(?:Starting|Partant)\D*#?\s*(\d+)", c, re.IGNORECASE)
                         if sm:
                             starting_goalie_num = sm.group(1)
-                        bm = re.search(r"Substitute\s*#\s*(\d+)", c)
+                        bm = re.search(r"Substitut\D*#?\s*(\d+)", c, re.IGNORECASE)
                         if bm:
                             backup_goalie_num = bm.group(1)
                     if m and nums:
