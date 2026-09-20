@@ -109,6 +109,7 @@ export default function ScoutingHub({ onNavigateHome, onOpenRosterSetup, onOpenG
   const [chlLineupsMap, setChlLineupsMap] = useState<Map<string, ChlLineup>>(new Map());
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [leagueFilter, setLeagueFilter] = useState('all');
   const [editingStandalone, setEditingStandalone] = useState<SavedScoutingReport | 'new' | null>(null);
   const [editingLineup, setEditingLineup] = useState<SavedScoutedLineup | 'new' | null>(null);
   const [lineupPrefill, setLineupPrefill] = useState<{ teamAName: string; teamBName: string; gameDate: string; rosterA: any[]; rosterB: any[] } | null>(null);
@@ -207,13 +208,8 @@ export default function ScoutingHub({ onNavigateHome, onOpenRosterSetup, onOpenG
 
   const seenOther = new Set<string>();
   const otherEntries: GameEntry[] = [];
-  const todayStr = todayEastern();
   for (const l of lineups) {
     if (usedLineupIds.has(l.id) || seenOther.has(l.id)) continue;
-    // Only today-or-future (or genuinely undated, e.g. a minor-league
-    // lineup with no specific game date) — a past-dated one is stale
-    // and was cluttering this list with old games that already happened.
-    if (l.gameDate && l.gameDate < todayStr) continue;
     const pair = findManualPair(l, lineups);
     if (pair) seenOther.add(pair.id);
     seenOther.add(l.id);
@@ -231,14 +227,37 @@ export default function ScoutingHub({ onNavigateHome, onOpenRosterSetup, onOpenG
   }
 
   const allEntries = [...chlEntries, ...otherEntries];
+
+  // Built from whatever leagues actually have games today, rather than a
+  // fixed OHL/WHL/QMJHL list — so it stays correct if a league ever gets
+  // renamed or a new one starts appearing. "Other" covers lineups with
+  // no league attached at all (minor-hockey entries uploaded manually,
+  // not tied to a CHL schedule game).
+  const availableLeagues = Array.from(new Set(chlEntries.map(e => e.league).filter((l): l is string => !!l))).sort();
+  const hasOther = otherEntries.length > 0;
+
+  const leagueScoped = leagueFilter === 'all'
+    ? allEntries
+    : leagueFilter === 'other'
+      ? otherEntries
+      : allEntries.filter(e => e.league === leagueFilter);
+
   const gq = searchQuery.trim().toLowerCase();
   const filteredEntries = gq
-    ? allEntries.filter(e => `${e.homeTeam} ${e.awayTeam}`.toLowerCase().includes(gq))
-    : allEntries;
+    ? leagueScoped.filter(e => `${e.homeTeam} ${e.awayTeam}`.toLowerCase().includes(gq))
+    : leagueScoped;
 
   // Ready-to-scout games first (a scout opening this wants those before
-  // ones needing setup), each group by scheduled time, then home team.
+  // ones needing setup); when no specific league is picked, grouped by
+  // league first so the list reads as sections rather than everything
+  // interleaved together — within each group, by scheduled time, then
+  // home team.
   const sortedEntries = [...filteredEntries].sort((a, b) => {
+    if (leagueFilter === 'all') {
+      const leagueA = a.league || 'zzz';
+      const leagueB = b.league || 'zzz';
+      if (leagueA !== leagueB) return leagueA.localeCompare(leagueB);
+    }
     const aReady = a.status !== 'none' ? 0 : 1;
     const bReady = b.status !== 'none' ? 0 : 1;
     if (aReady !== bReady) return aReady - bReady;
@@ -433,12 +452,27 @@ export default function ScoutingHub({ onNavigateHome, onOpenRosterSetup, onOpenG
               </button>
 
               {allEntries.length > 0 && (
-                <input
-                  style={S.search}
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  placeholder="Search by team…"
-                />
+                <>
+                  <select
+                    value={leagueFilter}
+                    onChange={e => setLeagueFilter(e.target.value)}
+                    style={{ ...S.search, cursor: 'pointer' }}
+                  >
+                    <option value="all">All leagues ({allEntries.length})</option>
+                    {availableLeagues.map(lg => (
+                      <option key={lg} value={lg}>
+                        {lg.toUpperCase()} ({chlEntries.filter(e => e.league === lg).length})
+                      </option>
+                    ))}
+                    {hasOther && <option value="other">Other ({otherEntries.length})</option>}
+                  </select>
+                  <input
+                    style={S.search}
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    placeholder="Search by team…"
+                  />
+                </>
               )}
 
               {loading ? (
@@ -448,12 +482,21 @@ export default function ScoutingHub({ onNavigateHome, onOpenRosterSetup, onOpenG
                   {gq ? `No games match "${searchQuery.trim()}".` : "No CHL games today, and nothing else uploaded yet."}
                 </div>
               ) : (
-                sortedEntries.map(entry => (
-                  <div
-                    key={entry.key}
-                    onClick={() => openGameEntry(entry)}
-                    className="bg-white/[0.03] border border-white/10 rounded-2xl p-4 mb-2.5 cursor-pointer active:scale-[0.98] transition-all"
-                  >
+                sortedEntries.map((entry, idx) => {
+                  const prevLeague = idx > 0 ? (sortedEntries[idx - 1].league || 'other') : null;
+                  const thisLeague = entry.league || 'other';
+                  const showHeader = leagueFilter === 'all' && thisLeague !== prevLeague;
+                  return (
+                  <React.Fragment key={entry.key}>
+                    {showHeader && (
+                      <div className="text-[11px] font-black uppercase tracking-widest text-slate-500 mt-4 mb-2 first:mt-0">
+                        {entry.league ? entry.league.toUpperCase() : 'Other'}
+                      </div>
+                    )}
+                    <div
+                      onClick={() => openGameEntry(entry)}
+                      className="bg-white/[0.03] border border-white/10 rounded-2xl p-4 mb-2.5 cursor-pointer active:scale-[0.98] transition-all"
+                    >
                     <div className="flex items-center justify-between gap-2 mb-1.5">
                       <div className="text-[15px] font-black text-white truncate">
                         {entry.awayTeam} <span className="text-slate-600 font-bold">@</span> {entry.homeTeam}
@@ -478,7 +521,9 @@ export default function ScoutingHub({ onNavigateHome, onOpenRosterSetup, onOpenG
                       {entry.league ? `${entry.league.toUpperCase()} · ` : ''}{entry.gameDate || 'No date'}
                     </div>
                   </div>
-                ))
+                  </React.Fragment>
+                  );
+                })
               )}
             </>
           ) : (
