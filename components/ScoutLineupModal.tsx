@@ -51,6 +51,10 @@ interface Props {
   // the real saved data, rather than showing empty import boxes for a
   // game someone already scouted.
   onOpenExisting?: (lineup: SavedScoutedLineup) => void;
+  // Seeds a brand-new lineup directly from an already-scraped CHL game
+  // (skipping the schedule picker entirely, since the caller already
+  // knows which game) — ignored when existing is set.
+  prefillFromChl?: { teamAName: string; teamBName: string; gameDate: string; rosterA: Player[]; rosterB: Player[] };
   onSaved: () => void;
   onClose: () => void;
 }
@@ -413,7 +417,7 @@ function TeamEntryPane({
   );
 }
 
-export default function ScoutLineupModal({ existing, allLineups, onOpenExisting, onSaved, onClose }: Props) {
+export default function ScoutLineupModal({ existing, allLineups, onOpenExisting, prefillFromChl, onSaved, onClose }: Props) {
   const { user } = useUser();
 
   // The other team from the same game, if it was saved too — matched by
@@ -427,11 +431,11 @@ export default function ScoutLineupModal({ existing, allLineups, onOpenExisting,
       ) || null
     : null;
 
-  const [gameDate, setGameDate] = useState(existing?.gameDate || '');
-  const [teamAName, setTeamAName] = useState(existing?.teamName || '');
-  const [teamBName, setTeamBName] = useState(pairedLineup?.teamName || '');
-  const [rosterA, setRosterA] = useState<Player[]>(existing?.roster || []);
-  const [rosterB, setRosterB] = useState<Player[]>(pairedLineup?.roster || []);
+  const [gameDate, setGameDate] = useState(existing?.gameDate || prefillFromChl?.gameDate || '');
+  const [teamAName, setTeamAName] = useState(existing?.teamName || prefillFromChl?.teamAName || '');
+  const [teamBName, setTeamBName] = useState(pairedLineup?.teamName || prefillFromChl?.teamBName || '');
+  const [rosterA, setRosterA] = useState<Player[]>(existing?.roster || prefillFromChl?.rosterA || []);
+  const [rosterB, setRosterB] = useState<Player[]>(pairedLineup?.roster || prefillFromChl?.rosterB || []);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showGamePicker, setShowGamePicker] = useState(false);
