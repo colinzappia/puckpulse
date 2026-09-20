@@ -125,12 +125,27 @@ def parse_lineup_pdf(pdf_bytes: bytes) -> dict:
     result: dict = {"home": None, "visitor": None}
 
     with pdfplumber.open(BytesIO(pdf_bytes)) as pdf:
-        for page in pdf.pages:
+        for page_num, page in enumerate(pdf.pages):
             tables = page.extract_tables()
             if not tables:
+                # Ground truth instead of another guess: show exactly
+                # what pdfplumber found (or didn't) on this page, so the
+                # actual real structure can be seen directly rather than
+                # inferred from an old screenshot.
+                print(f"    [debug] page {page_num}: extract_tables() found nothing")
+                print(f"    [debug] page {page_num} raw text (first 500 chars):")
+                print("    " + repr((page.extract_text() or "")[:500]))
                 continue
+
+            print(f"    [debug] page {page_num}: {len(tables)} table(s) found")
+            for t_idx, table in enumerate(tables):
+                print(f"    [debug] table {t_idx}: {len(table)} row(s), header={table[0] if table else None}")
+                for r_idx, row in enumerate(table[:5]):
+                    print(f"    [debug]   row {r_idx}: {row}")
+
             team = _parse_one_team_from_tables(tables)
             if not team:
+                print(f"    [debug] page {page_num}: tables found but none matched a roster/lines header — nothing extracted")
                 continue
 
             # Which side this page belongs to: read from the page's own
