@@ -1031,7 +1031,7 @@ const App: React.FC = () => {
 
   const [showFeed, setShowFeed] = useState(true);
   const [showLineups, setShowLineups] = useState(true);
-  const [linesLocked, setLinesLocked] = useState(true);
+  const [linesLocked, setLinesLocked] = useState(false);
   const [visibleTypes, setVisibleTypes] = useState<EventType[]>([]);
   const [shotResultFilter, setShotResultFilter] = useState<'ALL' | 'onNet' | 'attempt'>('ALL');
   const [shotStrengthFilter, setShotStrengthFilter] = useState<'ALL' | 'pp' | 'pk'>('ALL');
@@ -1655,6 +1655,53 @@ const App: React.FC = () => {
       setSavePrompt({ teamName: teamName.trim(), roster: sortedPlayers, logo: isHome ? homeLogo : awayLogo, side: isHome ? 'home' : 'away' });
     } catch (err: any) {
       alert(`Roster Photo Error: ${err.message}`);
+    } finally {
+      setIsPasteSyncing(false);
+      setSyncMessage('');
+    }
+  };
+
+  // Reads a PDF roster sheet — extracts its raw text client-side (no
+  // server round-trip needed for this part), then hands that text to
+  // the exact same AI parsing the paste-text flow already uses, rather
+  // than building separate parsing logic for PDFs specifically. This
+  // works well because a roster PDF is usually a simple player list,
+  // not a complex multi-column layout — the AI is already good at
+  // finding number/name pairs in a loose block of text either way.
+  const handlePdfRosterSync = async (team: Team, file: File | null) => {
+    if (!file) return;
+    const isHome = team === Team.HOME;
+    const teamName = isHome ? homeName : awayName;
+    if (!teamName.trim()) { alert('Please enter a team name first.'); return; }
+    setIsPasteSyncing(true);
+    setSyncMessage('Reading roster PDF...');
+    try {
+      const pdfjsLib = await import('pdfjs-dist');
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let extractedText = '';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        extractedText += textContent.items.map((item: any) => item.str).join(' ') + '\n';
+      }
+      if (!extractedText.trim()) throw new Error('Could not find any readable text in that PDF — it may be a scanned image rather than real text.');
+
+      const result = await fetchRosterByAI({ teamName, rosterUrl: '', pasteText: extractedText });
+      if (result.status === 'ERROR') throw new Error(result.reason || 'Could not parse roster');
+      const players: Player[] = (result.players || []).map((p: any) => ({
+        number: p.number || '00', name: normalizeName(p.name), position: p.position || 'F',
+        line: p.line || (p.position === 'G' ? 'G1' : p.position === 'D' ? 'P1' : '1'),
+      }));
+      if (players.length === 0) throw new Error('No players found in that PDF.');
+      const sortedPlayers = sortByNumber(players);
+      if (isHome) setHomeRoster(sortedPlayers);
+      else setAwayRoster(sortedPlayers);
+      setSyncMessage('');
+      setSavePrompt({ teamName: teamName.trim(), roster: sortedPlayers, logo: isHome ? homeLogo : awayLogo, side: isHome ? 'home' : 'away' });
+    } catch (err: any) {
+      alert(`Roster PDF Error: ${err.message}`);
     } finally {
       setIsPasteSyncing(false);
       setSyncMessage('');
@@ -2929,6 +2976,14 @@ const App: React.FC = () => {
                     <label className={`w-full py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center cursor-pointer ${isPasteSyncing ? 'bg-slate-800 text-slate-600' : 'bg-cyan-600 text-white hover:bg-cyan-500 shadow-lg border border-cyan-400/30'}`}>
                       {isPasteSyncing ? <span className="flex items-center justify-center gap-2"><span className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{animationDelay:'0ms'}}/><span className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{animationDelay:'150ms'}}/><span className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{animationDelay:'300ms'}}/></span> : '📷 Upload Roster Photo'}
                       <input type="file" accept="image/*" disabled={isPasteSyncing} className="hidden" onChange={e => { handleImageRosterSync(team, e.target.files?.[0] || null); e.target.value = ''; }} />
+                    </label>
+                  </section>
+                  <section className="space-y-4 p-5 bg-white/5 rounded-[2.5rem] border border-white/5">
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">📄 PDF Roster</h4>
+                    <p className="text-[9px] text-slate-500 px-1">Upload a roster as a PDF — a downloaded lineup sheet, an exported spreadsheet, anything with a real player list in it (not a scanned image).</p>
+                    <label className={`w-full py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center cursor-pointer ${isPasteSyncing ? 'bg-slate-800 text-slate-600' : 'bg-cyan-600 text-white hover:bg-cyan-500 shadow-lg border border-cyan-400/30'}`}>
+                      {isPasteSyncing ? <span className="flex items-center justify-center gap-2"><span className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{animationDelay:'0ms'}}/><span className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{animationDelay:'150ms'}}/><span className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{animationDelay:'300ms'}}/></span> : '📄 Upload Roster PDF'}
+                      <input type="file" accept="application/pdf" disabled={isPasteSyncing} className="hidden" onChange={e => { handlePdfRosterSync(team, e.target.files?.[0] || null); e.target.value = ''; }} />
                     </label>
                   </section>
                   <section className="space-y-4">
