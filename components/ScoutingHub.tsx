@@ -217,8 +217,13 @@ export default function ScoutingHub({ onNavigateHome, onOpenRosterSetup, onOpenG
 
   const seenOther = new Set<string>();
   const otherEntries: GameEntry[] = [];
+  const todayStr = todayEastern();
   for (const l of lineups) {
     if (usedLineupIds.has(l.id) || seenOther.has(l.id)) continue;
+    // Only today-or-future (or genuinely undated, e.g. a minor-league
+    // lineup with no specific game date) — a past-dated one is stale
+    // and was cluttering this list with old games that already happened.
+    if (l.gameDate && l.gameDate < todayStr) continue;
     const pair = findManualPair(l, lineups);
     if (pair) seenOther.add(pair.id);
     seenOther.add(l.id);
