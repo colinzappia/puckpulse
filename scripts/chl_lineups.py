@@ -264,24 +264,19 @@ def upload_to_supabase(result: dict) -> bool:
     expected when just running a manual test, and only required for the
     real scheduled runs."""
     supabase_url = (os.environ.get("SUPABASE_URL") or "").strip().rstrip("/")
+    # Defends against the actual root cause found: the secret's stored
+    # value already included "/rest/v1" (likely copied from a Supabase
+    # dashboard field labeled for that specific endpoint, not the bare
+    # project URL) — appending this script's own "/rest/v1/..." on top
+    # produced a doubled, invalid path. Stripped here so this works
+    # correctly regardless of which form the secret holds, rather than
+    # relying on it being pasted exactly one specific way.
+    if supabase_url.endswith("/rest/v1"):
+        supabase_url = supabase_url[: -len("/rest/v1")]
     service_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
     if not supabase_url or not service_key:
         print("    [skip] SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not set — not uploading, only saved locally")
         return False
-
-    # Safe structural checks — these print facts about the value, never
-    # the value itself, so nothing here should ever be masked by GitHub
-    # or reveal the actual secret. This is here specifically because the
-    # obvious fix (stripping a trailing slash) didn't resolve a repeated
-    # "invalid path" error from Supabase, so something else about this
-    # value's exact shape needs to actually be seen instead of guessed at
-    # again.
-    print(f"    [debug] SUPABASE_URL length: {len(supabase_url)}")
-    print(f"    [debug] SUPABASE_URL starts with 'https://': {supabase_url.startswith('https://')}")
-    print(f"    [debug] SUPABASE_URL contains whitespace: {any(c.isspace() for c in supabase_url)}")
-    print(f"    [debug] SUPABASE_URL contains '.supabase.co': {'.supabase.co' in supabase_url}")
-    print(f"    [debug] first 12 chars: {supabase_url[:12]!r}")
-    print(f"    [debug] last 12 chars: {supabase_url[-12:]!r}")
 
     row = {
         "league": result["league"],
