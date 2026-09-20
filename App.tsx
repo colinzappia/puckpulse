@@ -1924,6 +1924,7 @@ const App: React.FC = () => {
           onOpenManual={() => navigate('/manual')}
           onOpenAbout={() => navigate('/about')}
           onOpenContact={() => navigate('/contact')}
+          onGoHome={() => { sessionStorage.removeItem('tch_launched'); navigate('/'); setShowLanding(true); }}
         />
         <SupportChatWidget />
       </>
