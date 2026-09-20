@@ -263,7 +263,7 @@ def upload_to_supabase(result: dict) -> bool:
     (not an error) if the Supabase credentials aren't configured — that's
     expected when just running a manual test, and only required for the
     real scheduled runs."""
-    supabase_url = os.environ.get("SUPABASE_URL")
+    supabase_url = (os.environ.get("SUPABASE_URL") or "").rstrip("/")
     service_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
     if not supabase_url or not service_key:
         print("    [skip] SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not set — not uploading, only saved locally")
@@ -281,9 +281,12 @@ def upload_to_supabase(result: dict) -> bool:
         "away_lines": result["visitor"]["lines"],
     }
 
+    upload_url = f"{supabase_url}/rest/v1/chl_lineups"
+    print(f"    [debug] uploading to: {upload_url}")
+
     try:
         r = requests.post(
-            f"{supabase_url}/rest/v1/chl_lineups",
+            upload_url,
             headers={
                 "apikey": service_key,
                 "Authorization": f"Bearer {service_key}",
