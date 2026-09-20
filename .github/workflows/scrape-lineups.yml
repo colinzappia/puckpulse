@@ -1,0 +1,31 @@
+name: Scrape CHL Lineups
+
+on:
+  schedule:
+    # Every 15 minutes. Lineups get posted roughly an hour before each
+    # game, and games happen at all different times of day across three
+    # leagues, so this runs often enough to catch one shortly after it's
+    # actually posted, without needing to know each game's exact time in
+    # advance. Games with no lineup posted yet are simply skipped again
+    # next run, at no real cost — it's a quick check, not a heavy job.
+    - cron: '*/15 * * * *'
+  workflow_dispatch:   # lets you also trigger a check manually anytime
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests pdfplumber
+
+      - name: Scrape today's lineups
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: python scripts/chl_lineups.py
