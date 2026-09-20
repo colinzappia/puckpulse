@@ -97,6 +97,12 @@ def get_games_for_date(target_date: str) -> list[dict]:
             for g in get_schedule(league):
                 if g.get("date_played") == target_date:
                     g["_league"] = league
+                    # The PDF URL needs the platform's own internal client
+                    # code (e.g. "lhjmq" for QMJHL), not this script's own
+                    # label for the league — confirmed these differ via a
+                    # real PDF link, where "qmjhl" (used here before) 404'd
+                    # and "lhjmq" was the actual, real path.
+                    g["_client_code"] = LEAGUES[league]["client_code"]
                     games.append(g)
         except Exception as exc:
             print(f"  [warn] {league} schedule failed: {exc}", file=sys.stderr)
@@ -107,12 +113,18 @@ def get_games_for_date(target_date: str) -> list[dict]:
 # PDF download
 # ---------------------------------------------------------------------------
 def build_pdf_url(game: dict) -> str:
-    # Confirmed correct: a real game (id 28992, KGN @ PBO, 2026-09-17)
-    # produces exactly the URL the league itself uses for that game's
-    # actual lineup sheet.
+    # Confirmed correct for OHL against a real game (id 28992, KGN @ PBO,
+    # 2026-09-17). For QMJHL, two things needed fixing after checking a
+    # real downloaded PDF's actual source URL: the league segment must be
+    # the platform's own client code ("lhjmq"), not this script's label
+    # ("qmjhl") — and team codes must be forced uppercase, since the API
+    # returned them in a different case ("Cha"/"Cap") than the real PDF
+    # URL actually uses ("CHA"/"CAP").
+    visitor_code = game["visiting_team_code"].upper()
+    home_code = game["home_team_code"].upper()
     return (
-        f"{PDF_BASE}/{game['_league']}/{game['game_id']}/"
-        f"{game['visiting_team_code']}@{game['home_team_code']}_{game['date_played']}.pdf"
+        f"{PDF_BASE}/{game['_client_code']}/{game['game_id']}/"
+        f"{visitor_code}@{home_code}_{game['date_played']}.pdf"
     )
 
 
@@ -407,6 +419,7 @@ def main():
             "home_team_code": "PBO",
             "home_team_name": "Peterborough Petes",
             "_league": "ohl",
+            "_client_code": "ohl",
         }
         result = process_game(game)
         if result:
