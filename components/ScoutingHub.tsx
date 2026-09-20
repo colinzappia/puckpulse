@@ -139,9 +139,9 @@ export default function ScoutingHub({ onNavigateHome, onOpenRosterSetup, onOpenG
     }
   };
 
-  const refresh = () => {
+  const refresh = (background = false) => {
     if (!user) return;
-    setLoading(true);
+    if (!background) setLoading(true);
     const today = todayEastern();
     Promise.all([
       loadMyScoutingReports(user.id),
@@ -160,11 +160,20 @@ export default function ScoutingHub({ onNavigateHome, onOpenRosterSetup, onOpenG
         setTodaysGames(allLeagueGames.filter(g => g.gameDate === today));
         setChlLineupsMap(chlMap);
       })
-      .finally(() => setLoading(false));
+      .finally(() => { if (!background) setLoading(false); });
   };
 
   useEffect(() => {
     refresh();
+    // The CHL lineup scraper itself only checks every 15 minutes, but
+    // polling a bit more often than that here just means a freshly
+    // scraped lineup shows up sooner for whoever's actually looking at
+    // this page — a scout waiting on tonight's lineup shouldn't have to
+    // remember to manually refresh or leave and come back. "background"
+    // skips the loading spinner so the list doesn't flicker every couple
+    // of minutes while someone's actively reading it.
+    const interval = setInterval(() => refresh(true), 2 * 60 * 1000);
+    return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -208,13 +217,8 @@ export default function ScoutingHub({ onNavigateHome, onOpenRosterSetup, onOpenG
 
   const seenOther = new Set<string>();
   const otherEntries: GameEntry[] = [];
-  const todayStr = todayEastern();
   for (const l of lineups) {
     if (usedLineupIds.has(l.id) || seenOther.has(l.id)) continue;
-    // Only today-or-future (or genuinely undated, e.g. a minor-league
-    // lineup with no specific game date) — a past-dated one is stale
-    // and was cluttering this list with old games that already happened.
-    if (l.gameDate && l.gameDate < todayStr) continue;
     const pair = findManualPair(l, lineups);
     if (pair) seenOther.add(pair.id);
     seenOther.add(l.id);
