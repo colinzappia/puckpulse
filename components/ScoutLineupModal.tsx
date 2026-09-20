@@ -453,7 +453,7 @@ export default function ScoutLineupModal({ existing, allLineups, onOpenExisting,
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showGamePicker, setShowGamePicker] = useState(false);
-  const [locked, setLocked] = useState(false);
+  const [locked, setLocked] = useState(true);
   const [scoutingPrefill, setScoutingPrefill] = useState<{ playerName: string; playerNumber: string; position: string; teamName: string; gameDate: string } | null>(null);
 
   const openScoutingReportFor = (p: Player, teamNameForPlayer: string) => {
