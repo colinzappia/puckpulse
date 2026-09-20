@@ -1031,7 +1031,7 @@ const App: React.FC = () => {
 
   const [showFeed, setShowFeed] = useState(true);
   const [showLineups, setShowLineups] = useState(true);
-  const [linesLocked, setLinesLocked] = useState(false);
+  const [linesLocked, setLinesLocked] = useState(true);
   const [visibleTypes, setVisibleTypes] = useState<EventType[]>([]);
   const [shotResultFilter, setShotResultFilter] = useState<'ALL' | 'onNet' | 'attempt'>('ALL');
   const [shotStrengthFilter, setShotStrengthFilter] = useState<'ALL' | 'pp' | 'pk'>('ALL');
