@@ -66,9 +66,10 @@ const getPeriodLabel = (p: number) => {
   return `${p}`;
 };
 
-const DraggablePlayer: React.FC<{ p: Player, team: Team, isHome: boolean, isSelected: boolean, onSelect: (num: string, team: Team) => void }> = ({ p, team, isHome, isSelected, onSelect }) => {
+const DraggablePlayer: React.FC<{ p: Player, team: Team, isHome: boolean, isSelected: boolean, onSelect: (num: string, team: Team) => void, locked?: boolean }> = ({ p, team, isHome, isSelected, onSelect, locked }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `player-${team}-${p.number}`,
+    disabled: locked,
   });
 
   const style = {
@@ -81,9 +82,9 @@ const DraggablePlayer: React.FC<{ p: Player, team: Team, isHome: boolean, isSele
       ref={setNodeRef}
       style={style}
       {...attributes}
-      {...listeners}
+      {...(locked ? {} : listeners)}
       onClick={() => onSelect(p.number, team)}
-      className={`relative h-10 rounded-xl font-black flex flex-col items-center justify-center transition-all border group active:scale-95 touch-none ${isSelected ? (isHome ? 'bg-blue-600 border-blue-400 shadow-blue-500/40 shadow-xl' : 'bg-red-600 border-red-400 shadow-red-500/40 shadow-xl') : 'bg-black/30 border-white/5 text-slate-400 hover:bg-white/10'}`}
+      className={`relative h-10 rounded-xl font-black flex flex-col items-center justify-center transition-all border group active:scale-95 ${locked ? '' : 'touch-none'} ${isSelected ? (isHome ? 'bg-blue-600 border-blue-400 shadow-blue-500/40 shadow-xl' : 'bg-red-600 border-red-400 shadow-red-500/40 shadow-xl') : 'bg-black/30 border-white/5 text-slate-400 hover:bg-white/10'}`}
     >
       <span className="text-[11px] font-black leading-none truncate w-full text-center px-1">
         #{p.number} {p.name.split(' ').pop()}
@@ -1016,6 +1017,7 @@ const App: React.FC = () => {
 
   const [showFeed, setShowFeed] = useState(true);
   const [showLineups, setShowLineups] = useState(true);
+  const [linesLocked, setLinesLocked] = useState(false);
   const [visibleTypes, setVisibleTypes] = useState<EventType[]>([]);
   const [shotResultFilter, setShotResultFilter] = useState<'ALL' | 'onNet' | 'attempt'>('ALL');
   const [shotStrengthFilter, setShotStrengthFilter] = useState<'ALL' | 'pp' | 'pk'>('ALL');
@@ -2141,7 +2143,7 @@ const App: React.FC = () => {
                           });
                           return (
                             <DroppableSlot key={pos} id={`line-${team}-${lineNum}-${pos}`} label={pos} cols={Math.max(1, playersInThisSlot.length)}>
-                              {playersInThisSlot.map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} isHome={isHome} isSelected={playerNumber === p.number && activeTeam === team} onSelect={selectPlayer} />)}
+                              {playersInThisSlot.map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} isHome={isHome} isSelected={playerNumber === p.number && activeTeam === team} onSelect={selectPlayer} locked={linesLocked} />)}
                             </DroppableSlot>
                           );
                         })}
@@ -2166,7 +2168,7 @@ const App: React.FC = () => {
                           });
                           return (
                             <DroppableSlot key={pos} id={`line-${team}-${pairNum}-${posIdx === 0 ? 'LD' : 'RD'}`} label={pos} cols={Math.max(1, playersInThisSlot.length)}>
-                              {playersInThisSlot.map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} isHome={isHome} isSelected={playerNumber === p.number && activeTeam === team} onSelect={selectPlayer} />)}
+                              {playersInThisSlot.map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} isHome={isHome} isSelected={playerNumber === p.number && activeTeam === team} onSelect={selectPlayer} locked={linesLocked} />)}
                             </DroppableSlot>
                           );
                         })}
@@ -2194,7 +2196,7 @@ const App: React.FC = () => {
                           <div className="flex items-center gap-1">
                             <div className="flex-1">
                               <DroppableSlot id={`line-${team}-active-goalie-G`} label="NET">
-                                <DraggablePlayer p={activeGoalie} team={team} isHome={isHome} isSelected={playerNumber === activeGoalie.number && activeTeam === team} onSelect={selectPlayer} />
+                                <DraggablePlayer p={activeGoalie} team={team} isHome={isHome} isSelected={playerNumber === activeGoalie.number && activeTeam === team} onSelect={selectPlayer} locked={linesLocked} />
                               </DroppableSlot>
                             </div>
                             {nextGoalie && (
@@ -2216,7 +2218,7 @@ const App: React.FC = () => {
                         <div className="grid grid-cols-2 gap-0.5">
                           {['G1','G2'].map(goalieNum => (
                             <DroppableSlot key={goalieNum} id={`line-${team}-${goalieNum}-G`} label={goalieNum === 'G1' ? 'S' : 'B'}>
-                              {roster.filter(p => p.line === goalieNum).map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} isHome={isHome} isSelected={playerNumber === p.number && activeTeam === team} onSelect={selectPlayer} />)}
+                              {roster.filter(p => p.line === goalieNum).map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} isHome={isHome} isSelected={playerNumber === p.number && activeTeam === team} onSelect={selectPlayer} locked={linesLocked} />)}
                             </DroppableSlot>
                           ))}
                         </div>
@@ -2226,7 +2228,7 @@ const App: React.FC = () => {
                   {/* Unassigned */}
                   {roster.filter(p => !['1','2','3','4','P1','P2','P3','G1','G2'].includes(p.line || '')).length > 0 && (
                     <DroppableSlot id={`line-${team}-unassigned`} label="?" cols={2}>
-                      {roster.filter(p => !['1','2','3','4','P1','P2','P3','G1','G2'].includes(p.line || '')).map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} isHome={isHome} isSelected={playerNumber === p.number && activeTeam === team} onSelect={selectPlayer} />)}
+                      {roster.filter(p => !['1','2','3','4','P1','P2','P3','G1','G2'].includes(p.line || '')).map(p => <DraggablePlayer key={`${team}-${p.number}`} p={p} team={team} isHome={isHome} isSelected={playerNumber === p.number && activeTeam === team} onSelect={selectPlayer} locked={linesLocked} />)}
                     </DroppableSlot>
                   )}
                 </div>
@@ -2236,13 +2238,22 @@ const App: React.FC = () => {
         </div>
 
         {/* Roster panel collapse handle — sits right on the seam it controls */}
-        <div className="w-full flex justify-center relative z-10 -mb-px">
+        <div className="w-full flex justify-center items-center gap-2 relative z-10 -mb-px">
           <button
             onClick={() => setShowLineups(!showLineups)}
             className="px-4 py-1 bg-white/10 hover:bg-white/20 rounded-b-lg text-[9px] font-black uppercase tracking-wider text-slate-400 hover:text-slate-200 border border-t-0 border-white/10 transition-all shadow-lg"
           >
             {showLineups ? '▲ Hide Rosters' : '▼ Show Rosters'}
           </button>
+          {showLineups && (
+            <button
+              onClick={() => setLinesLocked(l => !l)}
+              className={`px-3 py-1 rounded-b-lg text-[9px] font-black uppercase tracking-wider border border-t-0 transition-all shadow-lg ${linesLocked ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'bg-white/10 hover:bg-white/20 text-slate-400 hover:text-slate-200 border-white/10'}`}
+              title={linesLocked ? "Lines locked — tap to allow dragging players again" : "Lock lines to prevent accidentally dragging a player"}
+            >
+              {linesLocked ? '🔒 Locked' : '🔓 Lock Lines'}
+            </button>
+          )}
         </div>
 
         {/* RINK */}
