@@ -251,6 +251,12 @@ export default async function handler(req, res) {
       skippedPast,
       failures,
       dateRangeFound: earliestFound && latestFound ? `${earliestFound} to ${latestFound}` : null,
+      // Temporary — shows every field name on one real game record, so
+      // we can confirm exactly what the API actually returns (e.g.
+      // whether a team abbreviation code exists anywhere) instead of
+      // guessing. Safe to remove once that's settled.
+      sampleGameFields: games[0] ? Object.keys(games[0]) : null,
+      sampleGame: games[0] || null,
     });
   } catch (err) {
     console.error('Schedule sync error:', err);
