@@ -15,7 +15,7 @@ import React, { useEffect, useState } from 'react';
 import { LeagueGame, loadLeagueGames } from '../services/leagueGamesService';
 
 interface Props {
-  onPickBoth?: (game: { homeTeam: string; awayTeam: string; gameDate: string }) => void;
+  onPickBoth?: (game: { homeTeam: string; awayTeam: string; gameDate: string; league: string; externalGameId: string }) => void;
   onPickOne?: (result: { teamName: string; gameDate: string }) => void;
   onClose: () => void;
 }
@@ -180,7 +180,7 @@ export default function LeagueGamePicker({ onPickBoth, onPickOne, onClose }: Pro
                 style={S.card}
                 onClick={() => {
                   if (onPickBoth) {
-                    onPickBoth({ homeTeam: g.homeTeam, awayTeam: g.awayTeam, gameDate: g.gameDate });
+                    onPickBoth({ homeTeam: g.homeTeam, awayTeam: g.awayTeam, gameDate: g.gameDate, league: g.league, externalGameId: g.externalGameId });
                     onClose();
                   } else {
                     setChoosingSideFor(g);
