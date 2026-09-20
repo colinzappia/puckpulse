@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 from datetime import date, datetime, timezone
@@ -244,6 +245,52 @@ def _parse_one_team_from_tables(tables: list[list[list]]) -> dict | None:
 # ---------------------------------------------------------------------------
 # Process one game or a whole day
 # ---------------------------------------------------------------------------
+def upload_to_supabase(result: dict) -> bool:
+    """Push one game's result into the chl_lineups table. Skips gracefully
+    (not an error) if the Supabase credentials aren't configured — that's
+    expected when just running a manual test, and only required for the
+    real scheduled runs."""
+    supabase_url = os.environ.get("SUPABASE_URL")
+    service_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+    if not supabase_url or not service_key:
+        print("    [skip] SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not set — not uploading, only saved locally")
+        return False
+
+    row = {
+        "league": result["league"],
+        "external_game_id": result["game_id"],
+        "game_date": result["date"],
+        "home_team_code": result["home"]["code"],
+        "home_team_name": result["home"]["name"],
+        "away_team_code": result["visitor"]["code"],
+        "away_team_name": result["visitor"]["name"],
+        "home_lines": result["home"]["lines"],
+        "away_lines": result["visitor"]["lines"],
+    }
+
+    try:
+        r = requests.post(
+            f"{supabase_url}/rest/v1/chl_lineups",
+            headers={
+                "apikey": service_key,
+                "Authorization": f"Bearer {service_key}",
+                "Content-Type": "application/json",
+                "Prefer": "resolution=merge-duplicates",
+            },
+            params={"on_conflict": "league,external_game_id"},
+            json=row,
+            timeout=20,
+        )
+        if r.status_code not in (200, 201, 204):
+            print(f"    [warn] Supabase upload failed ({r.status_code}): {r.text[:300]}")
+            return False
+        print("    uploaded to Supabase")
+        return True
+    except Exception as exc:
+        print(f"    [warn] Supabase upload error: {exc}")
+        return False
+
+
 def process_game(game: dict) -> dict | None:
     pdf_url = build_pdf_url(game)
     print(f"  {game['visiting_team_code']} @ {game['home_team_code']}  →  {pdf_url}")
@@ -254,7 +301,7 @@ def process_game(game: dict) -> dict | None:
         return None
 
     parsed = parse_lineup_pdf(pdf_bytes)
-    return {
+    result = {
         "game_id": game["game_id"],
         "league": game["_league"],
         "date": game["date_played"],
@@ -273,6 +320,8 @@ def process_game(game: dict) -> dict | None:
         "pdf_url": pdf_url,
         "scraped_at": datetime.now(timezone.utc).isoformat(),
     }
+    upload_to_supabase(result)
+    return result
 
 
 def process_date(target_date: str, out_dir: Path = OUTPUT_DIR) -> list[dict]:
