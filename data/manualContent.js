@@ -250,7 +250,7 @@ export const manualSections = [
     subsections: [
       {
         title: 'What is Scouting?',
-        content: 'Scouting lets you build a structured evaluation of any player — ratings across 8 categories plus notes — either pulled from a game you\'ve tracked (with stats auto-filled from what was actually logged) or written freeform with no tracked game at all. Reach it from the "🔍 Scouts Portal" item in the menu — it\'s its own page, separate from Game History.'
+        content: 'Scouts Portal is its own page, reached from the "🔍 Scouts Portal" item in the menu — separate from Game History. It has two tabs: Games, for finding and viewing lineups; and My Reports, for the player evaluations you\'ve actually written. This section covers My Reports — see "Games & Lineups" below for the other tab.'
       },
       {
         title: 'Scouting a player during a live game',
@@ -282,7 +282,26 @@ export const manualSections = [
       },
       {
         title: 'Editing or deleting a report',
-        content: 'Tap any report in the Scouts Portal list to reopen it, make changes, and save again. A "Delete this report" button appears at the bottom whenever you\'re editing an existing report (not while creating a new one) — deleting is permanent and cannot be undone.'
+        content: 'Tap any report in the My Reports tab to reopen it, make changes, and save again. A "Delete this report" button appears at the bottom whenever you\'re editing an existing report (not while creating a new one) — deleting is permanent and cannot be undone.'
+      }
+    ]
+  },
+  {
+    id: 'scouting-lineups',
+    icon: '📋',
+    title: 'Games & Lineups',
+    subsections: [
+      {
+        title: 'The Games tab',
+        content: 'The Games tab (the first thing you see in Scouts Portal) lists games with a lineup you can actually look at — today\'s CHL schedule (OHL, WHL, QMJHL), plus anything else a lineup has been uploaded for. Each game shows one of three states: "Auto lineup" (found automatically, see below), "Uploaded" (a scout entered it by hand), or "No lineup yet." Games with a lineup already sort to the top of the list.\n\nA dropdown above the list lets you narrow to one league at a time; leave it on "All leagues" and games are grouped under league headings instead.'
+      },
+      {
+        title: 'Auto-populated CHL lineups',
+        content: 'For OHL, WHL, and QMJHL games, Top Cheese Hockey automatically checks for each team\'s official pre-game lineup — starting goalie, backup goalie, all four forward lines, and all three defense pairs — and fills it in on its own, typically within 15 minutes of the league posting it. Leagues generally post lineups roughly an hour before puck drop, so a game showing "No lineup yet" close to game time isn\'t a problem — it usually just hasn\'t been posted by the league yet.\n\nTapping a game marked "Auto lineup" opens both rosters already filled in with the real thing — nothing to type. You can still make changes before saving if something needs correcting.'
+      },
+      {
+        title: 'Uploading your own lineup',
+        content: 'For a game with "No lineup yet" — or any game not in the CHL schedule at all, including minor hockey — tap it (or "+ Upload a lineup for a different game" for one not already in the list) to open the upload screen. Paste a roster as text, or drag in a photo of one and let it read the roster automatically, then drag players into the right forward lines, D pairs, and goalie slots — the same drag-and-drop grid used on the live tracking screen. Save it, and it\'s visible to everyone on your plan, the same as an auto-populated one.'
       }
     ]
   },
