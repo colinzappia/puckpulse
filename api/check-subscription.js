@@ -120,6 +120,41 @@ export default async function handler(req, res) {
           });
         }
       }
+
+      // Association access is fundamentally different from the checks
+      // above — it was never a Stripe subscription to begin with, just
+      // a one-time payment, so there's no live Stripe status to ask
+      // about at all. The association's own season_start/season_end
+      // (set once, at purchase, in stripe-webhook.js) is the entire
+      // source of truth for whether this membership is currently
+      // valid — checked fresh on every request, same as everything
+      // else here, so access turns off on its own once the season
+      // ends, with nothing manual required.
+      const { data: assocMembership } = await supabaseAdmin
+        .from('association_members')
+        .select('associations(association_name, season_start, season_end)')
+        .eq('member_email', email.trim().toLowerCase())
+        .maybeSingle();
+
+      const association = assocMembership?.associations;
+      if (association) {
+        const todayStr = new Date().toISOString().slice(0, 10);
+        const inSeason = todayStr >= association.season_start && todayStr <= association.season_end;
+        if (inSeason) {
+          return res.status(200).json({
+            isSubscribed: true,
+            plan: 'Pro',
+            status: 'active',
+            viaAssociation: true,
+            associationName: association.association_name,
+            // An association is a coaching product, not a scouting
+            // one — its coaches get the same access as any other
+            // coach tier, Games tab included only with an actual
+            // Scout subscription of their own.
+            hasScoutAccess: false,
+          });
+        }
+      }
     }
 
     return res.status(200).json({ isSubscribed: false, plan: null, hasScoutAccess: false });
