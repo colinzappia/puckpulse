@@ -6,6 +6,13 @@ const supabaseAdmin = process.env.SUPABASE_SERVICE_ROLE_KEY
   ? createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
   : null;
 
+// The three Scout-tier plan names (set as each Stripe Price's own
+// metadata.planName, same mechanism the existing Basic/Pro/Team plans
+// already use) — checked against this list to know whether someone's
+// subscription is a Scout tier specifically, regardless of which of
+// the three sizes it is.
+const SCOUT_PLANS = ['ScoutIndividual', 'ScoutTeam', 'ScoutOrg'];
+
 async function getSubForEmail(email) {
   const customers = await stripe.customers.list({ email, limit: 5 });
   for (const customer of customers.data) {
@@ -35,11 +42,25 @@ export default async function handler(req, res) {
     const ownSub = await getSubForEmail(email);
     if (ownSub) {
       const planName = ownSub.metadata?.planName || 'Basic';
+      const isScout = SCOUT_PLANS.includes(planName);
       return res.status(200).json({
         isSubscribed: true,
-        plan: planName,
+        // A Scout subscriber gets full Pro-level app access (per an
+        // explicit decision — Scout is priced and positioned as its own
+        // product, not a restricted one), reported as plain "Pro" so
+        // every other Pro-gated check elsewhere in the app already
+        // handles it correctly, with no need to know about Scout plan
+        // names specifically. hasScoutAccess below is the one thing
+        // that's actually new and different for them.
+        plan: isScout ? 'Pro' : planName,
         status: ownSub.status,
         trialEnd: ownSub.trial_end,
+        // Only a real Scout-tier subscription unlocks the Games tab in
+        // Scouts Portal (CHL/AAA schedules, auto-populated and uploaded
+        // lineups) — every coach tier (Basic/Pro/Team) still gets the
+        // rest of Scouts Portal (writing reports, including from a
+        // tracked game), just not this specifically.
+        hasScoutAccess: isScout,
       });
     }
 
@@ -65,12 +86,43 @@ export default async function handler(req, res) {
             status: ownerSub.status,
             trialEnd: ownerSub.trial_end,
             viaTeam: true,
+            // A regular Team plan invite is still a regular coach —
+            // this alone never grants Games-tab access, only an actual
+            // Scout subscription (own or via scout_org_members below)
+            // does.
+            hasScoutAccess: false,
+          });
+        }
+      }
+
+      // Same pattern, completely separate list: invited onto someone
+      // else's Scout subscription (a Scout Team or Scout Organization
+      // plan). Kept as its own table rather than sharing team_members,
+      // so a coaching team's roster and a scouting group's roster can
+      // never overlap or get confused with each other.
+      const { data: scoutMembership } = await supabaseAdmin
+        .from('scout_org_members')
+        .select('owner_email')
+        .eq('member_email', email.trim().toLowerCase())
+        .maybeSingle();
+
+      if (scoutMembership?.owner_email) {
+        const ownerSub = await getSubForEmail(scoutMembership.owner_email);
+        const ownerPlan = ownerSub?.metadata?.planName || null;
+        if (ownerSub && SCOUT_PLANS.includes(ownerPlan)) {
+          return res.status(200).json({
+            isSubscribed: true,
+            plan: 'Pro',
+            status: ownerSub.status,
+            trialEnd: ownerSub.trial_end,
+            viaScoutOrg: true,
+            hasScoutAccess: true,
           });
         }
       }
     }
 
-    return res.status(200).json({ isSubscribed: false, plan: null });
+    return res.status(200).json({ isSubscribed: false, plan: null, hasScoutAccess: false });
   } catch (err) {
     console.error('Subscription check error:', err);
     return res.status(500).json({ error: err.message });
