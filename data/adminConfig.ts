@@ -27,6 +27,7 @@ export const ADMIN_EMAILS = [
   'abbottnhl@gmail.com',
   'lennyzappia@gmail.com',
   'turpinliam@gmail.com',
+  'puckbunker@gmail.com',
 ];
 
 // A separate, much narrower list — just for who can trigger a league
