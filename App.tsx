@@ -19,6 +19,7 @@ import AuthGate from './components/AuthGate';
 import PricingGate from './components/PricingGate';
 import LegalPages from './components/LegalPages';
 import ContactPage from './components/ContactPage';
+import AssociationWelcome from './components/AssociationWelcome';
 import AboutPage from './components/AboutPage';
 import AdvertisePage from './components/AdvertisePage';
 import ThemedBackground from './components/ThemedBackground';
@@ -1915,6 +1916,9 @@ const App: React.FC = () => {
   }
   if (location.pathname === '/contact') {
     return <><ContactPage onClose={() => navigate('/')} /><SupportChatWidget /></>;
+  }
+  if (location.pathname === '/association-welcome') {
+    return <><AssociationWelcome onClose={() => navigate('/')} /><SupportChatWidget /></>;
   }
   if (location.pathname === '/advertise' && ADS_ENABLED) {
     return <><AdvertisePage isOpen={true} onClose={() => navigate('/')} /><SupportChatWidget /></>;
