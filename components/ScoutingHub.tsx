@@ -43,6 +43,11 @@ interface Props {
   onOpenAbout: () => void;
   onOpenContact: () => void;
   onGoHome: () => void;
+  // Only a real Scout-tier subscription unlocks the Games tab (CHL/AAA
+  // schedules, auto-populated and uploaded lineups) — every coach tier
+  // still gets My Reports (writing evaluations, including from a
+  // tracked game), just not this specifically.
+  hasScoutAccess: boolean;
 }
 
 function formatDate(iso: string) {
@@ -76,7 +81,7 @@ interface GameEntry {
   scoutedLineup?: SavedScoutedLineup;
 }
 
-export default function ScoutingHub({ onNavigateHome, onOpenRosterSetup, onOpenGameHistory, onOpenManual, onOpenAbout, onOpenContact, onGoHome }: Props) {
+export default function ScoutingHub({ onNavigateHome, onOpenRosterSetup, onOpenGameHistory, onOpenManual, onOpenAbout, onOpenContact, onGoHome, hasScoutAccess }: Props) {
   const { user } = useUser();
   const { getToken } = useAuth();
   const isAdmin = SCHEDULE_SYNC_EMAILS.includes((user?.primaryEmailAddress?.emailAddress || '').toLowerCase());
@@ -101,7 +106,7 @@ export default function ScoutingHub({ onNavigateHome, onOpenRosterSetup, onOpenG
   const menuAction = (fn: () => void) => { setMenuOpen(false); fn(); };
 
   const [loading, setLoading] = useState(false);
-  const [tab, setTab] = useState<'games' | 'reports'>('games');
+  const [tab, setTab] = useState<'games' | 'reports'>(hasScoutAccess ? 'games' : 'reports');
   const [reports, setReports] = useState<SavedScoutingReport[]>([]);
   const [games, setGames] = useState<SavedGameReport[]>([]);
   const [lineups, setLineups] = useState<SavedScoutedLineup[]>([]);
@@ -430,6 +435,15 @@ export default function ScoutingHub({ onNavigateHome, onOpenRosterSetup, onOpenG
 
         <div style={S.body}>
           {tab === 'games' ? (
+            !hasScoutAccess ? (
+              <div className="text-center py-16 px-4">
+                <div className="text-4xl mb-4">🔒</div>
+                <div className="text-white font-black text-sm uppercase tracking-widest mb-2">Scout Tier Required</div>
+                <div className="text-slate-500 text-xs leading-relaxed max-w-xs mx-auto">
+                  CHL and AAA schedules, plus lineups that fill themselves in automatically, are part of the Scout subscription — not included with a coaching plan. My Reports (writing evaluations, including from games you've tracked) is still fully available to you below.
+                </div>
+              </div>
+            ) : (
             <>
               {isAdmin && (
                 <>
@@ -540,6 +554,7 @@ export default function ScoutingHub({ onNavigateHome, onOpenRosterSetup, onOpenG
                 })
               )}
             </>
+            )
           ) : (
             <>
               <div className="flex gap-2 mb-4">
