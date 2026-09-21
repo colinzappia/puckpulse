@@ -806,6 +806,7 @@ const App: React.FC = () => {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [userPlan, setUserPlan] = useState<string | null>(null);
   const [isViaTeam, setIsViaTeam] = useState(false);
+  const [hasScoutAccess, setHasScoutAccess] = useState(false);
   const [checkingSubscription, setCheckingSubscription] = useState(false);
   const [legalPage, setLegalPage] = useState<'terms' | 'privacy' | null>(null);
   const [showPlayerStats, setShowPlayerStats] = useState(false);
@@ -845,7 +846,7 @@ const App: React.FC = () => {
           body: JSON.stringify({ userId, email: user.primaryEmailAddress.emailAddress }),
         });
         const data = await response.json();
-        if (data.isSubscribed) { setIsSubscribed(true); setUserPlan(data.plan || 'Basic'); setIsViaTeam(!!data.viaTeam); }
+        if (data.isSubscribed) { setIsSubscribed(true); setUserPlan(data.plan || 'Basic'); setIsViaTeam(!!data.viaTeam); setHasScoutAccess(!!data.hasScoutAccess); }
       } catch (err) {
         console.error('Subscription check failed:', err);
       } finally {
@@ -1988,6 +1989,7 @@ const App: React.FC = () => {
           onOpenAbout={() => navigate('/about')}
           onOpenContact={() => navigate('/contact')}
           onGoHome={() => { sessionStorage.removeItem('tch_launched'); navigate('/'); setShowLanding(true); }}
+          hasScoutAccess={hasScoutAccess || isAdmin}
         />
         <SupportChatWidget />
       </>
