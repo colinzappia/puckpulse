@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuth, useUser } from '@clerk/clerk-react';
+import JoinAssociation from './JoinAssociation';
 
 interface Plan {
   name: string;
@@ -51,6 +52,7 @@ const PricingGate: React.FC<PricingGateProps> = ({ onSubscribed }) => {
   const [loading, setLoading] = React.useState<string | null>(null);
   const [error, setError] = React.useState('');
   const [couponCode, setCouponCode] = React.useState('');
+  const [showJoinAssociation, setShowJoinAssociation] = React.useState(false);
 
   const handleSubscribe = async (plan: Plan) => {
     setLoading(plan.name);
@@ -81,12 +83,20 @@ const PricingGate: React.FC<PricingGateProps> = ({ onSubscribed }) => {
   };
 
   return (
+    <>
     <div className="min-h-screen bg-[#05070a] flex flex-col items-center justify-center px-4 py-12">
       <img src="/Top_Cheese_Hockey_logo.png" alt="Top Cheese Hockey" className="h-24 w-auto mb-6" />
       
       <h2 className="text-3xl font-black text-white tracking-tight mb-2">Choose your plan</h2>
       <p className="text-slate-400 mb-2">30-day free trial on all plans. No credit card surprises.</p>
       <p className="text-xs text-slate-600 mb-8">Cancel any time.</p>
+
+      <button
+        onClick={() => setShowJoinAssociation(true)}
+        className="text-cyan-400 hover:text-cyan-300 text-xs font-bold underline mb-6"
+      >
+        Have an association join code?
+      </button>
 
       {/* Coupon code */}
       <div className="flex gap-2 w-full max-w-sm mb-6">
@@ -162,6 +172,14 @@ const PricingGate: React.FC<PricingGateProps> = ({ onSubscribed }) => {
         © 2026 Top Cheese Hockey · Built for hockey people, by hockey people
       </p>
     </div>
+
+    {showJoinAssociation && (
+      <JoinAssociation
+        onClose={() => setShowJoinAssociation(false)}
+        onJoined={() => { setShowJoinAssociation(false); onSubscribed(); }}
+      />
+    )}
+    </>
   );
 };
 
