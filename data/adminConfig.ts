@@ -16,10 +16,8 @@ export const ADMIN_EMAILS = [
   'marcodinardo24@gmail.com',
   'mmcnamee12@hotmail.com',
   'codycaron@cunet.carleton.ca',
-  'shahbazimel@gmail.com',
   'patrick.grandmaitre@uottawa.ca',
-  'patrickdelislehoude@cunet.carleton.ca',
-  'jboyd@ontariohockeyleague.com',
+  'patrickdelislehoude@cunet.carleton.ca'
   'boydjam@gmail.com',
   'andrewmercer@rogers.com',
   'pstoykewych@ottawa67s.com',
@@ -28,6 +26,7 @@ export const ADMIN_EMAILS = [
   'lennyzappia@gmail.com',
   'turpinliam@gmail.com',
   'puckbunker@gmail.com',
+  'tonyzappia@gmail.com'
 ];
 
 // A separate, much narrower list — just for who can trigger a league
