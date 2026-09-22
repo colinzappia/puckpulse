@@ -282,6 +282,72 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onContact, onAdvert
             </div>
           ))}
         </div>
+
+        <div className="max-w-6xl mt-16">
+          <h3 className="text-2xl font-black tracking-tight mb-2">Scouting</h3>
+          <p className="text-slate-400 text-sm mb-8">Full Pro-level access, plus CHL & AAA schedules with auto-populated lineups.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            {[
+              {
+                name: 'Scout Individual', price: '$49.99', period: '/ month', desc: 'Full Pro-level access, plus CHL & AAA schedules with auto-populated lineups.',
+                features: ['Everything in Pro', 'Scouts Portal Games tab', 'Auto-populated CHL lineups', 'Upload lineups for any league'],
+              },
+              {
+                name: 'Scout Team', price: '$149.99', period: '/ month', desc: 'A small scouting group sharing one subscription.',
+                features: ['Everything in Scout Individual', 'Invite your scouting group by email', 'Shared access, one bill'],
+              },
+              {
+                name: 'Scout Organization', price: '$299.99', period: '/ month', desc: 'For larger scouting departments.',
+                features: ['Everything in Scout Team', 'Larger group size', 'Priority support'],
+              },
+            ].map((p) => (
+              <div key={p.name} className="rounded-2xl p-7 flex flex-col relative border backdrop-blur-sm border-white/10 bg-black/30">
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">{p.name}</p>
+                <p className="text-4xl font-black mb-1">{p.price} <span className="text-base font-normal text-slate-400">{p.period}</span></p>
+                <p className="text-[11px] text-slate-500 mb-4 -mt-1">CAD, plus applicable sales tax</p>
+                <p className="text-slate-400 text-sm mb-5 pb-5 border-b border-white/10">{p.desc}</p>
+                <ul className="flex flex-col gap-2 mb-8 flex-1">
+                  {p.features.map(f => <li key={f} className="text-sm flex gap-2"><span className="text-yellow-400 font-bold">✓</span>{f}</li>)}
+                </ul>
+                <button
+                  onClick={handleLaunch}
+                  className="w-full py-3 rounded-xl font-bold text-sm transition-all border border-white/10 hover:border-white/20 hover:bg-white/5"
+                >
+                  Start 7-day free trial →
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="max-w-6xl mt-16">
+          <h3 className="text-2xl font-black tracking-tight mb-2">Association Season Passes</h3>
+          <p className="text-slate-400 text-sm mb-8">One payment for your entire association, September through March.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-6">
+            {[
+              { name: 'Association — 6 Teams', price: '$599', period: '/ season', teams: 'Up to 6 teams' },
+              { name: 'Association — 10 Teams', price: '$999', period: '/ season', teams: 'Up to 10 teams' },
+              { name: 'Association — 20 Teams', price: '$1,699', period: '/ season', teams: 'Up to 20 teams' },
+              { name: 'Association — 30 Teams', price: '$2,499', period: '/ season', teams: 'Up to 30 teams' },
+              { name: 'Association — 40 Teams', price: '$3,199', period: '/ season', teams: 'Up to 40 teams' },
+            ].map((p) => (
+              <div key={p.name} className="rounded-2xl p-6 flex flex-col relative border backdrop-blur-sm border-white/10 bg-black/30">
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">{p.name}</p>
+                <p className="text-3xl font-black mb-1">{p.price} <span className="text-sm font-normal text-slate-400">{p.period}</span></p>
+                <p className="text-[11px] text-slate-500 mb-4 -mt-1">CAD, plus applicable sales tax</p>
+                <ul className="flex flex-col gap-2 mb-6 flex-1">
+                  {[p.teams, 'Every coach gets full access', 'Self-service join code'].map(f => <li key={f} className="text-xs flex gap-2"><span className="text-yellow-400 font-bold">✓</span>{f}</li>)}
+                </ul>
+                <button
+                  onClick={handleLaunch}
+                  className="w-full py-2.5 rounded-xl font-bold text-xs transition-all border border-white/10 hover:border-white/20 hover:bg-white/5"
+                >
+                  Purchase Season Pass →
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
 
       <style>{`
