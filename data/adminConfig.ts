@@ -17,7 +17,7 @@ export const ADMIN_EMAILS = [
   'mmcnamee12@hotmail.com',
   'codycaron@cunet.carleton.ca',
   'patrick.grandmaitre@uottawa.ca',
-  'patrickdelislehoude@cunet.carleton.ca'
+  'patrickdelislehoude@cunet.carleton.ca',
   'boydjam@gmail.com',
   'andrewmercer@rogers.com',
   'pstoykewych@ottawa67s.com',
