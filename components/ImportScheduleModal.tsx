@@ -26,11 +26,43 @@ interface ParsedGame {
   venue: string;
 }
 
+// Handles a real Excel date-type cell (unchanged from before), and now
+// also pulls the date portion out of a text value even when a time is
+// attached — confirmed against real files: a cell typed with a time
+// (e.g. "9/20/2026 7:00 PM") doesn't always get recognized as a proper
+// date-type cell, and the old version just passed that whole messy
+// string through unparsed as game_date, which then silently never
+// matched a clean "2026-09-20" comparison anywhere else in the app —
+// games with a time attached were quietly vanishing from every
+// date-filtered view because of this, not because of anything wrong
+// with the games themselves.
 function excelDateToISO(val: any): string {
   if (val instanceof Date) {
     return val.toISOString().slice(0, 10);
   }
-  return String(val || '').trim();
+  const str = String(val || '').trim();
+  if (!str) return '';
+
+  // Already clean "YYYY-MM-DD", optionally with a time after it.
+  let m = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+
+  // "M/D/YYYY" or "MM/DD/YYYY", optionally with a time after it.
+  m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (m) return `${m[3]}-${m[1].padStart(2, '0')}-${m[2].padStart(2, '0')}`;
+
+  // Last resort — JS's own flexible parser (handles things like "Sept
+  // 20, 2026 7:00 PM"); only trusted if it actually produced a real
+  // date, not NaN.
+  const parsed = new Date(str);
+  if (!isNaN(parsed.getTime())) {
+    return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}-${String(parsed.getDate()).padStart(2, '0')}`;
+  }
+
+  // Genuinely unparseable — returned as-is so the existing "no complete
+  // rows found" validation below catches it during preview, rather
+  // than silently guessing wrong.
+  return str;
 }
 
 export default function ImportScheduleModal({ getToken, onClose }: Props) {
