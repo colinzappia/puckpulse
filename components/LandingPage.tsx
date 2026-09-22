@@ -243,7 +243,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onContact, onAdvert
         <h2 className="text-4xl font-black tracking-tight mb-4">Simple, honest pricing</h2>
         <p className="text-slate-400 text-lg mb-4">No contracts, no surprises. Cancel any time.</p>
 
-        <p className="text-slate-400 text-sm mb-10 italic">★ All plans include a free 30-day trial. No credit card required to start. ★</p>
+        <p className="text-slate-400 text-sm mb-10 italic">★ All plans include a free 7-day trial. No credit card required to start. ★</p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl">
           {[
             {
@@ -277,7 +277,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onContact, onAdvert
                 onClick={handleLaunch}
                 className={`w-full py-3 rounded-xl font-bold text-sm transition-all ${p.featured ? 'bg-yellow-400 text-[#05070a] hover:bg-yellow-300' : 'border border-white/10 hover:border-white/20 hover:bg-white/5'}`}
               >
-                Start 30-day free trial →
+                Start 7-day free trial →
               </button>
             </div>
           ))}
