@@ -244,6 +244,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onContact, onAdvert
         <p className="text-slate-400 text-lg mb-4">No contracts, no surprises. Cancel any time.</p>
 
         <p className="text-slate-400 text-sm mb-10 italic">★ All plans include a free 7-day trial. No credit card required to start. ★</p>
+
+        <h3 className="text-2xl font-black tracking-tight mb-2">Single Team Sign-Ups</h3>
+        <p className="text-slate-400 text-sm mb-8">For one team and its coaching staff.</p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl">
           {[
             {
@@ -284,6 +287,35 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onContact, onAdvert
         </div>
 
         <div className="max-w-6xl mt-16">
+          <h3 className="text-2xl font-black tracking-tight mb-2">Association Season Passes</h3>
+          <p className="text-slate-400 text-sm mb-8">One payment for your entire association, September through March.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-6">
+            {[
+              { name: 'Association — 6 Teams', price: '$599', period: '/ season', teams: 'Up to 6 teams' },
+              { name: 'Association — 10 Teams', price: '$999', period: '/ season', teams: 'Up to 10 teams' },
+              { name: 'Association — 20 Teams', price: '$1,699', period: '/ season', teams: 'Up to 20 teams' },
+              { name: 'Association — 30 Teams', price: '$2,499', period: '/ season', teams: 'Up to 30 teams' },
+              { name: 'Association — 40 Teams', price: '$3,199', period: '/ season', teams: 'Up to 40 teams' },
+            ].map((p) => (
+              <div key={p.name} className="rounded-2xl p-6 flex flex-col relative border backdrop-blur-sm border-white/10 bg-black/30">
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">{p.name}</p>
+                <p className="text-3xl font-black mb-1">{p.price} <span className="text-sm font-normal text-slate-400">{p.period}</span></p>
+                <p className="text-[11px] text-slate-500 mb-4 -mt-1">CAD, plus applicable sales tax</p>
+                <ul className="flex flex-col gap-2 mb-6 flex-1">
+                  {[p.teams, 'Every coach gets full access', 'Self-service join code'].map(f => <li key={f} className="text-xs flex gap-2"><span className="text-yellow-400 font-bold">✓</span>{f}</li>)}
+                </ul>
+                <button
+                  onClick={handleLaunch}
+                  className="w-full py-2.5 rounded-xl font-bold text-xs transition-all border border-white/10 hover:border-white/20 hover:bg-white/5"
+                >
+                  Purchase Season Pass →
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="max-w-6xl mt-16">
           <h3 className="text-2xl font-black tracking-tight mb-2">Scouting</h3>
           <p className="text-slate-400 text-sm mb-8">Full Pro-level access, plus CHL & AAA schedules with auto-populated lineups.</p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -314,35 +346,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onContact, onAdvert
                   className="w-full py-3 rounded-xl font-bold text-sm transition-all border border-white/10 hover:border-white/20 hover:bg-white/5"
                 >
                   Start 7-day free trial →
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="max-w-6xl mt-16">
-          <h3 className="text-2xl font-black tracking-tight mb-2">Association Season Passes</h3>
-          <p className="text-slate-400 text-sm mb-8">One payment for your entire association, September through March.</p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-6">
-            {[
-              { name: 'Association — 6 Teams', price: '$599', period: '/ season', teams: 'Up to 6 teams' },
-              { name: 'Association — 10 Teams', price: '$999', period: '/ season', teams: 'Up to 10 teams' },
-              { name: 'Association — 20 Teams', price: '$1,699', period: '/ season', teams: 'Up to 20 teams' },
-              { name: 'Association — 30 Teams', price: '$2,499', period: '/ season', teams: 'Up to 30 teams' },
-              { name: 'Association — 40 Teams', price: '$3,199', period: '/ season', teams: 'Up to 40 teams' },
-            ].map((p) => (
-              <div key={p.name} className="rounded-2xl p-6 flex flex-col relative border backdrop-blur-sm border-white/10 bg-black/30">
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">{p.name}</p>
-                <p className="text-3xl font-black mb-1">{p.price} <span className="text-sm font-normal text-slate-400">{p.period}</span></p>
-                <p className="text-[11px] text-slate-500 mb-4 -mt-1">CAD, plus applicable sales tax</p>
-                <ul className="flex flex-col gap-2 mb-6 flex-1">
-                  {[p.teams, 'Every coach gets full access', 'Self-service join code'].map(f => <li key={f} className="text-xs flex gap-2"><span className="text-yellow-400 font-bold">✓</span>{f}</li>)}
-                </ul>
-                <button
-                  onClick={handleLaunch}
-                  className="w-full py-2.5 rounded-xl font-bold text-xs transition-all border border-white/10 hover:border-white/20 hover:bg-white/5"
-                >
-                  Purchase Season Pass →
                 </button>
               </div>
             ))}
