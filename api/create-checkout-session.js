@@ -51,7 +51,7 @@ export default async function handler(req, res) {
     } else {
       sessionParams.subscription_data = couponCode
         ? { metadata: { userId, planName } }
-        : { trial_period_days: 30, metadata: { userId, planName } };
+        : { trial_period_days: 7, metadata: { userId, planName } };
     }
  
     // Apply coupon if provided, otherwise allow promotion codes — this
