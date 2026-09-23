@@ -32,9 +32,7 @@ import {
   deleteScoutedLineup,
 } from '../services/scoutedLineupService';
 import { fetchRosterByAI } from '../services/geminiService';
-import { findChlLineup, chlLineupSideToPlayers } from '../services/chlLineupsService';
 import { sortByNumber, normalizeName } from '../hooks/useTeamRoster';
-import LeagueGamePicker from './LeagueGamePicker';
 import StandaloneScoutingModal from './StandaloneScoutingModal';
 
 interface Props {
@@ -460,7 +458,6 @@ export default function ScoutLineupModal({ existing, allLineups, onOpenExisting,
   const [rosterB, setRosterB] = useState<Player[]>(pairedLineup?.roster || prefillFromChl?.rosterB || []);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [showGamePicker, setShowGamePicker] = useState(false);
   const [locked, setLocked] = useState(true);
   const [scoutingPrefill, setScoutingPrefill] = useState<{ playerName: string; playerNumber: string; position: string; teamName: string; gameDate: string } | null>(null);
 
@@ -588,12 +585,6 @@ export default function ScoutLineupModal({ existing, allLineups, onOpenExisting,
           >
             {locked ? '🔒 Locked' : '🔓 Unlocked'}
           </button>
-          <button
-            className="ml-auto text-[10px] font-black uppercase tracking-wide px-3 py-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/15 text-emerald-400"
-            onClick={() => setShowGamePicker(true)}
-          >
-            📅 Pick from CHL schedule
-          </button>
         </div>
         {locked && (
           <div className="text-[10px] text-amber-400/80 -mt-1.5 mb-3">
@@ -651,42 +642,6 @@ export default function ScoutLineupModal({ existing, allLineups, onOpenExisting,
           {!hasB && !pairedLineup && ' Filling in both teams saves them as two paired lineups.'}
         </div>
       </div>
-
-      {showGamePicker && (
-        <LeagueGamePicker
-          onPickBoth={async game => {
-            // If either team's lineup for this exact game was already
-            // uploaded by anyone, hand off to that saved lineup instead
-            // of starting a blank one — same game, so the same lineup.
-            const already = allLineups?.find(l =>
-              l.gameDate === game.gameDate &&
-              ((l.teamName === game.homeTeam && l.opponent === game.awayTeam) ||
-               (l.teamName === game.awayTeam && l.opponent === game.homeTeam))
-            );
-            if (already && onOpenExisting) {
-              setShowGamePicker(false);
-              onOpenExisting(already);
-              return;
-            }
-
-            setTeamAName(game.homeTeam);
-            setTeamBName(game.awayTeam);
-            setGameDate(game.gameDate);
-
-            // No manually-entered lineup exists yet — check whether the
-            // CHL scraper already found this game's real lineup (posted
-            // roughly an hour before puck drop). If so, both rosters
-            // come pre-filled with the actual real lines, no manual
-            // entry needed at all.
-            const scraped = await findChlLineup(game.league, game.externalGameId);
-            if (scraped) {
-              setRosterA(chlLineupSideToPlayers(scraped.homeLines));
-              setRosterB(chlLineupSideToPlayers(scraped.awayLines));
-            }
-          }}
-          onClose={() => setShowGamePicker(false)}
-        />
-      )}
 
       {scoutingPrefill && (
         <StandaloneScoutingModal
