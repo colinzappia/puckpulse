@@ -241,6 +241,12 @@ def _parse_one_team_from_tables(tables: list[list[list]]) -> dict | None:
                         })
 
                 elif "def" in label_lower:
+                    # Temporary — need to see the exact raw cell text for
+                    # a specific North Bay goalie mismatch before fixing
+                    # it for real, since the fix depends on exactly how
+                    # this cell is actually structured, not a guess.
+                    if any("starting" in c.lower() or "substitut" in c.lower() for c in cells if c):
+                        print(f"    [debug] Def row cells: {cells!r}")
                     m = re.search(r"\d+", label)
                     nums = []
                     for c in cells:
