@@ -146,32 +146,18 @@ def download_pdf(url: str) -> bytes | None:
 # exactly this kind of gridded layout, where linear text extraction can
 # scramble two side-by-side tables into one confused stream.
 # ---------------------------------------------------------------------------
-def parse_lineup_pdf(pdf_bytes: bytes, debug_game_id: str | None = None) -> dict:
+def parse_lineup_pdf(pdf_bytes: bytes) -> dict:
     """Return {'home': {...}, 'visitor': {...}} with lines/pairs/goalies."""
     result: dict = {"home": None, "visitor": None}
 
     with pdfplumber.open(BytesIO(pdf_bytes)) as pdf:
-        for page_num, page in enumerate(pdf.pages):
+        for page in pdf.pages:
             tables = page.extract_tables()
             if not tables:
                 continue
 
-            # Temporary, targeted at one specific game — need to see
-            # everything pdfplumber actually extracts for both sides of
-            # this PDF (not a filtered guess) before fixing two separate
-            # reported issues: Brampton's lineup not loading at all, and
-            # North Bay's backup goalie number being wrong.
-            if debug_game_id:
-                print(f"    [debug] page {page_num}: {len(tables)} table(s)")
-                for t_idx, table in enumerate(tables):
-                    print(f"    [debug] table {t_idx} ({len(table)} rows):")
-                    for r_idx, row in enumerate(table):
-                        print(f"    [debug]   row {r_idx}: {row!r}")
-
             team = _parse_one_team_from_tables(tables)
             if not team:
-                if debug_game_id:
-                    print(f"    [debug] page {page_num}: _parse_one_team_from_tables returned None — nothing matched")
                 continue
 
             # Which side this page belongs to: read from the page's own
@@ -366,7 +352,7 @@ def process_game(game: dict) -> dict | None:
         print("    PDF not posted yet")
         return None
 
-    parsed = parse_lineup_pdf(pdf_bytes, debug_game_id=str(game["game_id"]) if str(game["game_id"]) == "29010" else None)
+    parsed = parse_lineup_pdf(pdf_bytes)
     result = {
         "game_id": game["game_id"],
         "league": game["_league"],
