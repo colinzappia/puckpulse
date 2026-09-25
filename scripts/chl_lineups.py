@@ -353,6 +353,43 @@ def clean_team_name(name: str, league: str) -> str:
     return name
 
 
+def delete_stale_lineup(game: dict) -> None:
+    """Removes any existing chl_lineups row for a game whose PDF is no
+    longer accessible. Without this, a lineup that was genuinely posted
+    and correctly scraped earlier — then later pulled back or changed
+    by the league — would sit in the database indefinitely looking
+    exactly as current and trustworthy as a lineup scraped five minutes
+    ago, since this script previously only ever added or updated rows,
+    never reconsidered ones it had already saved. Silently does nothing
+    if there was no existing row to remove, or if credentials aren't
+    configured (same as upload_to_supabase's own skip behavior)."""
+    supabase_url = (os.environ.get("SUPABASE_URL") or "").strip().rstrip("/")
+    if supabase_url.endswith("/rest/v1"):
+        supabase_url = supabase_url[: -len("/rest/v1")]
+    service_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+    if not supabase_url or not service_key:
+        return
+
+    try:
+        r = requests.delete(
+            f"{supabase_url}/rest/v1/chl_lineups",
+            headers={
+                "apikey": service_key,
+                "Authorization": f"Bearer {service_key}",
+                "Prefer": "return=representation",
+            },
+            params={
+                "league": f"eq.{game['_league']}",
+                "external_game_id": f"eq.{game['game_id']}",
+            },
+            timeout=20,
+        )
+        if r.status_code == 200 and r.json():
+            print(f"    removed stale lineup (was scraped earlier, no longer posted)")
+    except Exception as exc:
+        print(f"    [warn] failed to check/remove stale lineup: {exc}")
+
+
 def process_game(game: dict) -> dict | None:
     pdf_url = build_pdf_url(game)
     print(f"  {game['visiting_team_code']} @ {game['home_team_code']}  →  {pdf_url}")
@@ -360,6 +397,7 @@ def process_game(game: dict) -> dict | None:
     pdf_bytes = download_pdf(pdf_url)
     if not pdf_bytes:
         print("    PDF not posted yet")
+        delete_stale_lineup(game)
         return None
 
     parsed = parse_lineup_pdf(pdf_bytes)
