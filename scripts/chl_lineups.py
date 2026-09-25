@@ -343,6 +343,16 @@ def upload_to_supabase(result: dict) -> bool:
         return False
 
 
+def clean_team_name(name: str, league: str) -> str:
+    # QMJHL's API returns team names with an embedded comma (e.g.
+    # "Halifax, Mooseheads") — scoped to QMJHL specifically, matching
+    # the same fix already applied in sync-chl-schedule.js, since other
+    # leagues don't have this formatting quirk.
+    if league == "qmjhl":
+        return re.sub(r",\s*", " ", name)
+    return name
+
+
 def process_game(game: dict) -> dict | None:
     pdf_url = build_pdf_url(game)
     print(f"  {game['visiting_team_code']} @ {game['home_team_code']}  →  {pdf_url}")
@@ -361,12 +371,12 @@ def process_game(game: dict) -> dict | None:
         "status": game.get("game_status"),
         "visitor": {
             "code": game["visiting_team_code"],
-            "name": game["visiting_team_name"],
+            "name": clean_team_name(game["visiting_team_name"], game["_league"]),
             "lines": parsed.get("visitor"),
         },
         "home": {
             "code": game["home_team_code"],
-            "name": game["home_team_name"],
+            "name": clean_team_name(game["home_team_name"], game["_league"]),
             "lines": parsed.get("home"),
         },
         "pdf_url": pdf_url,
